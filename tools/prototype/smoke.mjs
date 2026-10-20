@@ -160,6 +160,32 @@ async function main () {
   })
   check('state renderers run without throwing', renderErr === '', renderErr)
 
+  // ---- DNS/VPN status matrix -------------------------------------------- #
+  const vpnStates = await page.evaluate(async () => {
+    const read = () => ({
+      pill: document.getElementById('vpnPill').textContent.trim(),
+      title: document.getElementById('vpnTitle').textContent,
+      sub: document.getElementById('vpnSub').textContent,
+      sw: document.getElementById('vpnToggle').classList.contains('on')
+    })
+    const out = {}
+    for (const v of ['on', 'off', 'custom', 'system', 'schedule']) {
+      window.setDemo('vpn', v)
+      await new Promise(r => setTimeout(r, 30))
+      out[v] = read()
+    }
+    window.setDemo('vpn', 'on')
+    return out
+  })
+  check('vpn: on/off/presets bundle their status copy like vpnStatusSub()',
+    vpnStates.on.sub === 'Cloudflare Family · 0 exempt' && vpnStates.on.pill === 'Active'
+    && vpnStates.off.sub === 'Tap to re-enable protection' && vpnStates.off.pill === 'Off'
+    && !vpnStates.off.sw
+    && vpnStates.custom.sub.startsWith('Custom · 1.1.1.1 · ')
+    && vpnStates.system.sub.startsWith('System-wide · ')
+    && vpnStates.schedule.sub.endsWith('· schedule block active'),
+    JSON.stringify(vpnStates))
+
   // ---- block overlay: countdown empties the arc then unlocks Close -------- #
   const blockGate = await page.evaluate(async () => {
     while (window.bsDwell > 3) window.dwellStep(-1)

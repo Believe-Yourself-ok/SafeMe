@@ -39,6 +39,15 @@
         <option value="lockout">Lockout · 5 min</option>
       </select>
     </label>
+    <label>DNS / VPN
+      <select id="stVpn" onchange="setDemo('vpn',this.value)">
+        <option value="on">On · Cloudflare Family</option>
+        <option value="off">Off</option>
+        <option value="custom">Custom · IPv4 + IPv6</option>
+        <option value="system">System-wide</option>
+        <option value="schedule">Schedule block active</option>
+      </select>
+    </label>
     <label>Biometrics
       <select id="stBio" onchange="setDemo('bio',this.value)">
         <option value="available">Available</option>

@@ -1106,18 +1106,44 @@
     const w=document.getElementById('vpnNotifWrap'); if(w) w.style.display=vpnNotif==='Custom'?'':'none';
     toast('Notification: '+vpnNotif);
   }
+  // DnsVpnScreen.vpnStatusSub(): preset/custom -> optional System-wide -> exempt
+  // count -> optional schedule-block suffix; not running -> re-enable hint.
+  const VPN_LABEL = {cloudflare:'Cloudflare Family', adguard:'AdGuard Family', custom:'Custom preset'};
   function vpnStatus(){
-    const on=document.getElementById('vpnToggle').classList.contains('on');
-    const p=document.getElementById('vpnPill'); if(p){ p.className='pill '+(on?'g':'r'); p.innerHTML='<span class="pdot"></span>'+(on?'Active':'Off'); }
-    const tt=document.getElementById('vpnTitle'); if(tt) tt.textContent=on?'VPN filtering is on':'VPN filtering is off';
+    const v = DEMO.vpn;
+    const running = v.running;
+    const p=document.getElementById('vpnPill');
+    if(p){ p.className='pill '+(running?'g':'r');
+      p.innerHTML='<span class="pdot"></span>'+(running?'Active':'Off'); }
+    const tt=document.getElementById('vpnTitle');
+    if(tt) tt.textContent = running ? 'VPN filtering is on' : 'VPN filtering is off';
+    const sw=document.getElementById('vpnToggle');
+    if(sw) sw.classList.toggle('on', running);
     const s=document.getElementById('vpnSub');
     if(s){
-      const base=vpnPreset==='Custom preset'?('Custom · '+dnsV4+(dnsV6?' · '+dnsV6:'')):vpnPreset;
-      s.textContent=on?(base+' · '+vpnWhitelist.length+' exempt'):'Tap to re-enable protection';
+      if(!running){ s.textContent='Tap to re-enable protection'; }
+      else {
+        const base = (v.preset==='custom' && v.customV4)
+          ? ('Custom · '+v.customV4+(v.customV6?' · '+v.customV6:''))
+          : VPN_LABEL[v.preset];
+        const scoped = v.systemDns ? ('System-wide · '+base) : base;
+        const withExempt = scoped+' · '+v.exempt+' exempt';
+        s.textContent = v.scheduleBlocking ? (withExempt+' · schedule block active') : withExempt;
+      }
     }
+    const sub=document.getElementById('vpnWhitelistSub');
+    // vpn_whitelist_none / vpn_whitelist_count ("%1$d app(s) exempt")
+    if(sub) sub.textContent = v.exempt ? v.exempt+' app(s) exempt' : 'No apps exempt';
   }
-  vpnStatus();
-
+  function setDemoVpn(value){
+    const v = DEMO.vpn;
+    v.running = value !== 'off';
+    v.preset = value==='custom' ? 'custom' : 'cloudflare';
+    v.customV6 = value==='custom' ? '2606:4700::1111' : '';
+    v.systemDns = value === 'system';
+    v.scheduleBlocking = value === 'schedule';
+    vpnStatus();
+  }
   // ---------- Accessibility status ----------
   // ---------- DEMO state (SAD-319 Phase 3) ----------
   // One object drives every prototype state so each production variant is
@@ -1131,6 +1157,14 @@
       bioAvailable: true,           // AppLockBiometrics.isAvailable(device)
       blockedToday: 0,
       schedules: 0
+    },
+    vpn: {
+      running: true,
+      preset: 'cloudflare',         // 'cloudflare' | 'adguard' | 'custom'
+      customV4: '1.1.1.1', customV6: '',
+      exempt: 0,
+      systemDns: false,             // vpn_sub_system_prefix
+      scheduleBlocking: false       // vpn_sub_schedule_suffix
     }
   };
   const DEMO_STR = {
@@ -1164,6 +1198,7 @@
     if(key === 'greeting') d.greeting = value;
     if(key === 'lock') setDemoLock(value);
     if(key === 'bio'){ DEMO.home.bioAvailable = value === 'available'; paintLockBio(); }
+    if(key === 'vpn') setDemoVpn(value);
     renderHome();
   }
 

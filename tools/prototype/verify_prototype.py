@@ -637,6 +637,35 @@ def group_h(rep: Report, ctx):
               strings["bs_why_fallback"] in html,
               f"{strings['bs_why_fallback']!r} missing")
 
+    # --- DNS / VPN status matrix (B-15) ------------------------------------ #
+    vpn = read(UI / "screens/vpn/DnsVpnScreen.kt")
+    for res in ("vpn_status_on", "vpn_status_off", "vpn_pill_active", "vpn_pill_off",
+                "vpn_status_re_enable"):
+        rep.check("H", f"vpn state copy {res} present", strings[res] in js,
+                  f"{strings[res]!r} missing from vpnStatus()")
+    rep.check("H", "vpn sub = preset | 'Custom · v4[ · v6]' (vpnStatusSub)",
+              strings["vpn_custom_status_v4"] == "Custom · %1$s"
+              and strings["vpn_custom_status_v4v6"] == "Custom · %1$s · %2$s"
+              and "'Custom · '+v.customV4+(v.customV6?' · '+v.customV6:'')" in js,
+              "custom preset line drifted")
+    rep.check("H", "vpn sub wraps in vpn_sub_system_prefix",
+              strings["vpn_sub_system_prefix"] == "System-wide · %1$s"
+              and "v.systemDns ? ('System-wide · '+base) : base" in js,
+              "system-wide prefix drifted")
+    rep.check("H", "vpn sub appends vpn_sub_exempt",
+              strings["vpn_sub_exempt"] == "%1$s · %2$d exempt"
+              and "scoped+' · '+v.exempt+' exempt'" in js,
+              "exempt suffix drifted")
+    rep.check("H", "vpn sub appends vpn_sub_schedule_suffix last",
+              strings["vpn_sub_schedule_suffix"] == "%1$s · schedule block active"
+              and "(withExempt+' · schedule block active')" in js,
+              "schedule suffix drifted")
+    rep.check("H", "vpn whitelist row uses vpn_whitelist_none / _count",
+              strings["vpn_whitelist_none"] in js
+              and strings["vpn_whitelist_count"] == "%1$d app(s) exempt"
+              and "v.exempt+' app(s) exempt'" in js,
+              "whitelist copy drifted")
+
     # --- app lock gate (B-16) --------------------------------------------- #
     alm = read(ROOT / "app/src/main/java/com/safeme/app/protect/AppLockManager.kt")
     auo = read(UI / "screens/applock/AppLockUnlockOverlay.kt")
