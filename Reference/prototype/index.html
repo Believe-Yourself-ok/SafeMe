@@ -235,8 +235,8 @@
         </div>
         <div class="stats" style="margin-top:12px">
           <div class="stat b"><div class="n" id="blkBlocked">0</div><div class="l">Blocked today</div></div>
-          <div class="stat g"><div class="n">454</div><div class="l">Keywords</div></div>
-          <div class="stat o"><div class="n">3</div><div class="l">Layers active</div></div>
+          <div class="stat g"><div class="n" id="blkKeywords">0</div><div class="l">Keywords</div></div>
+          <div class="stat o"><div class="n" id="blkLayers">0</div><div class="l">Layers active</div></div>
         </div>
 
         <div class="qa" role="button" tabindex="0" style="margin-top:12px;cursor:pointer" onclick="kwGo('keywords')"><div style="display:flex;align-items:center;gap:12px;width:100%"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div><div style="flex:1;min-width:0"><div class="t">Custom Keywords &amp; Web Blocking</div><div class="s" id="mgCardSub">0 keywords · 0 websites · 0 trusted</div></div><span class="chev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></div><div class="seg" style="margin-top:12px"><button class="on" onclick="event.stopPropagation();kwGo('keywords')">Keywords</button><button onclick="event.stopPropagation();kwGo('websites')">Websites</button></div></div>
@@ -414,7 +414,7 @@
             <span class="pb-chev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
           </span>
         </button>
-        <div class="note" style="margin-top:12px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>Self-healing observer loop + WRITE_SECURE_SETTINGS re-enable keeps protection running.</span></div>
+        <div class="note" style="margin-top:12px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>While on, SafeMe blocks its App Info, Device Admin and uninstall pages — and shows the protection screen before its own Accessibility page, then returns you away so the service can't be disabled by its own overlay.</span></div>
       </section>
 
       <section class="screen" id="sc-selfprotect">
@@ -465,9 +465,6 @@
         <label class="field" style="margin-top:16px"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="titleSearch" placeholder="Search rules…" oninput="titleSearch()"></label>
         <div class="group-label" style="margin-top:14px">Rules</div>
         <div id="titleList" style="display:none">
-          <div class="kw-row"><div class="ic d"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div><div class="tx"><div class="t">Settings</div><div class="s">Exact</div></div><div class="sw on" data-toggle></div><button class="act" onclick="openSheet('sheetTitle')"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
-          <div class="kw-row"><div class="ic d"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div><div class="tx"><div class="t">Apps</div><div class="s">Contains</div></div><div class="sw on" data-toggle></div><button class="act" onclick="openSheet('sheetTitle')"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
-          <div class="kw-row"><div class="ic d"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div><div class="tx"><div class="t">Google Play</div><div class="s">Contains</div></div><div class="sw on" data-toggle></div><button class="act" onclick="openSheet('sheetTitle')"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
         </div>
         <div id="titleEmpty"><div class="card" style="padding:22px;text-align:center"><div class="ic d" style="margin:0 auto 10px"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></svg></div><div style="font-size:15px;font-weight:700;color:var(--ink)">No title rules yet</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px">Add your first rule to start blocking by window title.</div></div></div>
         <div id="titleNoMatch" style="display:none;padding:12px;font-size:13px;color:var(--ink-2);text-align:center">No rules match your search.</div>
@@ -746,21 +743,6 @@
         <div class="sub"><button class="back" onclick="back()"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Protect a service</h1><p class="sub-desc">Select the Accessibility Services SafeMe should keep running.</p></div>
         <label class="field" style="margin-top:14px"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input placeholder="Search services…" oninput="svcSearch(this)"></label>
         <div id="svcList" style="margin-top:12px">
-          <div class="svc-row" data-name="SafeMe Accessibility">
-            <div class="svc-ic"><svg viewBox="0 0 24 24"><path d="M12 2l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
-            <div class="tx"><div class="t">SafeMe Accessibility</div><div class="s">com.safeme.app</div></div>
-            <div class="sw on" data-toggle></div>
-          </div>
-          <div class="svc-row" data-name="Keyguard AppLock">
-            <div class="svc-ic"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
-            <div class="tx"><div class="t">Keyguard AppLock</div><div class="s">com.example.keyguard</div></div>
-            <div class="sw" data-toggle></div>
-          </div>
-          <div class="svc-row" data-name="ScreenGuard">
-            <div class="svc-ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg></div>
-            <div class="tx"><div class="t">ScreenGuard</div><div class="s">com.example.screenguard</div></div>
-            <div class="sw" data-toggle></div>
-          </div>
         </div>
         <div id="svcEmpty" style="display:none;font-size:13px;color:var(--ink-3);text-align:center;padding:24px 0">No accessibility services found.</div>
       </section>

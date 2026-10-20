@@ -18,6 +18,7 @@ Groups
     F  copy                    (production strings present, placeholders intact)
     G  drift-register closure  (the 42 rows of the plan: added/fixed/deleted)
     H  state machines          (every prototype state variant vs its ViewModel)
+    I  copy provenance         (every visible string on every screen is production copy)
 
 Exit code 0 only when every selected assertion passes.
 """
@@ -877,8 +878,96 @@ def group_h(rep: Report, ctx):
               f"{strings['home_quick_actions_empty']!r} missing")
 
 
+def kotlin_literals() -> str:
+    """Every string literal in the UI sources — production still hardcodes some copy
+    (WelcomeScreen), so a prototype string is only 'invented' if it is in neither
+    strings.xml nor a Kotlin literal."""
+    out = []
+    for f in UI.rglob("*.kt"):
+        # some sources spell quotes as \" — normalise before extracting
+        src = read(f).replace('\\"', '"')
+        out += re.findall(r'"([^"\n]{3,})"', src)
+    return norm(" ".join(out))
+
+
+# Containers whose children are built by JS at runtime; their copy is asserted
+# against the resource templates in group H instead of being read from markup.
+DYNAMIC_IDS = {
+    "schedList", "launchList", "kwList", "histList", "svcList", "titleList",
+    "homeFeed", "qaOn", "qaAdd", "appList", "vpnAppList", "socialAppList",
+    "unlockBody", "toasts",
+}
+# Single values a renderer writes at boot (counts, timers). They may ship a value
+# — asserting them empty would be pointless — but they must be written by JS.
+VALUE_IDS = {"homeBlocked", "homeSchedules", "boNum", "homeGreeting", "homeDate",
+             "homeHeroTitle", "homeHeroSub", "homePill"}
+
+
+def group_i(rep: Report, ctx):
+    """Per-screen copy provenance: every visible run of text on every screen must
+    come from strings.xml or be a literal production actually renders.
+
+    Some screens hardcode copy in Kotlin (WelcomeScreen), so the corpus is
+    strings.xml + every literal in ui/**. Containers that JS fills at runtime are
+    skipped here — their copy is asserted against resource templates in group H.
+    """
+    strings = strings_xml()
+    corpus_kt = norm(kotlin_literals())
+
+    # Production strings become patterns: placeholders match anything, so a value
+    # the app would format at runtime ("0 of 3 granted · finish setup") is known.
+    patterns = []
+    plural_items = [it.text or "" for pl in ET.parse(STRINGS).getroot().findall("plurals")
+                    for it in pl.findall("item")]
+    for v in list(strings.values()) + plural_items:
+        t = norm(v)
+        if len(t) < 3:
+            continue
+        rx = re.escape(t).replace(re.escape("\x00"), ".+?")
+        patterns.append(re.compile(rx))
+    kt_runs = {c.strip() for c in corpus_kt.split(" . ") if len(c.strip()) >= 3}
+
+    def known(text: str) -> bool:
+        n = norm(text)
+        if len(n) < 3:
+            return True
+        if any(p.fullmatch(n) for p in patterns):
+            return True
+        # a production title split across spans for an accent word is still
+        # production copy: "Battery" + "optimization" from perm_battery_title
+        if len(n) >= 4 and not n.isdigit() and any(n in p.pattern for p in patterns):
+            return True
+        return any(n in k for k in kt_runs) or n in corpus_kt
+
+    unknown: dict[str, list[str]] = {}
+    for name, body in ctx["sections"].items():
+        for dyn in DYNAMIC_IDS:
+            body = re.sub(rf'<[^>]*id="{dyn}"[^>]*>.*?</[a-z]+>', " ", body, flags=re.S)
+            body = re.sub(rf'<[^>]*id="{dyn}"[^>]*>', " ", body)
+        body = re.sub(r'<[^>]*data-demo="1"[^>]*>.*?</[a-z]+>', " ", body, flags=re.S)
+        body = re.sub(r"<script.*?</script>", " ", body, flags=re.S)
+        body = re.sub(r"<svg.*?</svg>", " ", body, flags=re.S)
+        # text nodes only
+        runs = [html_mod.unescape(t).strip() for t in re.split(r"<[^>]+>", body)]
+        bad = [re.sub(r"\s+", " ", t) for t in runs if t and not known(t)]
+        # a run may be a fragment of a longer production string (e.g. a split
+        # sentence); keep only runs that no production string contains
+        if bad:
+            unknown[name] = sorted(set(bad))
+
+    total = sum(len(v) for v in unknown.values())
+    detail = "; ".join(f"{k}: {v[:3]}" for k, v in list(unknown.items())[:8])
+    rep.check("I", "every screen's copy exists in strings.xml or a Kotlin literal",
+              not unknown, f"{total} invented strings — {detail}")
+
+    # JS-rendered containers must not ship baked-in text of their own
+    baked = [i for i in DYNAMIC_IDS
+             if re.search(rf'id="{i}"[^>]*>\s*[A-Za-z0-9]', ctx["html"])]
+    rep.check("I", "JS-rendered containers ship empty", not baked, f"baked copy in {baked}")
+
+
 GROUPS = {"A": group_a, "B": group_b, "C": group_c, "D": group_d,
-          "E": group_e, "F": group_f, "G": group_g, "H": group_h}
+          "E": group_e, "F": group_f, "G": group_g, "H": group_h, "I": group_i}
 
 
 def main() -> int:
@@ -890,7 +979,7 @@ def main() -> int:
     args = ap.parse_args()
     if args.list:
         print("groups: A integrity · B wiring · C screens · D tokens · E geometry · "
-              "F copy · G drift · H state machines")
+              "F copy · G drift · H state machines · I copy provenance")
         return 0
 
     html, css, js = read(INDEX), read(CSS), read(JS)

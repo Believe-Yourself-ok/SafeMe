@@ -106,6 +106,12 @@
   // ---------- DEMO state (SAD-319 Phase 3) ----------
   // One object drives every prototype state so each production variant is
   // reachable from the toolbar instead of being hardcoded in markup.
+  // BundledAdult.kt ships 133 built-in keywords; BlockingViewModel adds them to the
+  // user's blocklist for the stat ("blocklistKeywords.size + BundledKeywords.keywords.size").
+  const BUNDLED_KEYWORDS = 133;
+  // BlockingViewModel.kt:66 — layersActive is the fixed "3" the production screen shows.
+  const LAYERS_ACTIVE = '3';
+
   const DEMO = {
     home: {
       layers: 8, total: 10, attention: 2,
@@ -931,6 +937,21 @@
     {name:'Weekend', days:'Sat · Sun', daysraw:'Sat,Sun',
      start:'09:00', end:'12:00', mode:'Internet', modetxt:'Internet blocked', apps:0, enabled:false}
   ];
+  const DEMO_TITLE_RULES = [
+    {t:'Settings',    s:'Exact'},
+    {t:'Apps',        s:'Contains'},
+    {t:'Google Play', s:'Contains'}
+  ];
+  const DEMO_SERVICES = [
+    {name:'SafeMe Accessibility', pkg:'com.safeme.app', on:true,
+     ic:'<path d="M12 2l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>'},
+    {name:'Keyguard AppLock', pkg:'com.example.keyguard', on:false,
+     ic:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'},
+    {name:'ScreenGuard', pkg:'com.example.screenguard', on:false,
+     ic:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/>'}
+  ];
+  let TITLES = DEMO_TITLE_RULES.slice();      // rendered copies (toggle mutates these)
+  let SERVICES = DEMO_SERVICES.slice();
   const DEMO_KEYWORDS = ['gambling', 'casino'];
   const DEMO_WEBSITES = ['bet365.com', 'poker.com'];
   const DEMO_ACTIVITY = [
@@ -947,11 +968,14 @@
       KW.keywords.blocklist = DEMO_KEYWORDS.slice();
       KW.websites.blocked = DEMO_WEBSITES.slice();
       if(!ACTIVITY.length){ DEMO_ACTIVITY.slice().reverse().forEach(e=>actAdd(e.type, e.title, e.sub, e.time)); }
+      TITLES = DEMO_TITLE_RULES.slice(); SERVICES = DEMO_SERVICES.slice();
     } else {
       if(list) list.innerHTML = '';
       KW.keywords.blocklist = []; KW.websites.blocked = [];
       ACTIVITY.length = 0;
+      TITLES = []; SERVICES = [];
     }
+    titleRender(); svcRender();
     kwRender(); feedRender(); histRender(); schedCount(); renderHome();
   }
 
@@ -1491,6 +1515,34 @@
     const s2=document.getElementById('mgCardSub');
     if(s2) s2.textContent = fmt(T.blkManage, KW.keywords.blocklist.length,
                                 KW.websites.blocked.length, KW.websites.trusted.length);
+    // Block screen stats: BlockingViewModel derives the keyword count from the blocklist
+    // plus the bundled list, and reports layersActive as the fixed value above.
+    const kb=document.getElementById('blkKeywords');
+    if(kb) kb.textContent = String(KW.keywords.blocklist.length + BUNDLED_KEYWORDS);
+    const kl=document.getElementById('blkLayers');
+    if(kl) kl.textContent = LAYERS_ACTIVE;
+  }
+  function titleRender(){
+    const host=document.getElementById('titleList'); if(!host) return;
+    host.innerHTML = TITLES.map(r =>
+      '<div class="kw-row"><div class="ic d"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>'
+      + '<div class="tx"><div class="t">'+r.t+'</div><div class="s">'+r.s+'</div></div>'
+      + '<div class="sw on" data-toggle></div>'
+      + `<button class="act" onclick="openSheet('sheetTitle')"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>`
+      + '</div>').join('');
+    host.style.display = TITLES.length ? 'block' : 'none';
+    const empty=document.getElementById('titleEmpty'); if(empty) empty.style.display = TITLES.length ? 'none' : 'block';
+    titleCount();
+  }
+  function svcRender(){
+    const host=document.getElementById('svcList'); if(!host) return;
+    host.innerHTML = SERVICES.map(x =>
+      '<div class="svc-row" data-name="'+x.name+'">'
+      + '<div class="svc-ic"><svg viewBox="0 0 24 24">'+x.ic+'</svg></div>'
+      + '<div class="tx"><div class="t">'+x.name+'</div><div class="s">'+x.pkg+'</div></div>'
+      + '<div class="sw'+(x.on?' on':'')+'" data-toggle></div></div>').join('');
+    const empty=document.getElementById('svcEmpty');
+    if(empty) empty.style.display = SERVICES.length ? 'none' : 'block';
   }
   function kwRowHTML(v){
     const art = kwSelType==='keywords'
