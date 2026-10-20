@@ -767,6 +767,38 @@ def group_g(rep: Report, ctx):
               and "R.string.bs_closing, dwell" in read(UI / "screens/blockscreen/BlockScreen.kt"),
               "dwell clamp drifted from BlockScreenViewModel")
 
+    # --- B-18: BackupScreen busy + error presentation ----------------------- #
+    backup_src = read(UI / "screens/backup/BackupScreen.kt")
+    codec = read(DATA / "BackupCodec.kt")
+    rep.check("G", "busy swaps the backup action labels, not an inline box (B-18)",
+              "actionLabel = if (busy) stringResource(R.string.backup_exporting)" in backup_src
+              and "actionLabel = if (busy) stringResource(R.string.backup_restoring)" in backup_src
+              and "enabled = !busy" in backup_src
+              and "T.backupExporting" in js and "T.backupImportAction" in js
+              and "T.backupRestoring" in js
+              and "backupStatus" not in html and "backupStatus" not in js,
+              "busy/error presentation drifted from BackupScreen")
+    rep.check("G", "backup failures toast the backup_err_* string (B-18)",
+              "toastRes(errorRes(result.error))" in backup_src
+              and "if(state==='error') toast(BACKUP_ERR[errKey]" in js
+              and len(re.findall(r"toast\(", js)) > 0,
+              "errors are not surfaced as toasts")
+    # every BackupError the UI can show must be reachable from the demo toolbar
+    err_res = re.findall(r"BackupError\.[A-Z0-9_]+ -> R\.string\.(backup_err_\w+)", backup_src)
+    js_norm = js.replace("\\'", "'")
+    missing = [r for r in err_res if strings[r] not in js_norm]
+    rep.check("G", "all seven BackupError messages are reachable (B-18)",
+              len(err_res) == 7 and not missing,
+              f"{len(err_res)} mapped, missing: {missing}")
+    sections = re.findall(r"^    ([A-Z0-9_]+),$", codec.split("enum class BackupSection")[1].split("}")[0], re.M)
+    # label resource per enum constant, read from BackupScreen.sectionLabelRes()
+    label_res = dict(re.findall(r"BackupSection\.([A-Z0-9_]+) -> R\.string\.(\w+)", backup_src))
+    labels = [strings[label_res[s]] for s in sections if s in label_res]
+    rows = re.findall(r'<div class="inc"[^>]*>([^<]+)</div>', html)
+    rep.check("G", '"What\'s included" lists every BackupSection in order (B-18)',
+              len(sections) == 10 and [r.replace("&amp;", "&") for r in rows] == labels,
+              f"Kotlin {labels} vs prototype {rows}")
+
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")
@@ -935,9 +967,13 @@ def group_h(rep: Report, ctx):
     for res in ("backup_err_not_json", "backup_err_rollback"):
         rep.check("H", f"backup error {res} present", strings[res] in js,
                   f"{strings[res]!r} missing")
-    rep.check("H", "restore still confirms before running (sheetRestore)",
-              'id="sheetRestore"' in html and "openSheet('sheetRestore')" in html,
-              "restore confirmation removed")
+    # BackupScreen.RestoreConfirmDialog is an AlertDialog, so the prototype must
+    # not present it as a bottom sheet (same class of bug as B-07).
+    rep.check("H", "restore confirms in an AlertDialog before running (dialogRestore)",
+              'id="dlgRestore"' in html and "openDlg('dlgRestore')" in html
+              and 'id="sheetRestore"' not in html
+              and "AlertDialog(" in read(UI / "screens/backup/BackupScreen.kt"),
+              "restore confirmation drifted from RestoreConfirmDialog")
 
     # --- blocking manage subtitle (A-12) ---------------------------------- #
     rep.check("H", "blocking manage subtitle uses blk_manage_sub",

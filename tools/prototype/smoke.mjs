@@ -204,27 +204,33 @@ async function main () {
     del.shown && del.closed && !del.sheet && del.title === 'Delete account?', JSON.stringify(del))
 
   // ---- backup progress + error states ---------------------------------- #
+  // BackupScreen.kt: busy swaps the action label (backup_exporting/restoring) and
+  // disables both cards; failures are toasts carrying the backup_err_* string.
   const backup = await page.evaluate(async () => {
     const read = () => {
-      const b = document.getElementById('backupStatus')
-      return { text: b.textContent, shown: getComputedStyle(b).display !== 'none',
-               err: b.classList.contains('err'),
-               disabled: document.getElementById('backupExportBtn').disabled }
+      const e = document.getElementById('backupExportBtn'), r = document.getElementById('backupRestoreBtn')
+      return { exp: e.textContent, res: r.textContent, expDisabled: e.disabled, resDisabled: r.disabled,
+               toast: document.getElementById('toasts').textContent.trim(),
+               box: !!document.getElementById('backupStatus') }
     }
     const out = {}
     window.setDemo('backup', 'exporting');   await new Promise(r => setTimeout(r, 40)); out.exporting = read()
     window.setDemo('backup', 'restoring');   await new Promise(r => setTimeout(r, 40)); out.restoring = read()
+    document.getElementById('toasts').innerHTML = ''
     window.setDemo('backup', 'not_json');    await new Promise(r => setTimeout(r, 40)); out.notJson = read()
+    document.getElementById('toasts').innerHTML = ''
     window.setDemo('backup', 'rollback');    await new Promise(r => setTimeout(r, 40)); out.rollback = read()
+    document.getElementById('toasts').innerHTML = ''
     window.setDemo('backup', 'idle');        await new Promise(r => setTimeout(r, 40)); out.idle = read()
     return out
   })
-  check('backup: progress disables actions, errors surface in danger style',
-    backup.exporting.text === 'Creating backup…' && backup.exporting.disabled
-    && backup.restoring.text === 'Restoring…' && backup.restoring.disabled
-    && backup.notJson.err && backup.notJson.text === "This file isn't valid JSONC"
-    && backup.rollback.err && backup.rollback.text.startsWith('Restore failed and couldn')
-    && !backup.idle.shown && !backup.idle.disabled,
+  check('backup: busy swaps the action labels, errors toast backup_err_*',
+    backup.exporting.exp === 'Creating backup…' && backup.exporting.expDisabled
+    && backup.exporting.resDisabled && backup.exporting.res === 'Restore'
+    && backup.restoring.res === 'Restoring…' && backup.restoring.exp === 'Export'
+    && backup.notJson.toast === "This file isn't valid JSONC"
+    && backup.rollback.toast.startsWith('Restore failed and couldn')
+    && backup.idle.exp === 'Export' && !backup.idle.expDisabled && !backup.idle.box,
     JSON.stringify(backup))
 
   // ---- schedule states: populated / overnight / disabled / empty -------- #

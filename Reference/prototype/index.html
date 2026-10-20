@@ -520,10 +520,9 @@
             <div class="ic g" style="width:44px;height:44px;border-radius:14px"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5"/></svg></div>
             <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Restore from backup</div><div style="font-size:12px;color:var(--ink-2);margin-top:2px">Pick a .jsonc backup and replace your current settings</div></div>
           </div>
-          <button class="btn btn-secondary" id="backupRestoreBtn" style="height:46px;font-size:14px;width:100%;margin-top:16px" onclick="openSheet('sheetRestore')">Restore</button>
+          <button class="btn btn-secondary" id="backupRestoreBtn" style="height:46px;font-size:14px;width:100%;margin-top:16px" onclick="openDlg('dlgRestore')">Restore</button>
         </div>
 
-        <div class="backup-status" id="backupStatus" style="display:none"></div>
 
         <div class="group-label" style="margin-top:22px">What's included</div>
         <div class="card">
@@ -535,7 +534,8 @@
           <div class="inc">Prevent Uninstall</div>
           <div class="inc">Accessibility Protection</div>
           <div class="inc">Content Engines</div>
-          <div class="inc" style="border-bottom:none">Block Screen</div>
+          <div class="inc">Block Screen</div>
+          <div class="inc" style="border-bottom:none">Social Media Blocking</div>
         </div>
       </section>
 
@@ -1002,13 +1002,6 @@
     </div>
 
     <!-- Restore confirmation -->
-    <div class="sheet" id="sheetRestore">
-      <div class="grab"></div>
-      <h3>Restore this backup?</h3>
-      <div class="s-sub">This will replace your current settings. Your data is validated before anything changes.</div>
-      <div style="font-size:12px;color:var(--ink-3);margin-top:8px" id="restoreMeta">Created — · app 0.1.0 · schema v1</div>
-      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" onclick="closeSheets();runBackup('restore')">Restore</button></div>
-    </div>
 
     <!-- Block overlay -->
     <div class="blockov" id="blockov">
@@ -1040,6 +1033,16 @@
         <div class="dlg-title">Delete account?</div>
         <div class="dlg-body">This removes all local data and disables protection. This can't be undone.</div>
         <div class="dlg-actions"><button class="dlg-btn" onclick="closeDlg()">Cancel</button><button class="dlg-btn danger" onclick="confirmDelete()">Delete</button></div>
+      </div>
+    </div>
+
+    <!-- Restore confirm — M3 AlertDialog (BackupScreen.kt:416-473), not a sheet -->
+    <div class="dlg" id="dlgRestore">
+      <div class="dlg-card" role="alertdialog" aria-modal="true">
+        <div class="dlg-title" style="color:var(--ink)">Restore this backup?</div>
+        <div class="dlg-body">This will replace your current settings. Your data is validated before anything changes.</div>
+        <div id="restoreMeta" style="font-size:12px;color:var(--ink-3);margin-top:10px">Created — · app 0.1.0 · schema v1</div>
+        <div class="dlg-actions"><button class="dlg-btn" onclick="closeDlg()">Cancel</button><button class="dlg-btn brand" onclick="closeDlg();runBackup('restore')">Restore</button></div>
       </div>
     </div>
 

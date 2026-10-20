@@ -367,9 +367,6 @@
 
 
   /* Backup progress / error line — backup_exporting, backup_err_* */
-  .backup-status{margin-top:14px;padding:12px 14px;border-radius:14px;font-size:12.5px;line-height:18px;
-                 border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
-  .backup-status.err{border-color:var(--danger);background:rgba(244,67,54,.07);color:var(--danger)}
   /* ---------- Centred dialog (M3 AlertDialog) ---------- */
   .dlg{position:absolute;inset:0;z-index:85;display:none;align-items:center;justify-content:center;
        padding:24px;background:rgba(31,26,22,.45)}
@@ -382,6 +379,7 @@
   .dlg-btn{font-family:inherit;font-size:14px;font-weight:600;color:var(--ink-2);background:none;border:none;
            padding:10px 12px;border-radius:999px}
   .dlg-btn.danger{color:var(--danger)}
+  .dlg-btn.brand{color:var(--brand-dark)}
 
   /* ---------- Block overlay ---------- */
   .blockov{position:absolute;inset:0;background:#171310;z-index:90;color:#fff;display:none;flex-direction:column;

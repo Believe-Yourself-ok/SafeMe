@@ -156,8 +156,11 @@
     profAboutSub:   'v%1$s · version info',
     aboutVersion:   'Version %1$s · package %2$s',
     footer1:        'SafeMe v%1$s · open://protectyourself',
+    backupExportAction:'Export',
+    backupImportAction:'Restore',
     backupExporting:'Creating backup…',
-    backupRestoring:'Restoring…'
+    backupRestoring:'Restoring…',
+    backupConfirmMeta:'Created %1$s · app %2$s · schema v%3$d'
   };
   /** getString()-style substitution: %1$s / %2$d, in any order. */
   function fmt(t, ...args){
@@ -176,6 +179,9 @@
     if(f) f.innerHTML = fmt(T.footer1, APP_VERSION) + '<br>No ads · no trackers · no analytics';
     const v=document.getElementById('aboutVersion');
     if(v) v.textContent = fmt(T.aboutVersion, APP_VERSION, APP_PKG);
+    // BackupScreen.RestoreConfirmDialog: createdAt.ifBlank { "—" } · app · schema
+    const rm=document.getElementById('restoreMeta');
+    if(rm) rm.textContent = fmt(T.backupConfirmMeta, '—', APP_VERSION, 1);
   }
 
   const DEMO_STR = {
@@ -526,21 +532,15 @@
     rollback:  "Restore failed and couldn't be fully undone — please re-check your settings"
   };
   let backupTimer=null;
+  // BackupScreen.kt: `busy` swaps the ACTION LABEL (backup_exporting /
+  // backup_restoring) and sets enabled = !busy on both cards; there is no status
+  // box — failures surface as a toast with the matching backup_err_* string.
   function paintBackup(state, errKey){
-    const box=document.getElementById('backupStatus');
     const exp=document.getElementById('backupExportBtn'), res=document.getElementById('backupRestoreBtn');
-    if(!box) return;
-    if(!state || state==='idle'){ box.style.display='none'; box.textContent=''; box.classList.remove('err'); }
-    else if(state==='exporting' || state==='restoring'){
-      box.style.display='block'; box.classList.remove('err');
-      box.textContent = state==='exporting' ? T.backupExporting : T.backupRestoring;
-    } else if(state==='error'){
-      box.style.display='block'; box.classList.add('err');
-      box.textContent = BACKUP_ERR[errKey] || BACKUP_ERR.write;
-    }
     const busy = state==='exporting' || state==='restoring';
-    if(exp) exp.disabled = busy;
-    if(res) res.disabled = busy;
+    if(exp){ exp.textContent = state==='exporting' ? T.backupExporting : T.backupExportAction; exp.disabled = busy; }
+    if(res){ res.textContent = state==='restoring' ? T.backupRestoring : T.backupImportAction; res.disabled = busy; }
+    if(state==='error') toast(BACKUP_ERR[errKey] || BACKUP_ERR.write);
   }
   function runBackup(kind){
     paintBackup(kind==='export' ? 'exporting' : 'restoring');
