@@ -347,6 +347,11 @@
   .blockov .bo-close.ready{background:var(--brand);color:#fff}
 
   /* ---------- Toast ---------- */
+  /* ToastHost sits inside the screen, and the screen's content box already
+     excludes the bottom bar (MainScreen applies the Scaffold's bottom padding
+     to the NavHost). So on tab roots the pill must clear the nav bar:
+     10 (nav inset) + 66 (nav height) + 24 (call-site padding) = 100px. */
+  .toasts.above-nav{bottom:100px}
   .toasts{position:absolute;left:0;right:0;bottom:24px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:95;pointer-events:none}
   .toast{background:#3A332C;color:#fff;padding:12px 18px;border-radius:999px;font-size:13px;font-weight:600;
          box-shadow:var(--shadow-lg);opacity:0;transform:translateY(12px);transition:.25s var(--ease)}
@@ -458,7 +463,7 @@
     --ink:#F2ECE4; --ink-2:#C6BCB0; --ink-3:#8A8077;
     --bg:#15120E; --surface:#211C16; --line:#332B22;
     --success:#5FBF92; --warning:#D89A4C; --danger:#E2685F;
-    --glass:rgba(33,28,22,.85);
+    --glass:rgba(33,28,22,.86);   /* BottomNavBar uses surface@0.86f in both themes */
     --shadow:0 6px 24px rgba(0,0,0,.45);
     --shadow-lg:0 16px 48px rgba(0,0,0,.55);
     color-scheme:dark;

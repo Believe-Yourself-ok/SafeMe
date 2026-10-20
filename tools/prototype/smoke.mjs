@@ -160,6 +160,19 @@ async function main () {
   })
   check('state renderers run without throwing', renderErr === '', renderErr)
 
+  // ---- toast docks above the bottom nav on a tab root --------------------
+  const toastGap = await page.evaluate(async () => {
+    window.nav('home')
+    window.toast('docking check')
+    await new Promise(r => setTimeout(r, 60))
+    const pill = document.querySelector('#toasts .toast')
+    if (!pill) return { ok: false, reason: 'no toast rendered' }
+    const t = pill.getBoundingClientRect()
+    const nav = document.getElementById('nav').getBoundingClientRect()
+    return { ok: t.bottom <= nav.top + 0.5, toastBottom: t.bottom, navTop: nav.top }
+  })
+  check('toast sits above the bottom nav', toastGap.ok, JSON.stringify(toastGap))
+
   check('no console errors', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
 
   await browser.close()

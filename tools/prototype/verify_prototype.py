@@ -371,6 +371,25 @@ def group_e(rep: Report, ctx):
     eq(".qa .ic", "width", 38, "tile icon 38 (home)")
     eq("#sc-profile .qa .ic", "width", 40, "tile icon 40 (profile)")
 
+    # --- Phase 2: chrome & header conventions -------------------------------
+    eq(".nav", "left", 10, "nav left inset 10")
+    eq(".nav", "right", 10, "nav right inset 10")
+    eq(".nav", "border-radius", 22, "nav radius 22")
+    eq(".nav button svg", "width", 23, "nav icon 23")
+    eq(".sub .back", "width", 40, "back chip 40")
+    eq(".sub .back", "border-radius", 14, "back chip radius 14")
+    eq(".sub .back svg", "width", 20, "back glyph 20")
+    eq(".sub h1", "font-size", 24, "pushed-screen title 24")
+    eq(".nav-on .sub h1", "font-size", 20, "tab-root title 20")
+    eq(".sub .sub-desc", "font-size", 12, "subtitle 12")
+    eq(".sub .sub-desc", "line-height", 20, "subtitle line-height 20")
+    eq(".toasts.above-nav", "bottom", 100, "toasts dock above the nav bar")
+    glass = resolve_vars(ctx["rules"].get(".nav", {}).get("background", ""), VAR_CACHE)
+    alpha = re.search(r",\s*([\d.]+)\s*\)$", glass)
+    rep.check("E", "nav background is surface @ .86 (glass, both themes)",
+              bool(alpha) and abs(float(alpha.group(1)) - 0.86) < 1e-9,
+              f".nav background resolves to {glass}")
+
     # block tiles are 40 in production (MoreCard IconBox)
     block_icon = r.get("#sc-block .qa .ic", {})
     rep.check("E", "tile icon 40 (block, MoreCard)", px(block_icon, "width") == 40,

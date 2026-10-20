@@ -39,6 +39,8 @@
     const cfg = SCREENS[name]||{};
     const navEl = document.getElementById('nav');
     navEl.classList.toggle('show', !!cfg.nav);
+    // toasts clear the bottom bar on tab roots (see .toasts.above-nav)
+    document.getElementById('toasts').classList.toggle('above-nav', !!cfg.nav);
     document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.nav===name));
     document.querySelectorAll('#ptbGroups a').forEach(a=>a.classList.toggle('on', a.dataset.pt===name));
     document.getElementById('statusbar').style.visibility = 'visible';
