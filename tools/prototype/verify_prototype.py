@@ -324,7 +324,8 @@ def group_b(rep: Report, ctx):
     targets = set(re.findall(r"nav\(['\"]([a-z]+)['\"]", html + js))
     rep.check("B", "no dead nav() target", not (targets - screens), f"dead: {sorted(targets - screens)}")
 
-    sheets = set(re.findall(r'class="sheet" id="([^"]+)"', html))
+    # sheets may carry extra modifier classes (e.g. `class="sheet bs-top"`)
+    sheets = set(re.findall(r'class="sheet[^"]*" id="([^"]+)"', html))
     # a sheet is reachable if some call site opens it — three patterns exist in app.js:
     #   openSheet('id') · openSheet(cond ? 'a' : 'b') · getElementById('id').classList.add('show')
     opened = set()
@@ -497,6 +498,29 @@ def group_e(rep: Report, ctx):
               r.get("#sheetSocialApps .app-picker .li .tx .t", {}).get("font-weight") == "500",
               f"font-weight={r.get('#sheetSocialApps .app-picker .li .tx .t', {}).get('font-weight')}")
     eq("#sheetSocialApps .app-picker .li .tx .s", "font-size", 11, "social picker package 11sp")
+    # --- Phase 5(g): sheetDnsCustom / sheetVpnApps -> DnsVpnSheets --------- #
+    rep.check("E", "DNS/VPN sheets use the 6dp top inset",
+              ctx["rules"].get(".sheet.bs-top", {}).get("padding-top") == "6px"
+              and "padding(top = 6.dp, bottom = 26.dp)" in read(
+                  UI / "screens/vpn/DnsVpnSheets.kt"),
+              "padding-top missing on .sheet.bs-top")
+    rep.check("E", "DNS note glyph is a 16dp ink-3 icon nudged 2dp down",
+              px(ctx["rules"].get(".dns-note svg", {}), "width") == 16
+              and px(ctx["rules"].get(".dns-note svg", {}), "margin-top") == 2
+              and ctx["rules"].get(".dns-note svg", {}).get("stroke") == "var(--ink-3)",
+              f"glyph = {ctx['rules'].get('.dns-note svg')}")
+    rep.check("E", "DNS note metrics (gap 8, 12sp/18, ink-2 body)",
+              ctx["rules"].get(".dns-note", {}).get("gap") == "8px"
+              and ctx["rules"].get(".dns-note span", {}).get("font-size") == "12px"
+              and ctx["rules"].get(".dns-note span", {}).get("line-height") == "18px"
+              and ctx["rules"].get(".dns-note span", {}).get("color") == "var(--ink-2)",
+              f".dns-note = {ctx['rules'].get('.dns-note')}")
+    rep.check("E", "DNS error line is left-aligned 12sp danger",
+              ctx["rules"].get(".dns-err", {}).get("font-size") == "12px"
+              and ctx["rules"].get(".dns-err", {}).get("color") == "var(--danger)"
+              and ctx["rules"].get(".dns-err", {}).get("text-align") == "left",
+              f".dns-err = {ctx['rules'].get('.dns-err')}")
+
     # --- Phase 5(f): sheetTitle -> TitleBlockScreen's rule sheet ----------- #
     rep.check("E", "MATCH label: 14 below the field, 10 above the segment, no inset",
               ctx["rules"].get("#sheetTitle .group-label", {}).get("margin") == "14px 0 10px",
@@ -1114,6 +1138,22 @@ def group_g(rep: Report, ctx):
               and "toast('Updated')" not in js
               and "kw_toast_website_updated" in strings_xml(),
               "keyword toasts still diverge from production")
+
+    # CustomDnsSheet: both fields are validated together and the message is
+    # inline (vpn_dns_invalid), never a toast.
+    sdns = body("saveDns")
+    rep.check("H", "DNS sheet validates both fields and reports inline",
+              "okV4" in sdns and "okV6" in sdns and "dnsErr('Enter a valid" in sdns
+              and "toast('Custom DNS saved')" in sdns
+              and sdns.count("toast(") == 1
+              and "VpnValidation.isValidIpv4" in read(UI / "screens/vpn/DnsVpnSheets.kt")
+              and "R.string.vpn_dns_invalid" in read(UI / "screens/vpn/DnsVpnSheets.kt"),
+              "the DNS sheet still toasts one field at a time")
+    rep.check("H", "VPN whitelist sheet keeps vpn_app_* copy",
+              "vpn_app_no_results" in strings_xml() and "vpn_app_loading" in strings_xml()
+              and "pickerEmptyCopy" in js
+              and "vpn_app_loading" not in js,
+              "VPN picker empty-state copy drifted")
 
     # TitleBlockScreen: save pill is tb_sheet_add ("Add title rule") when adding
     # and kw_sheet_save ("Save") when editing; duplicates are value AND mode.

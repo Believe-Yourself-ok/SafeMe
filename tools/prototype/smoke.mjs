@@ -597,6 +597,36 @@ async function main () {
     && headerStates.empty.startsWith('No quick actions yet'),
     JSON.stringify(headerStates))
 
+  // ---- DNS sheet: inline validation, both fields, Cancel = secondary ------ #
+  const dnsSheet = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms))
+    const cs = (el, p) => getComputedStyle(el)[p]
+    window.nav('vpn'); window.openSheet('sheetDnsCustom'); await wait(80)
+    const errBox = document.getElementById('dnsErr')
+    const emptyHidden = cs(errBox, 'display') === 'none'
+    document.getElementById('toasts').innerHTML = ''
+    document.getElementById('dnsIpv4').value = '1.1.1.1'
+    document.getElementById('dnsIpv6').value = 'nonsense'
+    window.saveDns(); await wait(40)
+    const v6Msg = errBox.textContent
+    const toastsAfterBad = document.getElementById('toasts').children.length
+    const stillOpen = document.getElementById('sheetDnsCustom').classList.contains('show')
+    // typing clears the inline message
+    document.getElementById('dnsIpv6').value = ''
+    window.dnsErr('')
+    const cleared = errBox.textContent
+    window.saveDns(); await wait(60)
+    const savedToast = [...document.querySelectorAll('#toasts .toast')].map(t => t.textContent)
+    return { emptyHidden, v6Msg, toastsAfterBad, stillOpen, cleared, savedToast }
+  })
+  check('dns sheet: one inline message for both fields, typing clears it, save toasts once',
+    dnsSheet.emptyHidden === true
+    && dnsSheet.v6Msg === 'Enter a valid IPv4 address (and IPv6 if provided).'
+    && dnsSheet.toastsAfterBad === 0 && dnsSheet.stillOpen === true
+    && dnsSheet.cleared === ''
+    && dnsSheet.savedToast.includes('Custom DNS saved'),
+    JSON.stringify(dnsSheet))
+
   // ---- title-rule sheet: labels, scope banner, value+mode duplicates ------ #
   const titleSheet = await page.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms))

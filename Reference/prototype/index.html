@@ -987,18 +987,20 @@
     </div>
 
     <!-- Custom DNS preset -->
-    <div class="sheet" id="sheetDnsCustom">
+    <div class="sheet bs-top" id="sheetDnsCustom">
       <div class="grab"></div>
       <h3>Custom DNS</h3>
       <div class="s-sub">Enter resolver addresses — IPv4 is required.</div>
-      <label class="field"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg><input id="dnsIpv4" placeholder="IPv4 e.g. 1.1.1.1"></label>
-      <label class="field" style="margin-top:10px"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg><input id="dnsIpv6" placeholder="IPv6 (optional)"></label>
-      <div class="note" style="margin-top:12px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>IPv4 is validated strictly; IPv6 is optional and validated if provided.</span></div>
-      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" onclick="saveDns()">Save</button></div>
+      <label class="field"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg><input id="dnsIpv4" placeholder="IPv4 e.g. 1.1.1.1" oninput="dnsErr('')"></label>
+      <label class="field" style="margin-top:10px"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg><input id="dnsIpv6" placeholder="IPv6 (optional)" oninput="dnsErr('')"></label>
+      <div class="dns-note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>IPv4 is validated strictly; IPv6 is optional and validated if provided.</span></div>
+      <!-- lookahead is left-aligned above the actions; it never toasts -->
+      <div class="dns-err" id="dnsErr"></div>
+      <div class="row2" style="margin-top:18px"><button class="btn btn-outline" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" onclick="saveDns()">Save</button></div>
     </div>
 
     <!-- VPN whitelist apps -->
-    <div class="sheet" id="sheetVpnApps">
+    <div class="sheet bs-top" id="sheetVpnApps">
       <div class="grab"></div>
       <h3>VPN whitelist</h3>
       <div class="s-sub">Select apps exempt from filtering.</div>

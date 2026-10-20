@@ -514,6 +514,17 @@
   /* inline validation copy (13sp semibold danger, 12dp below the AM/PM segment) */
   .time-err{font-size:13px;font-weight:600;line-height:18px;color:var(--danger);text-align:center;margin-top:12px}
   .time-err:empty{display:none}
+  /* DnsVpnSheets: grab + a 6dp column top inset, and the DNS note is a plain
+     16dp ink-3 glyph beside 12sp/18 ink-2 text (not a card). */
+  .sheet.bs-top{padding-top:6px}
+  .dns-note{display:flex;align-items:flex-start;gap:8px;margin-top:12px}
+  .dns-note svg{width:16px;height:16px;flex:none;margin-top:2px;stroke:var(--ink-3);fill:none;
+                stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .dns-note span{font-size:12px;line-height:18px;color:var(--ink-2)}
+  /* error line: left-aligned 12sp danger, 18 above the actions */
+  .dns-err{font-size:12px;line-height:18px;color:var(--danger);text-align:left;margin-top:18px}
+  .dns-err:empty{display:none}
+  .dns-err:not(:empty){margin-bottom:10px}
   .stepper .col{display:flex;flex-direction:column;align-items:center;gap:10px}
   .stepper .col small{font-size:11px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
   .stepper button{width:40px;height:40px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dark);font-size:18px;font-weight:700;cursor:pointer}

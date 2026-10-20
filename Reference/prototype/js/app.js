@@ -1519,11 +1519,16 @@
 
   // ---------- DNS & VPN ----------
   let vpnPreset='Cloudflare Family', dnsV4='1.1.1.1', dnsV6='', vpnWhitelist=[], vpnNotif='Default';
+  function dnsErr(msg){ const el=document.getElementById('dnsErr'); if(el) el.textContent=msg||''; }
   function saveDns(){
     const v4=document.getElementById('dnsIpv4').value.trim();
     const v6=document.getElementById('dnsIpv6').value.trim();
-    if(!/^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test(v4)){ toast('Enter a valid IPv4 address'); return; }
-    if(v6 && !/^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/.test(v6)){ toast('Enter a valid IPv6 address'); return; }
+    // CustomDnsSheet validates BOTH fields, then shows vpn_dns_invalid inline
+    // (left-aligned above the actions) instead of toasting.
+    const okV4=/^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test(v4);
+    const okV6=!v6 || /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/.test(v6);
+    if(!okV4 || !okV6){ dnsErr('Enter a valid IPv4 address (and IPv6 if provided).'); return; }
+    dnsErr('');
     dnsV4=v4; dnsV6=v6;
     const cs=document.getElementById('dnsCustomSub'); if(cs) cs.textContent='IPv4 '+v4+(v6?' · IPv6 '+v6:'');
     vpnStatus(); closeSheets(); toast('Custom DNS saved');
