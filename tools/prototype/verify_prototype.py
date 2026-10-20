@@ -497,6 +497,28 @@ def group_e(rep: Report, ctx):
               r.get("#sheetSocialApps .app-picker .li .tx .t", {}).get("font-weight") == "500",
               f"font-weight={r.get('#sheetSocialApps .app-picker .li .tx .t', {}).get('font-weight')}")
     eq("#sheetSocialApps .app-picker .li .tx .s", "font-size", 11, "social picker package 11sp")
+    # --- Phase 5(c): sheetBsImg / sheetBsMsg ------------------------------- #
+    eq(".img-grid", "margin-top", 14, "image grid 14 below the subtitle")
+    eq(".img-grid", "gap", 10, "image grid gap 10")
+    rep.check("E", "image tile is 4:3, r14, 2dp transparent border (no glow ring)",
+              "4/3" in ctx["rules"].get(".img-tile", {}).get("aspect-ratio", "")
+              and px(ctx["rules"].get(".img-tile", {}), "border-radius") == 14
+              and "2px" in ctx["rules"].get(".img-tile", {}).get("border", "")
+              and "box-shadow" not in ctx["rules"].get(".img-tile.on", {})
+              and ".border(2.dp" in read(UI / "screens/blockscreen/BlockSheets.kt"),
+              f"selected tile = {ctx['rules'].get('.img-tile.on')}")
+    rep.check("E", "no-image tile is brandSoft 12sp/700, brandDark when chosen",
+              ctx["rules"].get(".img-tile.clear", {}).get("background") == "var(--brand-soft)"
+              and ctx["rules"].get(".img-tile.clear", {}).get("font-size") == "12px"
+              and ctx["rules"].get(".img-tile.clear", {}).get("font-weight") == "700"
+              and ctx["rules"].get(".img-tile.clear.on", {}).get("color") == "var(--brand-dark)",
+              f"clear tile = {ctx['rules'].get('.img-tile.clear')}")
+    eq("#sheetBsMsg .chip", "height", 32, "message suggestions are 32dp pills")
+    rep.check("E", "message chip strip has no vertical padding",
+              ctx["rules"].get("#sheetBsMsg .chips", {}).get("padding") == "0",
+              f"padding={ctx['rules'].get('#sheetBsMsg .chips', {}).get('padding')}")
+    eq("#sheetBsMsg .group-label", "margin-top", 14, "SUGGESTIONS sits 14 under the field")
+
     # --- Phase 5(b): sheetTime -> TimePickerSheet --------------------------- #
     rep.check("E", "time stepper: 18dp above, no inter-column gap (the colon pads itself)",
               ctx["rules"].get(".stepper", {}).get("margin") == "18px 0 4px"
@@ -607,6 +629,17 @@ def group_f(rep: Report, ctx):
     # AppPickerSheet renders sche_apps_empty; SocialPickerSheet has its own
     # inline literal. Both must match production character for character.
     social_kt = read(UI / "screens/socialblocking/SocialBlockingScreen.kt")
+    # BlockScreen.kt:108-120 — image row sub uses "•", message row wraps the
+    # value in curly quotes. Both had the wrong punctuation.
+    rep.check("F", "motivation-image row sub uses bs_img_sub_set's bullet",
+              "bsImg+' \\u2022 persistable'" in ctx["js"]
+              and ">%1$s • persistable<" in read(STRINGS),
+              "image row sub is not '<name> • persistable'")
+    rep.check("F", "custom-message row sub uses curly quotes (BlockScreen.kt:118)",
+              "'\\u201C'+bsMsg+'\\u201D'" in ctx["js"]
+              and '"\\u201C$message\\u201D"' in read(UI / "screens/blockscreen/BlockScreen.kt"),
+              "message row sub is not “<message>”")
+
     rep.check("F", "app-picker empty state uses sche_apps_empty",
               f"'{strings['sche_apps_empty']}'" in ctx["js"]
               and "No apps match your search" in social_kt,
@@ -947,6 +980,20 @@ def group_g(rep: Report, ctx):
               "(timeH+d+24)%24" in js and "(timeM+d+60)%60" in js
               and "(hour - 1 + 24) % 24" in read(UI / "screens/schedule/ScheduleSheets.kt"),
               "steppers clamp instead of wrapping")
+
+    # CustomMessageSheet saves unconditionally (onSave(text.trim()) -> setMessage);
+    # an empty message is legal. The chip highlight is derived from the value.
+    smsg = body("saveMsg")
+    rep.check("H", "message sheet saves an empty message (no invented guard)",
+              "can" not in smsg.split("toast(")[0] and "if(!v)" not in smsg
+              and "onSave = { value ->" in read(UI / "screens/blockscreen/BlockScreen.kt")
+              and "fun setMessage(value: String) {" in read(
+                  UI / "screens/blockscreen/BlockScreenViewModel.kt"),
+              "saveMsg still refuses an empty message")
+    rep.check("H", "message chips derive their selected state from the field value",
+              "c.textContent===v" in js and "isSelected = text == chip" in read(
+                  UI / "screens/blockscreen/BlockSheets.kt"),
+              "chips keep an independent selected flag")
 
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",

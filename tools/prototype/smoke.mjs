@@ -597,6 +597,53 @@ async function main () {
     && headerStates.empty.startsWith('No quick actions yet'),
     JSON.stringify(headerStates))
 
+  // ---- block-screen sheets: image tiles + message chips ------------------- #
+  const blockSheets = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms))
+    const cs = (el, p) => getComputedStyle(el)[p]
+    document.getElementById('toasts').innerHTML = ''
+    window.openSheet('sheetBsImg'); await wait(80)
+    const tile = document.querySelector('#sheetBsImg .img-tile.img-ocean')
+    const glow = cs(tile, 'boxShadow')
+    tile.click(); await wait(40)
+    const selectedGlow = cs(tile, 'boxShadow')
+    const selectedBorder = cs(tile, 'borderColor')
+    ;[...document.querySelectorAll('#sheetBsImg .btn-primary')].pop().click()
+    await wait(60)
+    const imgToast = document.querySelector('#toasts .toast')?.textContent || ''
+
+    document.getElementById('toasts').innerHTML = ''
+    window.openSheet('sheetBsMsg'); await wait(80)
+    const chip = document.querySelector('#bsMsgChips .chip')
+    const chipH = cs(chip, 'height')
+    chip.click(); await wait(40)
+    const chipOn = chip.classList.contains('on')
+    const fieldValue = document.getElementById('bsMsgInput').value
+    // free text that is not a suggestion clears every chip
+    const inp = document.getElementById('bsMsgInput')
+    inp.value = 'stay calm'; window.syncMsgChips(); await wait(20)
+    const anyOn = [...document.querySelectorAll('#bsMsgChips .chip')].some(c => c.classList.contains('on'))
+    // an empty message is allowed (production has no guard)
+    inp.value = ''; window.syncMsgChips()
+    ;[...document.querySelectorAll('#sheetBsMsg .btn-primary')].pop().click()
+    await wait(60)
+    const msgToasts = [...document.querySelectorAll('#toasts .toast')].map(t => t.textContent)
+    const msgRow = document.getElementById('bsMsgSub').textContent
+    // image row subtitle after choosing "ocean"
+    const imgRow = document.getElementById('bsImgSub').textContent
+    return { glow, selectedGlow, selectedBorder, imgToast, chipH, chipOn, fieldValue,
+             anyOn, msgToasts, msgRow, imgRow }
+  })
+  check('block sheets: tiles use a brand border only; message chips are derived + 32dp',
+    blockSheets.glow === 'none' && blockSheets.selectedGlow === 'none'
+    && blockSheets.imgToast === 'Motivation image set to ocean'
+    && blockSheets.chipH === '32px' && blockSheets.chipOn === true
+    && blockSheets.fieldValue === 'Stay safe, Alex' && blockSheets.anyOn === false
+    && blockSheets.msgToasts.includes('Message saved')
+    && blockSheets.msgRow === '\u201C\u201D'
+    && blockSheets.imgRow === 'ocean \u2022 persistable',
+    JSON.stringify(blockSheets))
+
   // ---- time window sheet: inline validation + wrapping steppers ----------- #
   const timeSheet = await page.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms))

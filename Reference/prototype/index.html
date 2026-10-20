@@ -927,7 +927,7 @@
       <div class="grab"></div>
       <h3>Custom message</h3>
       <div class="s-sub">Shown on the block screen.</div>
-      <label class="field"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><input id="bsMsgInput" maxlength="60" placeholder="Stay safe, Alex. You chose this."></label>
+      <label class="field"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><input id="bsMsgInput" maxlength="60" placeholder="Stay safe, Alex. You chose this." oninput="syncMsgChips()"></label>
       <div class="group-label" style="margin-top:14px">Suggestions</div>
       <div class="chips" id="bsMsgChips">
         <button class="chip on" onclick="pickMsgChip(this)">Stay safe, Alex</button><button class="chip" onclick="pickMsgChip(this)">Stay focused</button><button class="chip" onclick="pickMsgChip(this)">You chose this</button><button class="chip" onclick="pickMsgChip(this)">Your goal matters</button><button class="chip" onclick="pickMsgChip(this)">Step away</button>

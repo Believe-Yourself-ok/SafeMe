@@ -501,9 +501,15 @@
   .timep .ampm{font-size:12px;font-weight:700;color:var(--brand-dark);margin-left:3px}
   .img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
   .img-tile{aspect-ratio:4/3;border-radius:14px;border:2px solid transparent;background-size:cover;background-position:center;position:relative;cursor:pointer;padding:0}
-  .img-tile.on{border-color:var(--brand);box-shadow:0 0 0 3px rgba(217,119,87,.18)}
+  /* BlockSheets.ImgTile: the selected state is the 2dp brand border only — no glow ring */
+  .img-tile.on{border-color:var(--brand)}
   .img-tile.clear{display:flex;align-items:center;justify-content:center;background:var(--brand-soft);color:var(--ink-2);font-size:12px;font-weight:700}
   .img-tile.clear.on{color:var(--brand-dark)}
+  /* CustomMessageSheet: 32dp suggestion pills in a single scrollable row,
+     14dp under the field, no vertical padding on the strip. */
+  #sheetBsMsg .chips{padding:0}
+  #sheetBsMsg .chip{height:32px}
+  #sheetBsMsg .group-label{margin-top:14px}
   .img-sunset{background:linear-gradient(135deg,#F4A25B,#E2545B,#7C3F8C)}
   .img-ocean{background:linear-gradient(135deg,#1B3B5C,#2C7FBE,#8FD3F4)}
   .img-forest{background:linear-gradient(135deg,#0E3B2E,#1E7A54,#A8E6C4)}

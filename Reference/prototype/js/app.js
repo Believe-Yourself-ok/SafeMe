@@ -507,7 +507,7 @@
     }
     if(id==='sheetBsMsg'){
       const mi=document.getElementById('bsMsgInput'); if(mi) mi.value=bsMsg;
-      document.querySelectorAll('#bsMsgChips .chip').forEach((b,i)=>b.classList.toggle('on',i===0));
+      syncMsgChips();   // chips mirror the stored message, not "the first chip"
     }
   }
   // AlertDialog-style modal (production uses M3 AlertDialog, not a sheet)
@@ -607,9 +607,10 @@
     // bs_closing = "Closing in %1$ds." — a full stop, not an ellipsis
     const cnt=document.getElementById('bsPreviewCount'); if(cnt) cnt.textContent=fmt(T.closing, bsDwell);
     const dv=document.getElementById('bsDwellVal'); if(dv) dv.textContent=bsDwell+'s';
-    const is=document.getElementById('bsImgSub'); if(is) is.textContent=bsImg?(bsImg+' · persistable'):'None • SAF persistable URI';
+    const is=document.getElementById('bsImgSub'); if(is) is.textContent=bsImg?(bsImg+' \u2022 persistable'):'None • SAF persistable URI';
     const pi=document.getElementById('bsPreviewImg'); if(pi){ if(bsImg){ pi.style.display='block'; pi.className='img-'+bsImg; } else { pi.style.display='none'; pi.className=''; } }
-    const ms=document.getElementById('bsMsgSub'); if(ms) ms.textContent='"'+bsMsg+'"';
+    // BlockScreen.kt:118 — sub = “$message” (curly quotes, ASCII would be wrong)
+    const ms=document.getElementById('bsMsgSub'); if(ms) ms.textContent='\u201C'+bsMsg+'\u201D';
     const bm=document.getElementById('boMsg'); if(bm) bm.textContent=bsMsg;
     const why=document.getElementById('boWhy'); const sw=document.getElementById('bsWhySw'); if(why&&sw) why.style.display=sw.classList.contains('on')?'':'none';
   }
@@ -625,14 +626,22 @@
     const sel=document.querySelector('#sheetBsImg .img-tile.on'); if(sel) bsImg=sel.dataset.img||'';
     renderBlockPreview(); closeSheets(); toast(bsImg?('Motivation image set to '+bsImg):'No motivation image');
   }
+  // CustomMessageSheet: the chip highlight is *derived* from the field value
+  // (`isSelected = text == chip`), so free text that happens to equal a
+  // suggestion highlights it and typing something else clears every chip.
+  function syncMsgChips(){
+    const inp=document.getElementById('bsMsgInput'); if(!inp) return;
+    const v=inp.value;
+    document.querySelectorAll('#bsMsgChips .chip').forEach(c=>c.classList.toggle('on', c.textContent===v));
+  }
   function pickMsgChip(chip){
-    document.querySelectorAll('#bsMsgChips .chip').forEach(c=>c.classList.remove('on'));
-    chip.classList.add('on');
     const inp=document.getElementById('bsMsgInput'); if(inp) inp.value=chip.textContent;
+    syncMsgChips();
   }
   function saveMsg(){
+    // production saves unconditionally (onSave(text.trim()) -> setMessage), an
+    // empty message is allowed and simply falls back to the default preview
     const v=(document.getElementById('bsMsgInput').value||'').trim();
-    if(!v){ toast('Message can’t be empty'); return; }
     bsMsg=v; renderBlockPreview(); closeSheets(); toast('Message saved');
   }
   let boTimer=null;
