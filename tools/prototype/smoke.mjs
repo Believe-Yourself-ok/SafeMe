@@ -160,6 +160,58 @@ async function main () {
   })
   check('state renderers run without throwing', renderErr === '', renderErr)
 
+  // ---- block overlay: countdown empties the arc then unlocks Close -------- #
+  const blockGate = await page.evaluate(async () => {
+    while (window.bsDwell > 3) window.dwellStep(-1)
+    window.dwellStep(-1); window.dwellStep(-1)     // clamp proves 3 is the floor
+    const preview = document.getElementById('bsPreviewCount').textContent
+    window.openBlockov()
+    await new Promise(r => setTimeout(r, 120))
+    const fg = document.querySelector('#blockov .ring-lg .fg')
+    const startOffset = parseFloat(fg.getAttribute('stroke-dashoffset'))
+    const lockedAtStart = document.getElementById('boClose').classList.contains('locked')
+    await new Promise(r => setTimeout(r, 3300))
+    const endOffset = parseFloat(fg.getAttribute('stroke-dashoffset'))
+    const readyAtEnd = document.getElementById('boClose').classList.contains('ready')
+    const num = document.getElementById('boNum').textContent
+    const dwellLabel = document.getElementById('bsDwellVal').textContent
+    window.closeBlockov()
+    return { preview, dwellLabel, startOffset, endOffset, lockedAtStart, readyAtEnd, num }
+  })
+  check('block overlay: dwell clamps at 3s, arc empties, Close unlocks at 0',
+    blockGate.dwellLabel === '3s' && blockGate.preview === 'Closing in 3s.'
+    && blockGate.lockedAtStart && blockGate.readyAtEnd
+    && blockGate.startOffset === 0 && blockGate.endOffset === 326.7 && blockGate.num === '0',
+    JSON.stringify(blockGate))
+
+  // ---- app lock gate: wrong code -> backoff -> lockout countdown --------- #
+  const lockGate = await page.evaluate(async () => {
+    window.setDemo('lock', 'gate')
+    await new Promise(r => setTimeout(r, 80))
+    const open = document.getElementById('lockov').classList.contains('show')
+    const dots = document.querySelectorAll('#unlockDots .pindot').length
+    const wrong = []
+    for (let i = 0; i < 5; i++) {
+      window.unlockPin('9'); window.unlockPin('9'); window.unlockPin('9'); window.unlockPin('9')
+      await new Promise(r => setTimeout(r, 40))
+      wrong.push(document.getElementById('lockErr').textContent)
+    }
+    window.setDemo('lock', 'lockout')
+    await new Promise(r => setTimeout(r, 80))
+    const lockoutMsg = document.getElementById('lockErr').textContent
+    const bio = document.getElementById('lockBio').textContent.trim()
+    window.closeLockov()
+    window.setDemo('lock', 'closed')
+    return { open, dots, wrong, lockoutMsg, bio }
+  })
+  check('app lock gate: 4-dot PIN gate, wrong-code copy, 5-min lockout countdown',
+    lockGate.open && lockGate.dots === 4
+    && lockGate.wrong[0] === 'Wrong code — try again'
+    && lockGate.wrong[4] === 'Too many attempts — try again in 1s'
+    && /^Too many attempts — try again in \d+m \d+s$/.test(lockGate.lockoutMsg)
+    && lockGate.bio === 'Use Face ID / fingerprint',
+    JSON.stringify(lockGate))
+
   // ---- home state machine: every variant renders like the ViewModel ------ #
   const heroStates = await page.evaluate(async () => {
     window.nav('home')

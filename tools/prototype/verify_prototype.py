@@ -602,6 +602,81 @@ def group_h(rep: Report, ctx):
     proto_order = [x.strip().strip("'") for x in proto_order.group(1).split(",")] if proto_order else []
     rep.check("H", "quick-action default order == QuickActionsPrefs.DEFAULTS",
               kt_order == proto_order, f"kotlin {kt_order} vs prototype {proto_order}")
+
+    # --- block screen: dwell countdown + overlay (B-17) -------------------- #
+    bs = read(UI / "screens/blockscreen/BlockScreenViewModel.kt")
+    ov = read(UI / "screens/blockscreen/BlockOverlay.kt")
+    clamp = re.search(r"coerceIn\((\d+),\s*(\d+)\)", bs)
+    proto_clamp = re.search(r"Math\.max\((\d+),Math\.min\((\d+),", js)
+    rep.check("H", "dwell clamp matches BlockScreenViewModel.coerceIn",
+              bool(clamp) and bool(proto_clamp)
+              and clamp.groups() == proto_clamp.groups(),
+              f"kotlin {clamp.groups() if clamp else None} vs prototype "
+              f"{proto_clamp.groups() if proto_clamp else None}")
+    rep.check("H", "preview countdown uses bs_closing (full stop, not an ellipsis)",
+              "'Closing in '+bsDwell+'s.'" in js
+              and strings["bs_closing"] == "Closing in %1$ds."
+              and "Closing in 5s." in html,
+              "preview copy drifted")
+    rep.check("H", "overlay label uses bs_overlay_label byte-for-byte",
+              strings["bs_overlay_label"] in html,
+              f"{strings['bs_overlay_label']!r} not in the overlay")
+    ring = re.search(r'class="ring-lg"[^>]*>|r="(\d+)"[^>]*stroke-dasharray="([\d.]+)"', html)
+    lg = re.search(r'r="52"[^>]*dasharray="([\d.]+)"', html)
+    rep.check("H", "overlay ring dasharray == 2πr for r=52",
+              bool(lg) and abs(float(lg.group(1)) - 2 * 3.14159 * 52) < 0.2,
+              f"dasharray={lg.group(1) if lg else None}")
+    rep.check("H", "overlay arc sweep == remaining/dwell (BlockOverlay.kt:173)",
+              "(C*(1-(bsDwell?n/bsDwell:0))).toFixed(1)" in js
+              and "remaining.toFloat() / dwell.toFloat()" in ov,
+              "prototype ring does not track the countdown")
+    rep.check("H", "why chip only renders when the why toggle is on",
+              "if (whyOn) {" in ov and "why.style.display = (sw && !sw.classList.contains('on'))" in js,
+              "prototype shows the why chip unconditionally")
+    rep.check("H", "why explanation falls back to bs_why_fallback",
+              strings["bs_why_fallback"] in html,
+              f"{strings['bs_why_fallback']!r} missing")
+
+    # --- app lock gate (B-16) --------------------------------------------- #
+    alm = read(ROOT / "app/src/main/java/com/safeme/app/protect/AppLockManager.kt")
+    auo = read(UI / "screens/applock/AppLockUnlockOverlay.kt")
+    max_attempts = re.search(r"MAX_ATTEMPTS_BEFORE_LOCKOUT = (\d+)", alm)
+    lockout_ms = re.search(r"LOCKOUT_DURATION_MS = (\d+) \* (\d+) \* (\d+)", alm)
+    rep.check("H", "gate lockout threshold copied from AppLockManager",
+              bool(max_attempts) and f"lockFails>={max_attempts.group(1)}" in js,
+              f"MAX_ATTEMPTS_BEFORE_LOCKOUT={max_attempts.group(1) if max_attempts else None}")
+    rep.check("H", "gate lockout duration is 5 minutes",
+              bool(lockout_ms) and int(lockout_ms.group(1)) * int(lockout_ms.group(2)) == 5 * 60
+              and "5*60*1000" in js,
+              "lockout duration drifted")
+    rep.check("H", "backoff schedule 5..9 == 1s,2s,4s,8s,16s (AppLockManager)",
+              "{5:1000,6:2000,7:4000,8:8000,9:16000}" in js
+              and "1s, 2s, 4s, 8s, 16s" in alm,
+              "backoff table drifted")
+    rep.check("H", "formatLockout == 'Xm Ys' / 'Xs'",
+              "return m>0 ? m+'m '+s+'s' : s+'s';" in js
+              and 'if (min > 0) "${min}m ${sec}s" else "${sec}s"' in auo,
+              "lockout formatting differs")
+    for res, where in (("al_gate_locked_out", "gate guard"),
+                       ("al_gate_wrong", "wrong-code error"),
+                       ("al_gate_use_biometric", "biometric row"),
+                       ("al_toast_bio_unavailable", "biometric unavailable"),
+                       ("al_gate_bio_off", "biometric off"),
+                       ("al_pattern_hint", "pattern gate hint")):
+        text = strings[res].replace("\\'", "'").replace("%1$s", "")
+        body = json_text = js + html
+        rep.check("H", f"{where} uses {res}", text in body,
+                  f"{text!r} missing")
+    rep.check("H", "forgot link switches copy with the lock method",
+              "lockMethod==='pin' ? 'Forgot PIN?' : 'Forgot password?'" in js
+              and strings["al_gate_forgot_pin"] == "Forgot PIN?"
+              and strings["al_gate_forgot_password"] == "Forgot password?",
+              "forgot copy drifted")
+    rep.check("H", "gate subtitle uses al_gate_sub for every method",
+              "'Enter your '+methodLabel()+' to unlock'" in js
+              and strings["al_gate_sub"] == "Enter your %1$s to unlock",
+              "gate subtitle drifted")
+
     rep.check("H", "empty quick actions use home_quick_actions_empty",
               strings["home_quick_actions_empty"] in js,
               f"{strings['home_quick_actions_empty']!r} missing")

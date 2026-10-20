@@ -333,7 +333,8 @@
   let bsDwell=5, bsMsg='Stay safe, Alex. You chose this.', bsImg='';
   function renderBlockPreview(){
     const msg=document.getElementById('bsPreviewMsg'); if(msg) msg.textContent=bsMsg;
-    const cnt=document.getElementById('bsPreviewCount'); if(cnt) cnt.textContent='Closing in '+bsDwell+'s…';
+    // bs_closing = "Closing in %1$ds." — a full stop, not an ellipsis
+    const cnt=document.getElementById('bsPreviewCount'); if(cnt) cnt.textContent='Closing in '+bsDwell+'s.';
     const dv=document.getElementById('bsDwellVal'); if(dv) dv.textContent=bsDwell+'s';
     const is=document.getElementById('bsImgSub'); if(is) is.textContent=bsImg?(bsImg+' · persistable'):'None · SAF persistable URI';
     const pi=document.getElementById('bsPreviewImg'); if(pi){ if(bsImg){ pi.style.display='block'; pi.className='img-'+bsImg; } else { pi.style.display='none'; pi.className=''; } }
@@ -363,17 +364,36 @@
     if(!v){ toast('Message can’t be empty'); return; }
     bsMsg=v; renderBlockPreview(); closeSheets(); toast('Message saved');
   }
+  let boTimer=null;
   function openBlockov(){
     renderBlockPreview();
-    document.getElementById('blockov').classList.add('show');
-    let n=bsDwell; const num=document.getElementById('boNum'); const close=document.getElementById('boClose');
-    close.classList.remove('ready'); close.classList.add('locked'); num.textContent=n;
-    const t = setInterval(()=>{
-      n--; num.textContent=Math.max(n,0);
-      if(n<=0){ clearInterval(t); close.classList.add('ready'); close.classList.remove('locked'); }
+    const ov=document.getElementById('blockov'); ov.classList.add('show');
+    const num=document.getElementById('boNum'); const close=document.getElementById('boClose');
+    const fg=ov.querySelector('.ring-lg .fg'); const C=326.7;   // 2πr, r=52 in viewBox units
+    close.classList.remove('ready'); close.classList.add('locked'); num.textContent=bsDwell;
+    // BlockOverlay: sweep = remaining/dwell, so the arc empties as the countdown runs
+    const paint=n=>{ if(fg) fg.setAttribute('stroke-dashoffset', (C*(1-(bsDwell?n/bsDwell:0))).toFixed(1)); };
+    paint(bsDwell);
+    // BlockOverlay honours the "Why am I seeing this?" toggle; hidden when the switch is off
+    const sw=document.getElementById('bsWhySw');
+    const why=document.getElementById('boWhy');
+    if(why) why.style.display = (sw && !sw.classList.contains('on')) ? 'none' : 'inline-block';
+    const reason=document.getElementById('boWhyReason'); if(reason) reason.style.display='none';
+    if(boTimer) clearInterval(boTimer);
+    let n=bsDwell;
+    boTimer = setInterval(()=>{
+      n--; num.textContent=Math.max(n,0); paint(Math.max(n,0));
+      if(n<=0){ clearInterval(boTimer); boTimer=null; close.classList.add('ready'); close.classList.remove('locked'); }
     },1000);
   }
-  function closeBlockov(){ document.getElementById('blockov').classList.remove('show'); toast('Back to the app'); }
+  function boWhyToggle(){
+    const r=document.getElementById('boWhyReason');
+    if(r) r.style.display = r.style.display==='none' ? 'block' : 'none';
+  }
+  function closeBlockov(){
+    if(boTimer){ clearInterval(boTimer); boTimer=null; }
+    document.getElementById('blockov').classList.remove('show'); toast('Back to the app');
+  }
   // Block-screen settings persist to localStorage (simulates SAF persistence),
   // mirroring the app's Save changes button on the Block Screen.
   const BS_KEY='safeme_blockscreen';
@@ -482,7 +502,11 @@
     setTimeout(()=>{ ok.classList.remove('show'); closeSheets(); renderLock(); toast('App Lock is on'); }, 700);
   }
   function pickAuto(el,label){ el.closest('.list').querySelectorAll('.checkbox').forEach(c=>c.classList.remove('on')); el.querySelector('.checkbox').classList.add('on'); lockAuto=label; renderLock(); toast('Auto-lock: '+label); closeSheets(); }
-  function lockNow(){ unlockVal=''; unlockPat=[]; renderUnlock(); document.getElementById('lockov').classList.add('show'); }
+  function lockNow(){
+    unlockVal=''; unlockPat=[]; renderUnlock();
+    paintLockBio();
+    document.getElementById('lockov').classList.add('show');
+  }
   function closeLockov(){ document.getElementById('lockov').classList.remove('show'); }
   function renderUnlock(){
     const b=document.getElementById('unlockBody');
@@ -498,19 +522,75 @@
     else {
       b.innerHTML='<div class="patgrid" id="unlockPat">'+[1,2,3,4,5,6,7,8,9].map(i=>'<button data-i="'+i+'" onclick="patUnlock(this)"></button>').join('')+'</div><div class="s-sub" style="text-align:center;margin-top:12px">Draw your pattern</div>';
     }
-    document.getElementById('lockErr').textContent='';
+    renderLockForgot();
+    paintLockGuard();
   }
-  function unlockPin(d){ if(unlockVal.length>=lockCode.length) return; unlockVal+=d; renderDotsId('unlockDots',unlockVal); if(unlockVal.length===lockCode.length) checkUnlock(); }
+  // Locked out -> the keypad and pattern grid are inert, exactly like the gate's inputEnabled
+  function lockBlocked(){ if(lockGuardRemaining()>0){ paintLockGuard(); return true; } return false; }
+  function unlockPin(d){ if(lockBlocked()) return; if(unlockVal.length>=lockCode.length) return; unlockVal+=d; renderDotsId('unlockDots',unlockVal); if(unlockVal.length===lockCode.length) checkUnlock(); }
   function unlockBack(){ unlockVal=unlockVal.slice(0,-1); renderDotsId('unlockDots',unlockVal); }
-  function unlockPass(v){ unlockVal=v; if(v.length>=lockCode.length) checkUnlock(); }
-  function patUnlock(btn){ const i=btn.dataset.i; if(unlockPat.includes(i)) return; unlockPat.push(i); btn.classList.add('on'); btn.textContent=unlockPat.length; if(unlockPat.length>=lockCode.split('-').length){ unlockVal=unlockPat.join('-'); checkUnlock(); } }
+  function unlockPass(v){ if(lockGuardRemaining()>0){ paintLockGuard(); return; } unlockVal=v; if(v.length>=lockCode.length) checkUnlock(); }
+  function patUnlock(btn){ if(lockBlocked()) return; const i=btn.dataset.i; if(unlockPat.includes(i)) return; unlockPat.push(i); btn.classList.add('on'); btn.textContent=unlockPat.length; if(unlockPat.length>=lockCode.split('-').length){ unlockVal=unlockPat.join('-'); checkUnlock(); } }
+  // AppLockManager: attempts 1-4 free, 5-9 exponential backoff 1/2/4/8/16s,
+  // the 10th costs a 5-minute lockout. formatLockout() is "Xm Ys" / "Xs".
+  let lockFails=0, lockCooldownUntil=0, lockTick=null;
+  function formatLockout(ms){
+    const t=Math.max(0,Math.floor(ms/1000)), m=Math.floor(t/60), s=t%60;
+    return m>0 ? m+'m '+s+'s' : s+'s';
+  }
+  function lockGuardRemaining(){ return Math.max(0, lockCooldownUntil - Date.now()); }
+  function paintLockGuard(){
+    const err=document.getElementById('lockErr'); if(!err) return;
+    const left=lockGuardRemaining();
+    const lockedOut = lockFails>=10;
+    err.textContent = left>0
+      ? 'Too many attempts — try again in '+formatLockout(left)
+      : (lockFails>0 && lockFails<10 ? 'Wrong code — try again' : '');
+  }
+  function registerFail(){
+    lockFails++;
+    const backoff={5:1000,6:2000,7:4000,8:8000,9:16000};
+    if(lockFails>=10) lockCooldownUntil = Date.now() + 5*60*1000;
+    else if(backoff[lockFails]) lockCooldownUntil = Date.now() + backoff[lockFails];
+    if(lockTick) clearInterval(lockTick);
+    lockTick = setInterval(()=>{ paintLockGuard(); if(lockGuardRemaining()<=0){ clearInterval(lockTick); lockTick=null; } }, 250);
+    paintLockGuard();
+  }
   function checkUnlock(){
-    if(unlockVal===lockCode){ closeLockov(); toast('Unlocked'); renderLock(); }
-    else {
-      unlockVal=''; unlockPat=[];
-      const card=document.getElementById('lockovCard'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
-      renderUnlock(); document.getElementById('lockErr').textContent='Wrong code — try again';
-    }
+    if(unlockVal===lockCode){ lockFails=0; lockCooldownUntil=0; if(lockTick){clearInterval(lockTick);lockTick=null;}
+      closeLockov(); toast('Unlocked'); renderLock(); return; }
+    unlockVal=''; unlockPat=[];
+    const card=document.getElementById('lockovCard'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    renderUnlock(); registerFail();
+  }
+  // Demo hook: jump straight to the lockout state from the toolbar.
+  function demoLockout(){
+    lockFails=10; lockCooldownUntil=Date.now()+5*60*1000;
+    lockNow(); paintLockGuard();
+  }
+  // AppLockUnlockOverlay: active -> system prompt; !available -> al_toast_bio_unavailable;
+  // enabled but device can't authenticate -> al_gate_bio_off.
+  function paintLockBio(){
+    const bio=document.getElementById('lockBio'); if(!bio) return;
+    const sw=document.querySelector('#sc-applock .list .li:nth-child(2) .sw');
+    const on=!!(sw && sw.classList.contains('on'));
+    bio.classList.toggle('active', on && DEMO.home.bioAvailable);
+  }
+  function bioUnlock(){
+    const sw=document.querySelector('#sc-applock .list .li:nth-child(2) .sw');
+    const on=!!(sw && sw.classList.contains('on'));
+    if(on && DEMO.home.bioAvailable){ toast('Face ID prompt — unlock SafeMe'); return; }
+    if(!DEMO.home.bioAvailable){ toast("Biometrics aren't available on this device"); return; }
+    toast('Turn on Touch ID / Face ID in App Lock settings');
+  }
+  function lockForgotTap(){
+    const forgot=document.getElementById('lockForgot');
+    toast(forgot.dataset.kind==='password' ? 'Forgot password — recovery email opened' : 'Forgot PIN — recovery email opened');
+  }
+  function renderLockForgot(){
+    const el=document.getElementById('lockForgot'); if(!el) return;
+    el.dataset.kind = lockMethod==='pin' ? 'pin' : 'password';
+    el.textContent = lockMethod==='pin' ? 'Forgot PIN?' : 'Forgot password?';
   }
   renderLock();
 
@@ -1048,6 +1128,7 @@
       paused: false,
       a11y: 'off',                  // 'off' | 'checking' | 'on'
       greeting: 'live',             // 'live' -> derived from the clock, like HomeViewModel
+      bioAvailable: true,           // AppLockBiometrics.isAvailable(device)
       blockedToday: 0,
       schedules: 0
     }
@@ -1081,7 +1162,18 @@
     }
     if(key === 'a11y'){ d.a11y = value; /* keep the simulated service flag in step */ a11yOn = value === 'on'; }
     if(key === 'greeting') d.greeting = value;
+    if(key === 'lock') setDemoLock(value);
+    if(key === 'bio'){ DEMO.home.bioAvailable = value === 'available'; paintLockBio(); }
     renderHome();
+  }
+
+  /** App Lock gate: closed / gate / lockout — the three states the gate can be in. */
+  function setDemoLock(value){
+    if(value === 'closed'){ closeLockov(); return; }
+    if(lockState !== 'on'){ lockState='on'; lockMethod='pin'; lockCode='1234'; renderLock(); }
+    lockFails=0; lockCooldownUntil=0;
+    if(value === 'lockout'){ demoLockout(); return; }
+    lockNow();
   }
 
   /** Home: title / subtitle / ring / pill / banner, exactly as HomeViewModel composes them. */

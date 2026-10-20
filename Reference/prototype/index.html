@@ -32,6 +32,19 @@
         <option value="on">On (no banner)</option>
       </select>
     </label>
+    <label>App Lock gate
+      <select id="stLock" onchange="setDemo('lock',this.value)">
+        <option value="closed">Closed</option>
+        <option value="gate">Gate (PIN 1234)</option>
+        <option value="lockout">Lockout · 5 min</option>
+      </select>
+    </label>
+    <label>Biometrics
+      <select id="stBio" onchange="setDemo('bio',this.value)">
+        <option value="available">Available</option>
+        <option value="unavailable">Unavailable</option>
+      </select>
+    </label>
     <label>Greeting
       <select id="stGreet" onchange="setDemo('greeting',this.value)">
         <option value="live">Live (from clock)</option>
@@ -331,7 +344,7 @@
           <div class="bo-logo" style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--brand-dark),var(--brand));display:flex;align-items:center;justify-content:center;margin:12px auto"><svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
           <div style="font-family:var(--serif);font-size:20px">This site is blocked</div>
           <div id="bsPreviewMsg" style="color:#C9BEB3;font-size:12.5px;margin-top:6px">Stay safe, Alex. You chose this.</div>
-          <div id="bsPreviewCount" style="color:#E8B78F;font-size:12px;margin-top:12px">Closing in 5s…</div>
+          <div id="bsPreviewCount" style="color:#E8B78F;font-size:12px;margin-top:12px">Closing in 5s.</div>
         </div>
         <div class="group-label">Customization</div>
         <div class="list">
@@ -807,7 +820,7 @@
               <button onclick="setPin('1','c')">1</button><button onclick="setPin('2','c')">2</button><button onclick="setPin('3','c')">3</button>
               <button onclick="setPin('4','c')">4</button><button onclick="setPin('5','c')">5</button><button onclick="setPin('6','c')">6</button>
               <button onclick="setPin('7','c')">7</button><button onclick="setPin('8','c')">8</button><button onclick="setPin('9','c')">9</button>
-              <button class="sym" style="visibility:hidden"></button><button onclick="setPin('0','c')">0</button><button class="sym" onclick="pinBackS('c')">⌫</button>
+              <button class="sym" style="visibility:hidden"></button><button onclick="setPin('0','c')">0</button><button class="sym" onclick="pinBackS('c')"><svg viewBox="0 0 24 24"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89H22c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/><path d="M15 9l-6 6M9 9l6 6"/></svg></button>
             </div>
           </div>
           <div class="set-ui" data-m="password" style="display:none">
@@ -834,7 +847,7 @@
               <button onclick="setPin('1','v')">1</button><button onclick="setPin('2','v')">2</button><button onclick="setPin('3','v')">3</button>
               <button onclick="setPin('4','v')">4</button><button onclick="setPin('5','v')">5</button><button onclick="setPin('6','v')">6</button>
               <button onclick="setPin('7','v')">7</button><button onclick="setPin('8','v')">8</button><button onclick="setPin('9','v')">9</button>
-              <button class="sym" style="visibility:hidden"></button><button onclick="setPin('0','v')">0</button><button class="sym" onclick="pinBackS('v')">⌫</button>
+              <button class="sym" style="visibility:hidden"></button><button onclick="setPin('0','v')">0</button><button class="sym" onclick="pinBackS('v')"><svg viewBox="0 0 24 24"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89H22c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/><path d="M15 9l-6 6M9 9l6 6"/></svg></button>
             </div>
           </div>
           <div class="set-ui" data-m="password" style="display:none">
@@ -875,7 +888,12 @@
         <h3>SafeMe is locked</h3>
         <p id="lockovSub">Enter your PIN to unlock</p>
         <div id="unlockBody"></div>
+        <button class="lock-bio" id="lockBio" onclick="bioUnlock()">
+          <svg viewBox="0 0 24 24"><path d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12.01 3c-1.98 0-3.86.47-5.57 1.41-.24.13-.54.04-.68-.2-.13-.24-.04-.55.2-.68C7.82 2.52 9.86 2 12.01 2c2.13 0 3.99.47 6.03 1.52.25.13.34.44.21.67-.09.18-.26.28-.44.28zM3.5 9.72c-.1 0-.2-.03-.29-.09-.23-.16-.28-.47-.12-.7.99-1.4 2.25-2.5 3.75-3.27C9.98 4.04 14 4.03 17.15 5.65c1.5.77 2.76 1.86 3.75 3.26.16.23.11.54-.12.7-.23.16-.54.11-.7-.12-.9-1.26-2.04-2.25-3.39-2.94-2.87-1.47-6.54-1.47-9.4.01-1.36.7-2.5 1.7-3.4 2.96-.08.14-.23.2-.39.2zm-1.15 3.49c-.15 0-.3-.07-.39-.2-.15-.24-.08-.55.16-.7 1.27-.87 2.68-1.52 4.2-1.94 2.94-.82 6.09-.82 9.03 0 1.52.42 2.93 1.07 4.2 1.94.24.16.31.46.16.7-.16.24-.46.31-.7.16-1.14-.81-2.45-1.41-3.83-1.8-2.72-.76-5.64-.76-8.36 0-1.38.39-2.69.99-3.83 1.8-.1.07-.21.1-.32.1zm12.8 3.54c-.17 0-.33-.09-.42-.24-.36-.62-.84-1.16-1.39-1.6-.39-.32-.8-.58-1.21-.79-.08-.04-.16-.09-.24-.14-.15-.1-.33-.14-.51-.14-.05 0-.11.01-.16.02-.16.04-.31.09-.45.15-.61.27-1.14.66-1.58 1.17-.13.15-.36.17-.51.04-.15-.13-.17-.36-.04-.51.53-.6 1.17-1.07 1.9-1.38.16-.07.34-.13.51-.17.08-.02.16-.03.24-.04.12-.01.25-.01.37.01.09.01.18.03.27.07.28.12.54.28.79.47.62.5 1.16 1.11 1.56 1.79.13.25.04.55-.21.68-.08.05-.17.07-.26.07zm-5.16 6.16c-.13 0-.26-.05-.35-.15-.16-.17-.15-.43.01-.59.24-.23.42-.51.55-.83.08-.19.29-.28.48-.2.19.08.28.29.2.48-.17.42-.42.81-.74 1.12-.09.09-.1.17-.15.17zm4.55-2.37c-.2 0-.39-.12-.47-.31-.1-.25.02-.53.27-.631.16-.46 2.17-1.18 2.96-2.1.11-.13.31-.14.44-.03.13.11.14.31.03.44-.87 1.01-1.98 1.8-3.25 2.3-.05.02-.11.03-.17.03zm2.98-4.42c-.12 0-.24-.04-.33-.13-.15-.17-.13-.43.04-.58.51-.44 1.28-1.51 1.28-2.4 0-.28-.05-.56-.15-.83-.08-.21.03-.44.24-.52.21-.08.44.03.52.24.12.34.19.73.19 1.11 0 1.12-.9 2.36-1.56 2.92-.08.07-.17.11-.27.11zm-8.23 5.07c-.11 0-.22-.04-.3-.12-.39-.39-.89-.58-1.44-.58-.08 0-.16.01-.23.02-.22.03-.42.07-.61.12-.35.1-.72.15-1.1.15-1.06 0-2.09-.4-2.85-1.12-.81-.75-1.25-1.77-1.25-2.86 0-1.09.44-2.11 1.25-2.86.76-.71 1.79-1.12 2.85-1.12.37 0 .73.04 1.09.15.16.04.34.06.52.06.42 0 .82-.09 1.19-.27.21-.1.46-.02.56.19.1.21.02.46-.19.56-.47.23-1 .35-1.56.35-.27 0-.54-.03-.8-.09-.28-.08-.57-.12-.86-.12-.84 0-1.63.32-2.22.89-.59.57-.92 1.33-.92 2.14s.33 1.57.92 2.14c.59.57 1.38.89 2.22.89.29 0 .58-.04.86-.12.24-.07.49-.11.75-.11.44 0 .86.08 1.25.23.24.09.36.36.27.6-.06.18-.23.29-.4.29zm-1.77 3.31c-.17 0-.33-.08-.43-.23-.3-.44-.45-.95-.45-1.49 0-.27.03-.54.09-.81.05-.22.27-.36.49-.31.22.05.36.27.31.49-.05.19-.08.39-.08.63 0 .38.11.74.31 1.05.13.18.09.43-.1.56-.07.05-.15.08-.24.08z"/></svg>
+          <span>Use Face ID / fingerprint</span>
+        </button>
         <div class="err" id="lockErr"></div>
+        <div class="lock-forgot" id="lockForgot" onclick="lockForgotTap()">Forgot PIN?</div>
       </div>
     </div>
 
@@ -994,7 +1012,8 @@
         <div class="bo-logo"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
         <h2>This site is blocked</h2>
         <p id="boMsg">Stay safe, Alex. You chose this.</p>
-        <div class="why" id="boWhy" onclick="toast('Why: matched keyword → blocked by SafeMe')">Why am I seeing this?</div>
+        <div class="why" id="boWhy" onclick="boWhyToggle()">Why am I seeing this?</div>
+        <p id="boWhyReason" style="display:none;color:#C9BEB3;font-size:13px;line-height:19px;margin-top:10px">Why: this content or action was blocked by an active SafeMe rule</p>
       </div>
       <div class="bo-mid">
         <div class="ring-wrap">
@@ -1006,7 +1025,7 @@
         </div>
       </div>
       <div style="width:100%">
-        <div class="bo-label">Close-gate · dwell countdown</div>
+        <div class="bo-label">Close-gate • dwell countdown</div>
         <button class="bo-close locked" id="boClose" onclick="closeBlockov()">Close</button>
       </div>
     </div>
