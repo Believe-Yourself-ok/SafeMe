@@ -604,6 +604,26 @@ def group_g(rep: Report, ctx):
                   read(UI / "screens/antitamper/AntiTamperScreen.kt"),
               "the device-admin pill is not state driven")
 
+    # DnsVpnScreen.vpnStatusSub(): preset/custom -> system prefix -> exempt count
+    # -> schedule suffix, and the pill flips with `running`, not with `enabled`.
+    strings = strings_xml()
+    for res, frag in (("vpn_status_on", "'VPN filtering is on'"),
+                      ("vpn_status_off", "'VPN filtering is off'"),
+                      ("vpn_status_re_enable", "'Tap to re-enable protection'"),
+                      ("vpn_pill_active", "'Active'"),
+                      ("vpn_pill_off", "'Off'")):
+        rep.check("G", f"vpn status literal matches {res}", frag in js,
+                  f"{frag} missing from vpnStatus()")
+    rep.check("G", "vpn sub nests vpn_sub_exempt -> system prefix -> schedule suffix (B-15)",
+              all(k in js for k in ("T.vpnExempt", "T.vpnSystem", "T.vpnSchedule", "T.vpnCustomV4V6"))
+              and js.index("T.vpnExempt") > js.index("T.vpnSystem"),
+              "vpnStatusSub() order drifted from DnsVpnScreen")
+    presets = read(ROOT / "app/src/main/java/com/safeme/app/vpn/VpnConfig.kt")
+    labels = re.findall(r"\(\"([^\"]+)\"\)", presets)
+    rep.check("G", "vpn preset labels == DnsPreset", bool(labels) and all(
+        f'"{lab}"' in js or f"'{lab}'" in js for lab in labels),
+        f"missing DnsPreset labels: {[l for l in labels if l not in js]}")
+
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")
