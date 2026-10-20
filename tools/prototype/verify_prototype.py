@@ -422,6 +422,12 @@ def group_e(rep: Report, ctx):
     eq(".li", "min-height", 60, "list row min-height 60")
     eq(".qa .ic", "width", 38, "tile icon 38 (home)")
     eq("#sc-profile .qa .ic", "width", 40, "tile icon 40 (profile)")
+    eq("#sc-block .qa .ic", "width", 40, "tile icon 40 (block)")
+    eq("#sc-block .qa .ic", "border-radius", 13, "tile icon radius 13 (block)")
+    eq("#sc-block .qa .ic", "margin-bottom", 12, "tile icon gap 12 (block)")
+    eq("#sc-block .qa .ic svg", "width", 20, "tile glyph 20 (block)")
+    eq(".qa .ic svg", "width", 19, "tile glyph 19 (home)")
+    eq(".shield .s-left", "gap", 12, "shield inner gap 12 (B-05)")
 
     # --- Phase 2: chrome & header conventions -------------------------------
     eq(".nav", "left", 10, "nav left inset 10")
