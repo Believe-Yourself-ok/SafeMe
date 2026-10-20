@@ -39,6 +39,12 @@
         <option value="lockout">Lockout · 5 min</option>
       </select>
     </label>
+    <label>Lists
+      <select id="stLists" onchange="setDemo('lists',this.value)">
+        <option value="populated">Populated (demo data)</option>
+        <option value="empty">Empty (first launch)</option>
+      </select>
+    </label>
     <label>DNS / VPN
       <select id="stVpn" onchange="setDemo('vpn',this.value)">
         <option value="on">On · Cloudflare Family</option>

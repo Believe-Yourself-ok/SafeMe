@@ -227,6 +227,25 @@ HOOK_CLASSES = {
 }
 
 
+# --------------------------------------------------------------------------- #
+# copy deviations
+# --------------------------------------------------------------------------- #
+# The prototype reproduces production copy verbatim EXCEPT where the string
+# itself is defective. Every exception must be registered here with the
+# production text, the replacement, and why — and the same table is asserted
+# against tools/prototype/DEVIATIONS.md so the doc cannot drift from the code.
+DEVIATIONS = {
+    "vpn_whitelist_count": {
+        "prod": "%1$d app(s) exempt",
+        "proto": ("%1$d app exempt", "%1$d apps exempt"),
+        "why": "literal '(s)' renders '1 app(s) exempt'; replaced with a real "
+               "singular/plural pair (owner decision, SAD-319)",
+    },
+}
+
+DEVIATIONS_DOC = ROOT / "tools" / "prototype" / "DEVIATIONS.md"
+
+
 def tpl(key: str) -> str | None:
     """Read one verbatim copy template out of the prototype's T table."""
     table = re.search(r"const T = \{(.*?)\n  \};", read(JS), re.S)
@@ -448,6 +467,8 @@ def group_f(rep: Report, ctx):
     blob = norm(ctx["html"] + ctx["js"])
     missing = []
     for key, expected in REQUIRED_COPY.items():
+        if key in DEVIATIONS:
+            continue                      # intentionally corrected — asserted in group H
         needle = norm(strings.get(key, expected))
         probe = needle[:40].replace("\x00", "").strip()
         if probe and probe not in blob.replace("\x00", ""):
@@ -613,6 +634,53 @@ def group_h(rep: Report, ctx):
     rep.check("H", "quick-action default order == QuickActionsPrefs.DEFAULTS",
               kt_order == proto_order, f"kotlin {kt_order} vs prototype {proto_order}")
 
+    # --- schedule screen states (B-14) ------------------------------------- #
+    svm = read(UI / "screens/schedule/ScheduleViewModel.kt")
+    sp = read(ROOT / "app/src/main/java/com/safeme/app/data/SchedulePrefs.kt")
+    rep.check("H", "hero count uses the sch_hero_count plural pair",
+              "0 active schedule" not in js
+              and "on.length+' active schedule'+(on.length===1?'':'s')" in js,
+              "hero count pluralisation drifted")
+    rep.check("H", "hero pill uses sch_hero_pill_on / _off",
+              strings["sch_hero_pill_on"] in js and strings["sch_hero_pill_off"] in js,
+              "schedule pill copy drifted")
+    for res in ("sch_hero_sub_on", "sch_hero_sub_paused", "sch_hero_sub_empty"):
+        body = strings[res].split("%1$s")[0].split("%2$s")[0]
+        rep.check("H", f"hero subtitle branch {res} present",
+                  body in js, f"{body!r} missing from schedCount()")
+    rep.check("H", "card time row == scheduleWindowLabel (en dash + ' (+1)')",
+              'scheduleWindowLabel(startMinute: Int, endMinute: Int)' in sp
+              and " – " in sp and " (+1)" in sp
+              and "o.start+' – '+o.end" in js.replace('"', "'"),
+              "card time format drifted")
+    rep.check("H", "overnight windows append (+1) when end < start",
+              "(o.end<o.start?' (+1)':'')" in js,
+              "overnight marker missing")
+    rep.check("H", "card apps uses sch_card_apps plural (1 app / N apps) + all-apps copy",
+              strings["sch_card_apps_all"] in js
+              and "(Number(o.apps)===1?' app':' apps')" in js,
+              "apps pill pluralisation drifted")
+    rep.check("H", "card next row uses sch_card_next",
+              strings["sch_card_next"] == "Next · %1$s" and "Next · '+o.days" in js,
+              "card next-row copy drifted")
+    rep.check("H", "next boundary label mirrors ScheduleViewModel.nextBoundaryLabel()",
+              "SCHEDULE_DAY_NAMES[dayIndex] }" in svm.replace("\n", " ")
+              or "return time" in svm
+              and "return d===0 ? start : name+' '+start;" in js,
+              "boundary label differs from the ViewModel")
+    rep.check("H", "disabled cards stay visible (only the switch differs)",
+              "enabled:false" in js and "sched-card" in js,
+              "demo fixtures no longer cover the disabled state")
+    rep.check("H", "Home stat row is derived, not hardcoded",
+              "ACTIVITY.filter(e=>e.type==='block').length" in js
+              and "document.querySelectorAll('#schedList .sched-card .sw.on').length" in js,
+              "home counters are typed in again")
+    rep.check("H", "demo lists can be emptied and restored from the toolbar",
+              "function setDemoLists(mode)" in js
+              and "ACTIVITY.length = 0" in js
+              and "DEMO_ACTIVITY.slice().reverse().forEach" in js,
+              "empty/populated states not symmetric")
+
     # --- block screen: dwell countdown + overlay (B-17) -------------------- #
     bs = read(UI / "screens/blockscreen/BlockScreenViewModel.kt")
     ov = read(UI / "screens/blockscreen/BlockOverlay.kt")
@@ -671,11 +739,23 @@ def group_h(rep: Report, ctx):
               strings["vpn_sub_schedule_suffix"] == "%1$s · schedule block active"
               and "v.scheduleBlocking ? fmt(T.vpnSchedule, withExempt) : withExempt" in js,
               "schedule suffix drifted")
-    rep.check("H", "vpn whitelist row uses vpn_whitelist_none / _count",
-              strings["vpn_whitelist_none"] in js
-              and strings["vpn_whitelist_count"] == "%1$d app(s) exempt"
-              and "fmt(T.vpnWlCount, v.exempt)" in js,
-              "whitelist copy drifted")
+    rep.check("H", "vpn whitelist row uses vpn_whitelist_none when empty",
+              strings["vpn_whitelist_none"] in js, "empty-whitelist copy drifted")
+    dev = DEVIATIONS["vpn_whitelist_count"]
+    rep.check("H", "vpn whitelist count uses a real plural pair (deviation D-1)",
+              tpl("vpnWlOne") == dev["proto"][0] and tpl("vpnWlMany") == dev["proto"][1]
+              and "fmt(v.exempt === 1 ? T.vpnWlOne : T.vpnWlMany, v.exempt)" in js,
+              f"T.vpnWlOne={tpl('vpnWlOne')!r} T.vpnWlMany={tpl('vpnWlMany')!r}")
+    doc = DEVIATIONS_DOC.read_text() if DEVIATIONS_DOC.exists() else ""
+    rows = [ln for ln in doc.splitlines() if ln.startswith("| `")]
+    rep.check("H", "every copy deviation is registered in DEVIATIONS.md",
+              len(rows) == len(DEVIATIONS)
+              and all(f"`{k}`" in doc and dev["prod"] in doc
+                      for k, dev in DEVIATIONS.items()),
+              f"{len(rows)} doc rows vs {len(DEVIATIONS)} registry entries")
+    leftover = [k for k, v in strings.items() if "(s)" in v and k not in DEVIATIONS]
+    rep.check("H", "no unregistered '(s)' plural left in strings.xml",
+              not leftover, f"unhandled: {leftover}")
 
     # --- app lock gate (B-16) --------------------------------------------- #
     alm = read(ROOT / "app/src/main/java/com/safeme/app/protect/AppLockManager.kt")
@@ -727,7 +807,6 @@ def group_h(rep: Report, ctx):
                   ("vpnExempt", "vpn_sub_exempt"),
                   ("vpnSystem", "vpn_sub_system_prefix"),
                   ("vpnSchedule", "vpn_sub_schedule_suffix"),
-                  ("vpnWlCount", "vpn_whitelist_count"),
                   ("lockout", "al_gate_locked_out"),
                   ("gateSub", "al_gate_sub"),
                   ("closing", "bs_closing"),

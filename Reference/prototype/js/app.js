@@ -138,7 +138,8 @@
     vpnExempt:      '%1$s · %2$d exempt',
     vpnSystem:      'System-wide · %1$s',
     vpnSchedule:    '%1$s · schedule block active',
-    vpnWlCount:     '%1$d app(s) exempt',
+    vpnWlOne:       '%1$d app exempt',      // deviation D-1: production prints "app(s)"
+    vpnWlMany:      '%1$d apps exempt',
     lockout:        'Too many attempts — try again in %1$s',
     gateSub:        'Enter your %1$s to unlock',
     closing:        'Closing in %1$ds.'
@@ -180,6 +181,7 @@
     if(key === 'lock') setDemoLock(value);
     if(key === 'bio'){ DEMO.home.bioAvailable = value === 'available'; paintLockBio(); }
     if(key === 'vpn') setDemoVpn(value);
+    if(key === 'lists') setDemoLists(value);
     renderHome();
   }
 
@@ -237,10 +239,7 @@
     const banner = document.getElementById('a11yBanner');
     if(banner) banner.style.display = d.a11y === 'off' ? 'flex' : 'none';
 
-    const blocked = document.getElementById('homeBlocked');
-    if(blocked) blocked.textContent = String(d.blockedToday);
-    const sched = document.getElementById('homeSchedules');
-    if(sched) sched.textContent = String(d.schedules);
+    syncHomeStats();
   }
 
   // ---------- Generic toggle ----------
@@ -555,8 +554,6 @@
       if(sw) sw.classList.toggle('on', !!s.why);
     }catch(e){}
   }
-  loadBlockScreen();
-  renderBlockPreview();
 
   // ---------- Presets / pickers ----------
   function pickDns(el){
@@ -732,7 +729,6 @@
     el.dataset.kind = lockMethod==='pin' ? 'pin' : 'password';
     el.textContent = lockMethod==='pin' ? 'Forgot PIN?' : 'Forgot password?';
   }
-  renderLock();
 
   // ---------- Theme ----------
   let themePref = (function(){ try{ return localStorage.getItem('safeme_theme') || 'System'; }catch(e){ return 'System'; } })();
@@ -754,7 +750,6 @@
     applyTheme();
   }
   try{ mqDark.addEventListener('change', applyTheme); }catch(e){ mqDark.addListener(applyTheme); }
-  initTheme();
 
   let schedEditId=null, timeTarget='start', timeH=21, timeM=0;
   function h12(h){ return (h%12)||12; }
@@ -788,7 +783,7 @@
       '</div>'+
       '<div class="sched-body">'+
         '<div class="sched-time"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="sched-time-txt">'+o.start+' – '+o.end+(o.end<o.start?' (+1)':'')+'</span></div>'+
-        '<div class="sched-pills"><span class="pill g">'+o.modetxt+'</span><span class="pill b">'+(Number(o.apps)?o.apps+' apps':'All apps')+'</span></div>'+
+        '<div class="sched-pills"><span class="pill g">'+o.modetxt+'</span><span class="pill b">'+(Number(o.apps)?(o.apps+(Number(o.apps)===1?' app':' apps')):'All apps')+'</span></div>'+
       '</div>'+
       '<div class="sched-foot"><span class="sched-next"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Next · '+o.days+'</span><button class="btn btn-ghost sm" onclick="openSchedEdit(this)">Edit</button></div>'+
     '</div>';
@@ -876,20 +871,84 @@
     schedEditId.remove(); schedEditId=null;
     schedCount(); nav('schedule'); toast('Schedule deleted');
   }
+  // ---- demo fixtures -------------------------------------------------------
+  // The prototype is a walkthrough, so lists show representative rows; the
+  // toolbar's "Empty (first launch)" state removes them to show what a fresh
+  // install renders. Counts on Home are derived from these rows, never typed.
+  const DEMO_SCHEDULES = [
+    {name:'Study',   days:'Mon · Tue · Wed · Thu · Fri', daysraw:'Mon,Tue,Wed,Thu,Fri',
+     start:'21:00', end:'23:00', mode:'Both', modetxt:'Internet + Launch', apps:0,  enabled:true},
+    {name:'Night',   days:'Daily', daysraw:'Mon,Tue,Wed,Thu,Fri,Sat,Sun',
+     start:'23:00', end:'06:00', mode:'Both', modetxt:'Internet + Launch', apps:3,  enabled:true},
+    {name:'Weekend', days:'Sat · Sun', daysraw:'Sat,Sun',
+     start:'09:00', end:'12:00', mode:'Internet', modetxt:'Internet blocked', apps:0, enabled:false}
+  ];
+  const DEMO_KEYWORDS = ['gambling', 'casino'];
+  const DEMO_WEBSITES = ['bet365.com', 'poker.com'];
+  const DEMO_ACTIVITY = [
+    {type:'block',    title:'Blocked site',      sub:'bet365.com · keyword rule',  time:'9:31 PM'},
+    {type:'schedule', title:'Study window ended', sub:'Restrictions lifted',       time:'9:00 PM'},
+    {type:'vpn',      title:'VPN filtering on',   sub:'Cloudflare Family',         time:'8:45 PM'}
+  ];
+  let demoListsMode = null;
+  function setDemoLists(mode){
+    demoListsMode = mode;
+    const list = document.getElementById('schedList');
+    if(mode === 'populated'){
+      if(list) list.innerHTML = DEMO_SCHEDULES.map(schedCardHTML).join('');
+      KW.keywords.blocklist = DEMO_KEYWORDS.slice();
+      KW.websites.blocked = DEMO_WEBSITES.slice();
+      if(!ACTIVITY.length){ DEMO_ACTIVITY.slice().reverse().forEach(e=>actAdd(e.type, e.title, e.sub, e.time)); }
+    } else {
+      if(list) list.innerHTML = '';
+      KW.keywords.blocklist = []; KW.websites.blocked = [];
+      ACTIVITY.length = 0;
+    }
+    kwRender(); feedRender(); histRender(); schedCount(); renderHome();
+  }
+
+  /** ScheduleViewModel.nextBoundaryLabel(): "21:00" today, otherwise "Wed 21:00". */
+  function nextBoundaryLabel(card){
+    const days=(card.dataset.daysraw||'').split(',').filter(Boolean);
+    const start=card.dataset.start||'';
+    if(!start) return '';
+    const NAMES=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const now=new Date();
+    for(let d=0; d<8; d++){
+      const dt=new Date(now.getFullYear(), now.getMonth(), now.getDate()+d);
+      const name=NAMES[(dt.getDay()+6)%7];
+      if(days.length && days.indexOf(name)<0) continue;
+      const [hh,mm]=start.split(':').map(Number);
+      const at=new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), hh, mm, 0, 0);
+      if(at.getTime() <= now.getTime()) continue;      // boundary already passed
+      return d===0 ? start : name+' '+start;
+    }
+    return start;                                       // degenerate window -> start time
+  }
   function schedCount(){
-    const all=document.querySelectorAll('#schedList .sched-card');
-    const on=[...all].filter(c=>c.querySelector('.sw').classList.contains('on')).length;
-    const c=document.getElementById('schedHeroCount'); if(c) c.textContent=on+' active schedule'+(on===1?'':'s');
-    const p=document.getElementById('schedHeroPill'); if(p){ p.className='pill '+(on?'g':'r'); p.innerHTML='<span class="pdot"></span>'+(on?'On':'Off'); }
+    const all=[...document.querySelectorAll('#schedList .sched-card')];
+    const on=all.filter(c=>c.querySelector('.sw').classList.contains('on'));
+    const c=document.getElementById('schedHeroCount');
+    if(c) c.textContent=on.length+' active schedule'+(on.length===1?'':'s');
+    const p=document.getElementById('schedHeroPill');
+    if(p){ p.className='pill '+(on.length?'g':'r'); p.innerHTML='<span class="pdot"></span>'+(on.length?'On':'Off'); }
     const sub=document.getElementById('schedHeroSub');
     if(sub){
-      const first=on?[...all].find(c=>c.querySelector('.sw').classList.contains('on')):null;
-      sub.textContent=first?('Next boundary · '+(first.dataset.name||'Schedule')+' at '+(first.dataset.start||'--:--')):(on===0&&all.length?'All schedules paused':'No schedules yet — create one');
+      const next=on.map(card=>({card, label:nextBoundaryLabel(card)})).filter(x=>x.label);
+      if(on.length && next.length){
+        const first=next[0];
+        sub.textContent='Next boundary · '+(first.card.dataset.name||'Schedule')+' at '+first.label;
+      } else if(on.length){
+        sub.textContent='Next boundary · '+(on[0].dataset.name||'Schedule')+' at '+(on[0].dataset.start||'');
+      } else if(all.length){
+        sub.textContent='All schedules paused';
+      } else {
+        sub.textContent='No schedules yet — create one';
+      }
     }
     const emp=document.getElementById('schedEmpty'); if(emp) emp.style.display=all.length?'none':'block';
-    const hs=document.getElementById('homeSchedules'); if(hs) hs.textContent=String(on);
+    syncHomeStats();
   }
-  schedCount();
 
   // ---------- Title Block ----------
   let titleEditId=null;
@@ -946,7 +1005,6 @@
     if(sub) sub.textContent=all.length?(all.length+' rule'+(all.length===1?'':'s')+' · '+on+' active · matching in real time'):'Add a rule to start blocking by window title';
     const empty=document.getElementById('titleEmpty'); if(empty) empty.style.display=all.length?'none':'';
   }
-  titleCount();
   (function(){
     const inp=document.getElementById('titleInput');
     if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter') addTitle(); });
@@ -1196,7 +1254,6 @@
     SOCIAL.wholeBlocked.delete(name);
     saveSocial(); renderSocial(); toast(name+' — unblocked');
   }
-  loadSocial();
 
   // ---------- DNS & VPN ----------
   let vpnPreset='Cloudflare Family', dnsV4='1.1.1.1', dnsV6='', vpnWhitelist=[], vpnNotif='Default';
@@ -1273,7 +1330,8 @@
     }
     const sub=document.getElementById('vpnWhitelistSub');
     // vpn_whitelist_none / vpn_whitelist_count ("%1$d app(s) exempt")
-    if(sub) sub.textContent = v.exempt ? fmt(T.vpnWlCount, v.exempt) : 'No apps exempt';
+    if(sub) sub.textContent = v.exempt === 0 ? 'No apps exempt'
+      : fmt(v.exempt === 1 ? T.vpnWlOne : T.vpnWlMany, v.exempt);
   }
   function setDemoVpn(value){
     const v = DEMO.vpn;
@@ -1285,6 +1343,16 @@
     vpnStatus();
   }
   // ---------- Accessibility status ----------
+  /** Home stat row — HomeViewModel reads blockedToday from the blocker and
+      scheduleCount from the enabled schedules, so the prototype derives both
+      from the same demo data instead of carrying hardcoded numbers. */
+  function syncHomeStats(){
+    const blocked = document.getElementById('homeBlocked');
+    if(blocked) blocked.textContent = String(ACTIVITY.filter(e=>e.type==='block').length);
+    const sched = document.getElementById('homeSchedules');
+    if(sched) sched.textContent = String(document.querySelectorAll('#schedList .sched-card .sw.on').length);
+  }
+
   let a11yOn=false;
   function openA11y(){
     toast('Opening: Accessibility → SafeMe…');
@@ -1536,15 +1604,27 @@
     if(!onboarded){ show(name || 'welcome'); }
     else if(name && !obScreens.includes(name)){ nav(name); }
     else { show('home'); }
-    // permissions init
+    // --- render order is owned here -------------------------------------
+    // Every renderer used to run at parse time, before the state it reads was
+    // declared (three temporal-dead-zone crashes in this phase). boot() is the
+    // single place that decides the order.
+    initTheme();
     permStatus();
     kwType('keywords');
+    loadBlockScreen();
+    renderBlockPreview();
+    renderLock();
+    loadSocial();
+    titleCount();
+    setDemoLists('populated');
+    schedCount();
     qaRender();
     renderHome();
-    setInterval(()=>{
-      if(DEMO.home.greeting==='live') renderHome();
-    }, 60000);
+    vpnStatus();
     feedRender();
     histRender();
     renderSocial();
+    setInterval(()=>{
+      if(DEMO.home.greeting==='live') renderHome();
+    }, 60000);
   })();

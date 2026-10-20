@@ -160,6 +160,40 @@ async function main () {
   })
   check('state renderers run without throwing', renderErr === '', renderErr)
 
+  // ---- schedule states: populated / overnight / disabled / empty -------- #
+  const sched = await page.evaluate(async () => {
+    window.nav('schedule')
+    const read = () => ({
+      count: document.getElementById('schedHeroCount').textContent,
+      pill: document.getElementById('schedHeroPill').textContent.trim(),
+      sub: document.getElementById('schedHeroSub').textContent,
+      times: [...document.querySelectorAll('#schedList .sched-time-txt')].map(t => t.textContent),
+      apps: [...document.querySelectorAll('#schedList .sched-card')].map(c => c.querySelectorAll('.pill')[1].textContent),
+      off: [...document.querySelectorAll('#schedList .sched-card')].filter(c => !c.querySelector('.sw').classList.contains('on')).length,
+      emptyShown: getComputedStyle(document.getElementById('schedEmpty')).display !== 'none',
+      home: [document.getElementById('homeBlocked').textContent, document.getElementById('homeSchedules').textContent]
+    })
+    window.setDemo('lists', 'populated'); await new Promise(r => setTimeout(r, 60))
+    const populated = read()
+    window.setDemo('lists', 'empty'); await new Promise(r => setTimeout(r, 60))
+    const empty = read()
+    window.setDemo('lists', 'populated'); await new Promise(r => setTimeout(r, 60))
+    return { populated, empty }
+  })
+  check('schedule: hero count/pill/boundary, (+1) overnight row, disabled card',
+    sched.populated.count === '2 active schedules' && sched.populated.pill === 'On'
+    && /^Next boundary · \w+ at (\w+ )?\d{2}:\d{2}$/.test(sched.populated.sub)
+    && sched.populated.times.includes('23:00 – 06:00 (+1)')
+    && sched.populated.apps.includes('All apps') && sched.populated.apps.includes('3 apps')
+    && sched.populated.off === 1 && !sched.populated.emptyShown
+    && sched.populated.home[1] === '2',
+    JSON.stringify(sched.populated))
+  check('schedule: empty first-launch state clears cards + Home counters',
+    sched.empty.count === '0 active schedules' && sched.empty.pill === 'Off'
+    && sched.empty.sub === 'No schedules yet — create one' && sched.empty.emptyShown
+    && sched.empty.home[0] === '0' && sched.empty.home[1] === '0',
+    JSON.stringify(sched.empty))
+
   // ---- DNS/VPN status matrix -------------------------------------------- #
   const vpnStates = await page.evaluate(async () => {
     const read = () => ({

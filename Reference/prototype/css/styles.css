@@ -86,7 +86,9 @@
   .sub .back{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--ink);background:var(--surface);border:1px solid var(--line);margin-left:-8px}
   .sub .back svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .sub h1{font-size:24px;font-weight:700;flex-basis:100%;text-align:left;margin-top:16px;line-height:1.2}
-  .nav-on .sub h1{flex:1;flex-basis:auto;text-align:left;margin-top:0;font-size:20px}
+  /* ScheduleScreen.SubHeader: title weight(1f) + 38dp chip — the title shrinks
+     beside the chip instead of being pushed onto its own row. */
+  .nav-on .sub h1{flex:1 1 0;min-width:0;text-align:left;margin-top:0;font-size:20px}
   .sub .sub-desc{font-size:12px;color:var(--ink-2);line-height:20px;margin-top:6px;flex-basis:100%;text-align:left}
   .sub .act{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
   .sub .act svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -552,7 +554,17 @@
   /* banners (Schedule) - production geometry */
   .banner{display:flex;align-items:center;gap:12px;background:rgba(244,67,54,.07);border:1px solid var(--danger);
           border-radius:20px;padding:16px;margin-top:12px}
-  .banner .ic{width:40px;height:40px;border-radius:13px;background:var(--dangerBg);color:var(--danger);flex:none}
+  .banner .ic{width:40px;height:40px;border-radius:13px;background:var(--dangerBg);color:var(--danger);flex:none;
+              display:flex;align-items:center;justify-content:center}
+  .banner .ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;
+                  stroke-linecap:round;stroke-linejoin:round}
+  /* Card rows that carry an icon block (Exclude Apps, VPN whitelist, Prevent
+     Uninstall): same 20dp stroked glyph as every other 40dp icon box. */
+  #sc-schedule .card .ic svg,#sc-vpn .card .ic svg,#sc-profile .card .ic svg{
+    width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  #sc-schedule .card .ic,#sc-vpn .card .ic,#sc-profile .card .ic{
+    display:flex;align-items:center;justify-content:center}
   .banner .tx{flex:1;min-width:0}
   .banner .t{font-size:13px;font-weight:700}
   .banner .s{font-size:12.5px;line-height:17px;color:var(--ink-2);margin-top:3px}
