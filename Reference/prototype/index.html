@@ -804,12 +804,13 @@
       <div class="grab"></div>
       <h3 id="titleSheetTitle">Add title rule</h3>
       <div class="s-sub">Blocks System Settings pages whose window title matches.</div>
-      <label class="field"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></svg><input id="titleInput" placeholder="e.g. Apps"></label>
-      <div class="group-label" style="margin-top:14px">Match</div>
+      <label class="field f50"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></svg><input id="titleInput" placeholder="e.g. Apps"></label>
+      <div class="group-label" id="titleMatchLbl">Match</div>
       <div class="seg" id="titleMode"><button class="on" onclick="togSeg(this)">Contains</button><button onclick="togSeg(this)">Exact</button><button onclick="togSeg(this)">Starts with</button></div>
-      <div style="font-size:12px;line-height:18px;color:var(--ink-3);margin-top:10px">Applies only to System Settings</div>
-      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" id="titleSaveBtn" onclick="addTitle()">Add Title</button></div>
-      <button class="btn btn-ghost btn-block" id="titleDel" style="margin-top:12px;display:none" onclick="delTitle()"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>Delete rule</button>
+      <!-- tb_sheet_scope_note: brandSoft r12 banner, not a bare caption -->
+      <div class="scope-note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>Applies only to System Settings</span></div>
+      <div class="row2 sheet-actions" style="margin-top:18px"><button class="btn btn-outline" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" id="titleSaveBtn" onclick="addTitle()">Add title rule</button></div>
+      <button class="title-del" id="titleDel" style="display:none" onclick="delTitle()"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>Delete rule</button>
     </div>
 
         <div class="sheet" id="sheetLockSetup">

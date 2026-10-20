@@ -497,6 +497,28 @@ def group_e(rep: Report, ctx):
               r.get("#sheetSocialApps .app-picker .li .tx .t", {}).get("font-weight") == "500",
               f"font-weight={r.get('#sheetSocialApps .app-picker .li .tx .t', {}).get('font-weight')}")
     eq("#sheetSocialApps .app-picker .li .tx .s", "font-size", 11, "social picker package 11sp")
+    # --- Phase 5(f): sheetTitle -> TitleBlockScreen's rule sheet ----------- #
+    rep.check("E", "MATCH label: 14 below the field, 10 above the segment, no inset",
+              ctx["rules"].get("#sheetTitle .group-label", {}).get("margin") == "14px 0 10px",
+              f"margin={ctx['rules'].get('#sheetTitle .group-label', {}).get('margin')}")
+    rep.check("E", "scope note is a brandSoft r12 banner with an 18dp glyph",
+              ctx["rules"].get(".scope-note", {}).get("background") == "var(--brand-soft)"
+              and px(ctx["rules"].get(".scope-note", {}), "border-radius") == 12
+              and ctx["rules"].get(".scope-note", {}).get("padding") == "12px 14px"
+              and px(ctx["rules"].get(".scope-note svg", {}), "width") == 18
+              and "background(colors.brandSoft)" in read(UI / "screens/titleblock/TitleBlockScreen.kt"),
+              f".scope-note = {ctx['rules'].get('.scope-note')}")
+    rep.check("E", "delete action is a plain 48dp danger row 12 below the buttons",
+              px(ctx["rules"].get(".title-del", {}), "height") == 48
+              and ctx["rules"].get(".title-del", {}).get("color") == "var(--danger)"
+              and px(ctx["rules"].get(".title-del", {}), "margin-top") == 12
+              and "tb_sheet_delete" in strings_xml(),
+              f".title-del = {ctx['rules'].get('.title-del')}")
+    rep.check("E", "rule sheet field is the 50dp SheetField",
+              px(ctx["rules"].get(".field.f50", {}), "height") == 50
+              and ".height(50.dp)" in read(UI / "screens/titleblock/TitleBlockScreen.kt"),
+              "rule field height drifted")
+
     # --- Phase 5(e): sheetLockSetup / sheetAutoLock ------------------------ #
     # ModalBottomSheet content carries NO top padding; the sheet's own inset
     # spaces the grab bar (so titles sit 21px down, not 31).
@@ -1092,6 +1114,26 @@ def group_g(rep: Report, ctx):
               and "toast('Updated')" not in js
               and "kw_toast_website_updated" in strings_xml(),
               "keyword toasts still diverge from production")
+
+    # TitleBlockScreen: save pill is tb_sheet_add ("Add title rule") when adding
+    # and kw_sheet_save ("Save") when editing; duplicates are value AND mode.
+    tb_js = js[js.index("function addTitle()"):]
+    rep.check("H", "rule sheet save pill switches tb_sheet_add / kw_sheet_save",
+              "sb.textContent='Add title rule'" in js and "sb.textContent='Save'" in js
+              and "R.string.tb_sheet_add" in read(UI / "screens/titleblock/TitleBlockScreen.kt"),
+              "the add mode still says Add Title / save mode says Save changes")
+    rep.check("H", "rule rows open the edit sheet (chevron), never the add sheet",
+              'onclick=\"editTitle(this)\"' in js
+              and "onclick=\"openSheet('sheetTitle')\"" not in js
+              and "showSheet = true" not in read(UI / "screens/titleblock/TitleBlockScreen.kt")
+              and "sheetRule = rule" in read(UI / "screens/titleblock/TitleBlockScreen.kt"),
+              "the displayed rule rows still open the add sheet")
+
+    rep.check("H", "rule duplicates compare value AND mode",
+              "&& (r.querySelector('.s').textContent||'Contains')===mode" in tb_js
+              and "it.value == normalized && it.mode == mode" in read(
+                  UI / "screens/titleblock/TitleBlockViewModel.kt"),
+              "duplicate check ignores the match mode")
 
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",

@@ -479,7 +479,8 @@
     if(id==='sheetTitle'){
       titleEditId=null;
       const tt=document.getElementById('titleSheetTitle'); if(tt) tt.textContent='Add title rule';
-      const sb=document.getElementById('titleSaveBtn'); if(sb) sb.textContent='Add Title';
+      // tb_sheet_add ("Add title rule") when adding, kw_sheet_save ("Save") when editing
+      const sb=document.getElementById('titleSaveBtn'); if(sb) sb.textContent='Add title rule';
       const dl=document.getElementById('titleDel'); if(dl) dl.style.display='none';
       const inp=document.getElementById('titleInput'); if(inp) inp.value='';
       document.querySelectorAll('#sheetTitle #titleMode button').forEach((b,i)=>b.classList.toggle('on',i===0));
@@ -1198,7 +1199,10 @@
     const v=(inp&&inp.value.trim())||'';
     if(!v){ toast('Enter a title to block'); return; }
     const mode=(document.querySelector('#sheetTitle #titleMode button.on')||{textContent:'Contains'}).textContent;
-    const dup=[...document.querySelectorAll('#titleList .kw-row')].some(r=>r!==titleEditId&&r.querySelector('.t').textContent.toLowerCase()===v.toLowerCase());
+    // TitleBlockViewModel.addRule: duplicate == same value AND same mode
+    const dup=[...document.querySelectorAll('#titleList .kw-row')].some(r=>r!==titleEditId
+      && r.querySelector('.t').textContent.toLowerCase()===v.toLowerCase()
+      && (r.querySelector('.s').textContent||'Contains')===mode);
     if(dup){ toast('Rule already exists'); return; }
     const row=document.createElement('div');
     row.className='kw-row';
@@ -1217,7 +1221,8 @@
     const inp=document.getElementById('titleInput'); if(inp) inp.value=v;
     document.querySelectorAll('#sheetTitle #titleMode button').forEach(b=>b.classList.toggle('on',b.textContent===mode));
     const tt=document.getElementById('titleSheetTitle'); if(tt) tt.textContent='Edit title rule';
-    const sb=document.getElementById('titleSaveBtn'); if(sb) sb.textContent='Save changes';
+    // opened directly (not via openSheet) so the edit state survives
+    const sb=document.getElementById('titleSaveBtn'); if(sb) sb.textContent='Save';
     const dl=document.getElementById('titleDel'); if(dl) dl.style.display='';
     document.getElementById('scrim').classList.add('show');
     document.getElementById('sheetTitle').classList.add('show');
@@ -1715,7 +1720,7 @@
       '<div class="kw-row"><div class="ic d"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>'
       + '<div class="tx"><div class="t">'+r.t+'</div><div class="s">'+r.s+'</div></div>'
       + '<div class="sw on" data-toggle></div>'
-      + `<button class="act" onclick="openSheet('sheetTitle')"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>`
+      + `<button class="act" onclick="editTitle(this)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>`
       + '</div>').join('');
     host.style.display = TITLES.length ? 'block' : 'none';
     const empty=document.getElementById('titleEmpty'); if(empty) empty.style.display = TITLES.length ? 'none' : 'block';

@@ -597,6 +597,51 @@ async function main () {
     && headerStates.empty.startsWith('No quick actions yet'),
     JSON.stringify(headerStates))
 
+  // ---- title-rule sheet: labels, scope banner, value+mode duplicates ------ #
+  const titleSheet = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms))
+    const cs = (el, p) => getComputedStyle(el)[p]
+    window.nav('titleblock'); window.openSheet('sheetTitle'); await wait(80)
+    const addLabel = document.getElementById('titleSaveBtn').textContent
+    const scope = document.querySelector('#sheetTitle .scope-note')
+    const scopeBg = scope ? cs(scope, 'backgroundColor') : null
+    const scopeText = scope ? scope.textContent.trim() : null
+    const delHidden = cs(document.getElementById('titleDel'), 'display') === 'none'
+    // adding "Apps / Contains" then "Apps / Exact" must both be accepted
+    const seed = (value, modeIndex) => {
+      document.getElementById('titleInput').value = value
+      document.querySelectorAll('#sheetTitle #titleMode button').forEach((b, i) => b.classList.toggle('on', i === modeIndex))
+    }
+    document.getElementById('toasts').innerHTML = ''
+    seed('zzTestRule', 0)
+    document.querySelector('#titleSaveBtn').click(); await wait(80)
+    const afterFirst = [...document.querySelectorAll('#toasts .toast')].map(t => t.textContent)
+    window.openSheet('sheetTitle'); await wait(60)
+    seed('zzTestRule', 1)
+    document.querySelector('#titleSaveBtn').click(); await wait(80)
+    const afterSecond = [...document.querySelectorAll('#toasts .toast')].map(t => t.textContent)
+    // edit mode: title + Save label + delete row
+    const editBtn = document.querySelector('#titleList .kw-row .act')
+    // rows open the EDIT sheet (chevron), not the add sheet
+    if (editBtn) editBtn.click(); await wait(80)
+    const editTitle = document.getElementById('titleSheetTitle').textContent
+    const editLabel = document.getElementById('titleSaveBtn').textContent
+    const delShown = cs(document.getElementById('titleDel'), 'display') !== 'none'
+    window.closeSheets()
+    return { addLabel, scopeBg, scopeText, delHidden, afterFirst, afterSecond,
+             editTitle, editLabel, delShown }
+  })
+  check('title sheet: brandSoft scope banner, Add title rule / Save, value+mode duplicates',
+    titleSheet.addLabel === 'Add title rule'
+    && titleSheet.scopeBg === 'rgb(251, 239, 232)'
+    && titleSheet.scopeText === 'Applies only to System Settings'
+    && titleSheet.delHidden === true
+    && titleSheet.afterFirst.includes('Rule added')
+    && titleSheet.afterSecond.includes('Rule added')
+    && titleSheet.editTitle === 'Edit title rule' && titleSheet.editLabel === 'Save'
+    && titleSheet.delShown === true,
+    JSON.stringify(titleSheet))
+
   // ---- app-lock wizard + auto-lock sheet ---------------------------------- #
   const lockSheets = await page.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms))

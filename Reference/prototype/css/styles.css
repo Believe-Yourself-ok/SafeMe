@@ -333,6 +333,19 @@
   .setup-lock-cta .sl-chev{display:flex;align-items:center;flex:none;opacity:.95;transition:transform .18s var(--ease)}
   .setup-lock-cta:active .sl-chev{transform:translateX(3px)}
   .setup-lock-cta .sl-chev svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* TitleBlock sheet: MATCH label 14/10 (no horizontal inset), the scope note is
+     a brandSoft r12 banner with an 18dp info glyph 14 below the segment, and the
+     delete action is a plain 48dp danger row 12 below the buttons. */
+  #sheetTitle .group-label{margin:14px 0 10px}
+  .scope-note{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;
+              border-radius:12px;background:var(--brand-soft);color:var(--brand-dark)}
+  .scope-note svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:2;
+                  stroke-linecap:round;stroke-linejoin:round}
+  .scope-note span{font-size:13px;font-weight:600}
+  .title-del{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;
+             margin-top:12px;border-radius:999px;color:var(--danger);font-size:15px;font-weight:600}
+  .title-del svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;
+                 stroke-linecap:round;stroke-linejoin:round}
   /* AutoLockSheet: option list 14 below the subtitle, 16 above Done */
   #autoLockList{margin-top:14px}
   .steps{display:flex;gap:6px;justify-content:center;margin:4px auto 16px}
