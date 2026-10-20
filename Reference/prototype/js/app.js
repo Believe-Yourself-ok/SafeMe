@@ -1215,11 +1215,14 @@
         const nm=r.dataset.app;
         if(!SOCIAL.wholeBlocked.has(nm)) r.remove();
       });
-      SOCIAL.wholeBlocked.forEach(name=>{
+      // LaunchBlockSection: extras are sorted by package, tinted #EFEFEF / #6B625A,
+      // subtitled with the package and drawn as a single initial.
+      [...SOCIAL.wholeBlocked].sort().forEach(name=>{
         if(defaults.has(name)) return;
         const exists = launchList.querySelector('.launch-row[data-app="'+name+'"]');
         if(exists) return;
         const a=appByName(name);
+        const pkgLabel = a.pkg || name;
         const row=document.createElement('div');
         row.className='launch-row extra';
         row.dataset.app=name;
@@ -1231,11 +1234,13 @@
         row.style.borderRadius='16px';
         row.style.padding='12px';
         const ic=document.createElement('div');
-        ic.style.width='42px'; ic.style.height='42px'; ic.style.borderRadius='14px'; ic.style.background=a.bg; ic.style.color=a.fg;
+        ic.style.width='42px'; ic.style.height='42px'; ic.style.borderRadius='14px';
+        ic.style.background='#EFEFEF'; ic.style.color='#6B625A';
         ic.style.display='flex'; ic.style.alignItems='center'; ic.style.justifyContent='center'; ic.style.flex='none';
-        ic.innerHTML='<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">'+a.ic+'</svg>';
+        ic.style.fontWeight='800'; ic.style.fontSize='14px'; ic.style.border='1px solid var(--line)';
+        ic.textContent=name.charAt(0).toUpperCase();
         const tx=document.createElement('div'); tx.style.flex='1'; tx.style.minWidth='0';
-        tx.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--ink);line-height:1.2">'+name+'</div><div style="font-size:11.5px;color:var(--ink-2);margin-top:2px">'+a.pkg+'</div>';
+        tx.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--ink);line-height:1.2">'+name+'</div><div style="font-size:11.5px;color:var(--ink-2);margin-top:2px">'+pkgLabel+'</div>';
         const sw=document.createElement('div'); sw.className='sw on'; sw.dataset.launch=name;
         sw.onclick=function(){ togLaunch(sw, name); };
         sw.classList.toggle('on', SOCIAL.enabled && SOCIAL.wholeBlocked.has(name));
@@ -1266,7 +1271,10 @@
     if(SOCIAL.wholeBlocked.has(name)) SOCIAL.wholeBlocked.delete(name);
     else SOCIAL.wholeBlocked.add(name);
     saveSocial(); renderSocial();
-    toast(name + (SOCIAL.wholeBlocked.has(name) ? ' blocked' : ' allowed'));
+    // SocialBlockingViewModel.toggleLaunch names the toast after the package tail
+    // ("musically blocked"), not after the app label.
+    const tailPkg = (appByName(name).pkg || name).split('.').pop() || name;
+    toast(tailPkg + (SOCIAL.wholeBlocked.has(name) ? ' blocked' : ' allowed'));
   }
   function togSocialMaster(el){
     SOCIAL.enabled = !SOCIAL.enabled;
@@ -1303,21 +1311,17 @@
     const q=(document.getElementById('socialAppSearch')||{}).value||'';
     APPS.forEach(a=>SOCIAL.wholeBlocked.add(a.name));
     renderAppPicker(document.getElementById('socialAppList'),'multi',SOCIAL.wholeBlocked,q);
-    updatePickerCounts(); renderSocial(); saveSocial(); toast('All apps blocked (whole-app)');
+    updatePickerCounts(); renderSocial(); saveSocial(); toast(APPS.length+' apps blocked (whole-app)');
   }
   function deselectAllSocialApps(){
     const q=(document.getElementById('socialAppSearch')||{}).value||'';
     SOCIAL.wholeBlocked.clear();
     renderAppPicker(document.getElementById('socialAppList'),'multi',SOCIAL.wholeBlocked,q);
-    updatePickerCounts(); renderSocial(); saveSocial(); toast('Cleared whole-app blocks');
+    updatePickerCounts(); renderSocial(); saveSocial(); toast('No whole-app blocks');
   }
   function socialAppsDone(){
     saveSocial(); renderSocial(); closeSheets();
     toast(SOCIAL.wholeBlocked.size ? SOCIAL.wholeBlocked.size+' app'+(SOCIAL.wholeBlocked.size===1?'':'s')+' blocked (whole-app)' : 'No whole-app blocks');
-  }
-  function socialRemoveApp(name){
-    SOCIAL.wholeBlocked.delete(name);
-    saveSocial(); renderSocial(); toast(name+' — unblocked');
   }
 
   // ---------- DNS & VPN ----------

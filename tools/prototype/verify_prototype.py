@@ -282,13 +282,31 @@ def group_a(rep: Report, ctx):
     dupes = sorted({i for i in ids if ids.count(i) > 1})
     rep.check("A", "no duplicate element ids", not dupes, f"dupes: {dupes}")
 
-    # dead compatibility spans: display:none wrappers that no JS writes to
+    # Dead compatibility shims: any element that ships with display:none and is
+    # never referenced by JS can never become visible again (B-22 class of drift).
     dead = []
-    for m in re.finditer(r'<div style="display:none">(.*?)</div>', html, re.S):
-        for sid in re.findall(r'id="([^"]+)"', m.group(1)):
+    for m in re.finditer(r'<[a-z]+\b[^>]*style="[^"]*display:\s*none[^"]*"[^>]*>', html):
+        for sid in re.findall(r'id="([^"]+)"', m.group(0)):
             if sid not in ctx["js"]:
                 dead.append(sid)
-    rep.check("A", "no dead display:none compat spans", not dead, f"never written: {dead}")
+    rep.check("A", "no dead display:none elements (never written by JS)", not dead,
+              f"never written: {dead}")
+
+    # Section banners rot silently: a half-deleted banner once left the PROFILE
+    # header sitting in front of the service picker. Assert the comments are
+    # well-formed and that no banner name is used twice.
+    bad_comments, banners = [], []
+    for n, line in enumerate(html.splitlines(), 1):
+        if line.count("-->") > line.count("<!--") or line.count("<!--") - line.count("-->") > 1:
+            bad_comments.append(n)
+        m = re.search(r"<!-- =+ ([A-Z0-9 &/+\-]+) =+ -->", line)
+        if m:
+            banners.append(m.group(1).strip())
+    rep.check("A", "HTML section comments are well formed", not bad_comments,
+              f"unbalanced comment delimiters on lines {bad_comments}")
+    dup_banners = sorted({b for b in banners if banners.count(b) > 1})
+    rep.check("A", "no duplicated section banner", not dup_banners,
+              f"duplicated: {dup_banners}")
 
 
 def group_b(rep: Report, ctx):
