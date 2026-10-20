@@ -4,6 +4,7 @@
     --bg:#FAF7F3; --surface:#FFFFFF; --line:#EAE3DB;
     --success:#2E7D5B; --warning:#C0822B; --danger:#C4453C;
     --success-bg:#E7F0EC;   /* Color.kt LightAppColors.successBg */
+    --danger-bg:#F9E7E5;    /* Color.kt LightAppColors.dangerBg */
     --glass:rgba(255,255,255,.86);
     --shadow:0 6px 24px rgba(31,26,22,.08);
     --shadow-lg:0 16px 48px rgba(31,26,22,.18);
@@ -300,7 +301,11 @@
                  align-items:center;justify-content:center;margin-bottom:14px}
   .hero .hero-ic svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .hero .hero-foot{display:flex;gap:10px;margin-top:14px}
-  .hero .pill{background:rgba(255,255,255,.16);color:#fff}
+  /* Compose HeroPill (ScheduleScreen.kt:302-323) and the AppLock hero pill
+     (AppLockScreen.kt:321-345) keep the translucent white shell + white label
+     in every state; only the 7dp dot changes. The generic .pill.g/.r rules
+     below have equal specificity, so they must be re-scoped here. */
+  .hero .pill,.hero .pill.g,.hero .pill.r{background:rgba(255,255,255,.16);color:#fff}
   .hero .pill.g .pdot{background:#7CE0B3}
   .hero .pill.r .pdot{background:#FFB4AB}
   .btn-light{background:#fff;color:var(--brand-dark)}
@@ -521,6 +526,7 @@
     --bg:#15120E; --surface:#211C16; --line:#332B22;
     --success:#5FBF92; --warning:#D89A4C; --danger:#E2685F;
     --success-bg:#22332B;   /* Color.kt DarkAppColors.successBg */
+    --danger-bg:#3B2321;    /* Color.kt DarkAppColors.dangerBg */
     --glass:rgba(33,28,22,.86);   /* BottomNavBar uses surface@0.86f in both themes */
     --shadow:0 6px 24px rgba(0,0,0,.45);
     --shadow-lg:0 16px 48px rgba(0,0,0,.55);
@@ -580,9 +586,9 @@
        border-bottom:1px solid var(--line)}
   .inc::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--success);flex:none}
   /* banners (Schedule) - production geometry */
-  .banner{display:flex;align-items:center;gap:12px;background:rgba(244,67,54,.07);border:1px solid var(--danger);
+  .banner{display:flex;align-items:center;gap:12px;background:var(--danger-bg);border:1px solid var(--danger);
           border-radius:20px;padding:16px;margin-top:12px}
-  .banner .ic{width:40px;height:40px;border-radius:13px;background:var(--dangerBg);color:var(--danger);flex:none;
+  .banner .ic{width:40px;height:40px;border-radius:13px;background:var(--danger-bg);color:var(--danger);flex:none;
               display:flex;align-items:center;justify-content:center}
   .banner .ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;
                   stroke-linecap:round;stroke-linejoin:round}
@@ -596,12 +602,16 @@
   .banner .tx{flex:1;min-width:0}
   .banner .t{font-size:13px;font-weight:700}
   .banner .s{font-size:12.5px;line-height:17px;color:var(--ink-2);margin-top:3px}
-  .banner .btn.sm{height:38px;padding:0 14px;font-size:13.5px}
+  /* Enable pill = brandSoft / brandDark (ScheduleScreen.kt:377-394), not the
+     filled btn-primary the markup carries by default. */
+  .banner .btn.sm{height:38px;padding:0 14px;font-size:13.5px;
+                  background:var(--brand-soft);color:var(--brand-dark)}
   .banner .x{width:22px;height:22px;padding:3px;flex:none;color:var(--ink-3)}
   /* Enable row + overnight caption (schedule editor) */
   .row14{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
          border-radius:14px;padding:14px;margin-top:12px}
-  .cap{font-size:12px;color:var(--ink-2);margin-top:6px}
+  /* ScheduleEditScreen.kt:406-411 — "Ends next day" caption */
+  .cap{font-size:12px;color:var(--ink-3);margin-top:6px}
   /* ---------- Permission steps (production layout) ---------- */
   .perm-step{display:flex;flex-direction:column;flex:1;min-height:0}
   .perm-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:20px}

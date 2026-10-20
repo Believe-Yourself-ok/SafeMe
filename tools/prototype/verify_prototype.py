@@ -379,6 +379,18 @@ def group_d(rep: Report, ctx):
             bad.append(f"{var}: proto {proto_val} vs kotlin {want}")
     rep.check("D", "13 dark tokens == DarkAppColors", not bad, "; ".join(bad))
 
+    # success-bg / danger-bg are component fills (VpnPill, alert banners) that
+    # production reads from AppColors but the original 13-token set never covered.
+    bad = []
+    for var, token in (("success-bg", "successBg"), ("danger-bg", "dangerBg")):
+        for label, rule, palette in (("light", root, light), ("dark", dark_rule, dark)):
+            proto_val = hex6(rule.get(f"--{var}", "#"))
+            want = palette.get(token, "")
+            if proto_val != want:
+                bad.append(f"{label} {var}: proto {proto_val} vs kotlin {want}")
+    rep.check("D", "success-bg/danger-bg match successBg/dangerBg in both themes",
+              not bad, "; ".join(bad))
+
     rep.check("D", "dark theme overrides exist for light-only component colours",
               ':root[data-theme="dark"] .sw' in ctx["rules"]
               and ':root[data-theme="dark"] .toast' in ctx["rules"],
@@ -623,6 +635,81 @@ def group_g(rep: Report, ctx):
     rep.check("G", "vpn preset labels == DnsPreset", bool(labels) and all(
         f'"{lab}"' in js or f"'{lab}'" in js for lab in labels),
         f"missing DnsPreset labels: {[l for l in labels if l not in js]}")
+
+    # --- B-14: ScheduleScreen / ScheduleEditScreen state coverage ------------ #
+    sched_src = read(UI / "screens/schedule/ScheduleScreen.kt")
+    sched_prefs = read(DATA / "SchedulePrefs.kt")
+    edit_src = read(UI / "screens/schedule/ScheduleEditScreen.kt")
+    rep.check("G", "banner predicates mirror shouldShowA11y/ExactAlarmWarning (B-14)",
+              "fun shouldShowA11yWarning" in sched_prefs
+              and "fun shouldShowExactAlarmWarning" in sched_prefs
+              and "function schedWarnings" in js
+              and "!a11yOn && !schedA11yDismissed && needsA11y" in js
+              and "!schedExactGranted && !schedExactDismissed && enabled.length>0" in js
+              and "mode == ScheduleMode.LAUNCH || mode == ScheduleMode.BOTH" in sched_prefs
+              and "m==='Both'||m==='Launch'" in js,
+              "banner gating drifted from SchedulePrefs")
+    rep.check("G", "dismissing a schedule banner is remembered until re-granted (B-14)",
+              "function dismissSchedBanner" in js
+              and "if(a11yOn) schedA11yDismissed = false" in js
+              and "if(schedExactGranted) schedExactDismissed = false" in js,
+              "a dismissal is not re-armed by ScheduleViewModel.refresh()")
+    rep.check("G", "toolbar can reach both banner states (B-14)",
+              'id="stExact"' in html and "setDemo('exact'" in html
+              and "key === 'exact'" in js and "function openExactAlarm" in js,
+              "the exact-alarm banner has no demo state")
+    rep.check("G", "Exclude Apps card is brandSoft + count-driven (B-14)",
+              'id="schExcludeSub"' in html and "function schedExcludeSub" in js
+              and "'Never blocked by any schedule'" in js
+              and "app'+(n===1?' excluded':'s excluded')" in js
+              and "R.plurals.sch_exclude_count" in sched_src
+              and "stringResource(R.string.sch_exclude_sub)" in sched_src,
+              "exclude card subtitle is not driven by sch_exclude_count")
+    rep.check("G", "Exclude Apps sheet reuses AppPickerSheet copy (B-14)",
+              'id="sheetExclude"' in html and 'id="excludeList"' in html
+              and strings["sch_exclude_sheet_title"] in html
+              and strings["sch_exclude_sheet_sub"] in html
+              and "function excludeDone" in js
+              and "R.string.sch_exclude_sheet_title" in sched_src,
+              "the exclude picker copy drifted from ScheduleScreen")
+    rep.check("G", "schedule list has no prototype-only empty line (B-14)",
+              "schedEmpty" not in html and "schedEmpty" not in js,
+              "schedEmpty is back; production shows the empty copy in the hero only")
+    rep.check("G", "hero pill keeps its translucent shell in every state (B-14)",
+              ".hero .pill,.hero .pill.g,.hero .pill.r{background:rgba(255,255,255,.16);color:#fff}"
+              in ctx["css"]
+              and ".background(Color.White.copy(alpha = 0.16f))" in sched_src,
+              "the generic .pill.g/.r rules are shadowing the hero shell again")
+    dots = re.findall(r"HeroPillDot(?:Off)? = Color\(0xFF([0-9A-Fa-f]{6})\)", sched_src)
+    applock_src = read(UI / "screens/applock/AppLockScreen.kt")
+    applock_dots = re.findall(r"Pill(?:Green|Red) = Color\(0xFF([0-9A-Fa-f]{6})\)", applock_src)
+    rep.check("G", "hero pill dot colours == HeroPillDot / PillGreen+PillRed (B-14)",
+              dots and applock_dots and sorted(d.upper() for d in dots) == sorted(applock_dots)
+              and all(f"#{d.upper()}" in ctx["css"] for d in dots),
+              f"Kotlin dots {dots} vs applock {applock_dots}")
+    btn_rule = ctx["rules"].get(".banner .btn.sm", {})
+    rep.check("G", "schedule banner: dangerBg fill + brandSoft Enable pill (B-14)",
+              ctx["rules"].get(".banner", {}).get("background") == "var(--danger-bg)"
+              and btn_rule.get("background") == "var(--brand-soft)"
+              and btn_rule.get("color") == "var(--brand-dark)"
+              and "colors.dangerBg" in sched_src,
+              "banner fill or Enable pill drifted from ScheduleScreen")
+    rep.check("G", "overnight windows append (+1) like scheduleWindowLabel (B-14)",
+              "(o.end<o.start?' (+1)':'')" in js
+              and 'if (endMinute < startMinute) " (+1)" else ""' in sched_prefs
+              and "(o.end<o.start?' (+1)':'')" in js,
+              "(+1) marker drifted from SchedulePrefs.scheduleWindowLabel")
+    rep.check("G", "card foot/pill copy == sch_card_next / sch_card_apps_all (B-14)",
+              "Next · '+o.days" in js and ":'All apps'" in js
+              and strings["sch_card_next"].startswith("Next · ")
+              and strings["sch_card_apps_all"] == "All apps",
+              "card foot/pill copy drifted")
+    rep.check("G", "\"Ends next day\" caption is state-derived, not Done-only (B-14)",
+              "function schedOvernightCap" in js
+              and js.count("schedOvernightCap();") >= 3
+              and "stringResource(R.string.sche_overnight)" in edit_src
+              and ctx["rules"].get(".cap", {}).get("color") == "var(--ink-3)",
+              "the overnight caption is not recomputed when the editor opens")
 
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
@@ -1006,6 +1093,7 @@ def kotlin_literals() -> str:
 DYNAMIC_IDS = {
     "schedList", "launchList", "kwList", "histList", "svcList", "titleList",
     "homeFeed", "qaOn", "qaAdd", "appList", "vpnAppList", "socialAppList",
+    "excludeList",
     "unlockBody", "toasts",
 }
 # Single values a renderer writes at boot (counts, timers). They may ship a value

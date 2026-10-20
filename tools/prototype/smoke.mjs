@@ -237,7 +237,10 @@ async function main () {
       times: [...document.querySelectorAll('#schedList .sched-time-txt')].map(t => t.textContent),
       apps: [...document.querySelectorAll('#schedList .sched-card')].map(c => c.querySelectorAll('.pill')[1].textContent),
       off: [...document.querySelectorAll('#schedList .sched-card')].filter(c => !c.querySelector('.sw').classList.contains('on')).length,
-      emptyShown: getComputedStyle(document.getElementById('schedEmpty')).display !== 'none',
+      // ScheduleScreen renders no list-level empty text; the hero sub owns that copy.
+      cards: document.querySelectorAll('#schedList .sched-card').length,
+      a11y: getComputedStyle(document.getElementById('schA11yWarn')).display !== 'none',
+      exact: getComputedStyle(document.getElementById('schExactWarn')).display !== 'none',
       home: [document.getElementById('homeBlocked').textContent, document.getElementById('homeSchedules').textContent]
     })
     window.setDemo('lists', 'populated'); await new Promise(r => setTimeout(r, 60))
@@ -245,21 +248,33 @@ async function main () {
     window.setDemo('lists', 'empty'); await new Promise(r => setTimeout(r, 60))
     const empty = read()
     window.setDemo('lists', 'populated'); await new Promise(r => setTimeout(r, 60))
-    return { populated, empty }
+    // Banner predicates: shouldShowA11yWarning / shouldShowExactAlarmWarning.
+    const flags = {}
+    window.setDemo('a11y', 'on'); window.setDemo('exact', 'granted')
+    await new Promise(r => setTimeout(r, 40)); flags.bothOk = read()
+    window.setDemo('a11y', 'off'); window.setDemo('exact', 'not_granted')
+    await new Promise(r => setTimeout(r, 40)); flags.bothMissing = read()
+    window.setDemo('a11y', 'on')
+    return { populated, empty, flags }
   })
   check('schedule: hero count/pill/boundary, (+1) overnight row, disabled card',
     sched.populated.count === '2 active schedules' && sched.populated.pill === 'On'
     && /^Next boundary · \w+ at (\w+ )?\d{2}:\d{2}$/.test(sched.populated.sub)
     && sched.populated.times.includes('23:00 – 06:00 (+1)')
     && sched.populated.apps.includes('All apps') && sched.populated.apps.includes('3 apps')
-    && sched.populated.off === 1 && !sched.populated.emptyShown
+    && sched.populated.off === 1 && sched.populated.cards === 3
     && sched.populated.home[1] === '2',
     JSON.stringify(sched.populated))
   check('schedule: empty first-launch state clears cards + Home counters',
     sched.empty.count === '0 active schedules' && sched.empty.pill === 'Off'
-    && sched.empty.sub === 'No schedules yet — create one' && sched.empty.emptyShown
+    && sched.empty.sub === 'No schedules yet — create one' && sched.empty.cards === 0
+    && !sched.empty.a11y && !sched.empty.exact                 // no enabled schedule, no nag
     && sched.empty.home[0] === '0' && sched.empty.home[1] === '0',
     JSON.stringify(sched.empty))
+  check('schedule: warning banners follow their predicates (a11y + exact alarm)',
+    sched.flags.bothOk.a11y === false && sched.flags.bothOk.exact === false
+    && sched.flags.bothMissing.a11y === true && sched.flags.bothMissing.exact === true,
+    JSON.stringify(sched.flags))
 
   // ---- DNS/VPN status matrix -------------------------------------------- #
   const vpnStates = await page.evaluate(async () => {

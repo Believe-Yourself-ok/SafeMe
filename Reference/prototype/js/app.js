@@ -205,12 +205,16 @@
       if(value === 'partial'){ d.paused = false; d.layers = 8; d.attention = 2; }
       if(value === 'paused'){ d.paused = true; }
     }
-    if(key === 'a11y'){ d.a11y = value; /* keep the simulated service flag in step */ a11yOn = value === 'on'; }
+    if(key === 'a11y'){ d.a11y = value; /* keep the simulated service flag in step */ a11yOn = value === 'on';
+      /* ScheduleViewModel.refresh(): re-arm the dismissed banner once the service is back on. */
+      if(a11yOn) schedA11yDismissed = false; schedWarnings(); }
     if(key === 'greeting') d.greeting = value;
     if(key === 'lock') setDemoLock(value);
     if(key === 'bio'){ DEMO.home.bioAvailable = value === 'available'; paintLockBio(); }
     if(key === 'vpn') setDemoVpn(value);
     if(key === 'lists') setDemoLists(value);
+    if(key === 'exact'){ schedExactGranted = value === 'granted';
+      if(schedExactGranted) schedExactDismissed = false; schedWarnings(); }
     if(key === 'backup') demoBackup(value);
     renderHome();
   }
@@ -277,7 +281,11 @@
     const t = e.target.closest('.sw[data-toggle]');
     if(t){ t.classList.toggle('on');
       if(t.id==='homeMaster'){ DEMO.home.paused=!t.classList.contains('on'); renderHome(); }
-      toast(t.classList.contains('on')?'On':'Off'); if(t.closest('#schedList')) schedCount(); if(t.closest('#titleList')) titleCount(); if(t.id==='vpnToggle') vpnStatus(); }
+      toast(t.classList.contains('on')?'On':'Off');
+      // ScheduleViewModel.toggleSchedule persists `enabled`, which the banner
+      // predicates and the edit screen both read back.
+      if(t.closest('#schedList')){ const card=t.closest('.sched-card');
+        if(card) card.dataset.enabled=t.classList.contains('on')?'1':'0'; schedCount(); } if(t.closest('#titleList')) titleCount(); if(t.id==='vpnToggle') vpnStatus(); }
   });
 
   // ---------- In-screen tabs ----------
@@ -337,6 +345,10 @@
   const DEFAULT_APP_SEL = new Set(['TikTok','Instagram','YouTube','Reddit','Snapchat','Facebook','X (Twitter)','WhatsApp','Netflix','Spotify','Roblox','Chrome']);
   const appPickSel = new Set(DEFAULT_APP_SEL);
   const vpnPickSel = new Set();
+  // ScheduleScreen.kt: `excludeSelection` is a working copy; Done commits it
+  // through setExcludedApps(), which feeds the Exclude Apps card count.
+  const excludeSel = new Set();
+  let excludeDraft = new Set();
 
   // ---------- Dynamic app classifier ----------
   // The category is derived on the fly from each installed app's package metadata
@@ -399,12 +411,14 @@
     const cfg={
       sheetApps:['appList','appSearch','multi'],
       sheetVpnApps:['vpnAppList','vpnAppSearch','multi'],
-      sheetSocialApps:['socialAppList','socialAppSearch','multi']
+      sheetSocialApps:['socialAppList','socialAppSearch','multi'],
+      sheetExclude:['excludeList','excludeSearch','multi']
     }[id];
     if(!cfg) return;
     const host=document.getElementById(cfg[0]);
     const search=document.getElementById(cfg[1]); if(search) search.value='';
-    const sel = id==='sheetApps' ? appPickSel : id==='sheetVpnApps' ? vpnPickSel : SOCIAL.wholeBlocked;
+    const sel = id==='sheetApps' ? appPickSel : id==='sheetVpnApps' ? vpnPickSel
+      : id==='sheetExclude' ? excludeDraft : SOCIAL.wholeBlocked;
     renderAppPicker(host, cfg[2], sel, '');
     updatePickerCounts();
   }
@@ -413,7 +427,9 @@
   function openSheet(id){
     document.getElementById('scrim').classList.add('show');
     document.getElementById(id).classList.add('show');
-    if(id==='sheetApps'||id==='sheetVpnApps'||id==='sheetSocialApps'){ refreshAppPicker(id); }
+    // ExcludeAppsCard.onManage: seed the working copy from the committed set.
+    if(id==='sheetExclude') excludeDraft = new Set(excludeSel);
+    if(id==='sheetApps'||id==='sheetVpnApps'||id==='sheetSocialApps'||id==='sheetExclude'){ refreshAppPicker(id); }
     if(id==='sheetTitle'){
       titleEditId=null;
       const tt=document.getElementById('titleSheetTitle'); if(tt) tt.textContent='Add title rule';
@@ -486,6 +502,7 @@
     const name=li.dataset.app||(li.querySelector('.t')||{textContent:''}).textContent;
     let set = null;
     if(li.closest('#appList')) set = appPickSel;
+    else if(li.closest('#excludeList')) set = excludeDraft;
     else if(li.closest('#vpnAppList')) set = vpnPickSel;
     else if(li.closest('#socialAppList')) set = SOCIAL.wholeBlocked;
     if(set){ if(c.classList.contains('on')) set.add(name); else set.delete(name); }
@@ -848,6 +865,13 @@
     else { document.getElementById('schedList').insertAdjacentHTML('beforeend',html); }
     schedCount(); nav('schedule'); toast('Schedule saved — alarms set');
   }
+  /** ScheduleEditScreen.kt:405-411 — endMinute < startMinute shows "Ends next day". */
+  function schedOvernightCap(){
+    const cap=document.getElementById('schedOvernight'); if(!cap) return;
+    const a=(document.getElementById('timeStart').dataset.h24)||'21:00';
+    const b=(document.getElementById('timeEnd').dataset.h24)||'23:00';
+    cap.style.display = (b<a)?'block':'none';
+  }
   function schedCardHTML(o){
     return '<div class="sched-card" data-name="'+o.name+'" data-days="'+o.days+'" data-daysraw="'+o.daysraw+'" data-start="'+o.start+'" data-end="'+o.end+'" data-mode="'+o.mode+'" data-modetxt="'+o.modetxt+'" data-apps="'+o.apps+'" data-enabled="'+(o.enabled===false?'0':'1')+'">'+
       '<div class="sched-head">'+
@@ -879,7 +903,7 @@
       if(save) save.textContent='Create schedule';
       if(name) name.value='';
       days.forEach((d,i)=>d.classList.toggle('on',i<3));
-      setTimep(ts,'21:00'); setTimep(te,'23:00');
+      setTimep(ts,'21:00'); setTimep(te,'23:00'); schedOvernightCap();
       seg.forEach(b=>b.classList.toggle('on',b.textContent==='Both'));
       if(apc) apc.textContent='No apps selected';
       if(aps) aps.textContent='No apps — schedule blocks everything';
@@ -893,7 +917,7 @@
     if(name) name.value=c.dataset.name;
     const raw=(c.dataset.daysraw||'').split(',');
     days.forEach((d,i)=>d.classList.toggle('on',raw.includes(dayNames[i])));
-    setTimep(ts,c.dataset.start||'21:00'); setTimep(te,c.dataset.end||'23:00');
+    setTimep(ts,c.dataset.start||'21:00'); setTimep(te,c.dataset.end||'23:00'); schedOvernightCap();
     seg.forEach(b=>b.classList.toggle('on',b.textContent===c.dataset.mode));
     const n=Number(c.dataset.apps||0);
     if(apc) apc.textContent=n?(n+' apps selected'):'No apps selected';
@@ -935,8 +959,7 @@
     const el=document.getElementById(timeTarget==='start'?'timeStart':'timeEnd');
     setTimep(el,v);
     const a=(document.getElementById('timeStart').dataset.h24)||'21:00', b=(document.getElementById('timeEnd').dataset.h24)||'23:00';
-    const cap=document.getElementById('schedOvernight');
-    if(cap) cap.style.display = (b<a)?'block':'none';
+    schedOvernightCap();
     if(a===b){ toast('Start and end can\u2019t be the same'); return; }
     closeSheets();
   }
@@ -1040,8 +1063,35 @@
         sub.textContent='No schedules yet — create one';
       }
     }
-    const emp=document.getElementById('schedEmpty'); if(emp) emp.style.display=all.length?'none':'block';
+    schedWarnings(); schedExcludeSub();
     syncHomeStats();
+  }
+
+  // SchedulePrefs.shouldShowA11yWarning / shouldShowExactAlarmWarning. Both
+  // banners require at least one ENABLED schedule (a paused one never nags);
+  // the a11y banner additionally only fires for modes that need the service.
+  let schedA11yDismissed = false, schedExactDismissed = false, schedExactGranted = false;
+  function schedWarnings(){
+    const enabled=[...document.querySelectorAll('#schedList .sched-card')]
+      .filter(c=>{ const sw=c.querySelector('.sw'); return !sw || sw.classList.contains('on'); });
+    const modeOf=c=>c.dataset.mode||'Both';
+    const needsA11y=enabled.some(c=>{ const m=modeOf(c); return m==='Both'||m==='Launch'; });
+    const a11y=document.getElementById('schA11yWarn');
+    if(a11y) a11y.style.display=(!a11yOn && !schedA11yDismissed && needsA11y)?'flex':'none';
+    const exact=document.getElementById('schExactWarn');
+    if(exact) exact.style.display=(!schedExactGranted && !schedExactDismissed && enabled.length>0)?'flex':'none';
+  }
+  /** dismissA11yWarning()/dismissExactAlarmWarning(): remembered until re-granted. */
+  function dismissSchedBanner(btn, which){
+    const b=btn.closest('.banner'); if(b) b.style.display='none';
+    if(which==='a11y') schedA11yDismissed=true; else schedExactDismissed=true;
+  }
+  /** ExcludeAppsCard subtitle: count==0 → sch_exclude_sub, else sch_exclude_count. */
+  function schedExcludeSub(){
+    const el=document.getElementById('schExcludeSub'); if(!el) return;
+    const n=excludeSel.size;
+    el.textContent = n===0 ? 'Never blocked by any schedule'
+      : n+' app'+(n===1?' excluded':'s excluded');
   }
 
   // ---------- Title Block ----------
@@ -1104,6 +1154,9 @@
     if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter') addTitle(); });
   })();
   function updatePickerCounts(){
+    const ex=document.getElementById('selAllExcludeBtn'), exd=document.getElementById('deselAllExcludeBtn');
+    if(ex) ex.textContent='Select All ('+excludeDraft.size+')';
+    if(exd) exd.textContent='Deselect All ('+excludeDraft.size+')';
     const a=document.getElementById('selAllAppsBtn'), b=document.getElementById('deselAllAppsBtn');
     if(a) a.textContent='Select All ('+appPickSel.size+')';
     if(b) b.textContent='Deselect All ('+appPickSel.size+')';
@@ -1150,6 +1203,38 @@
       });
       g.style.display=any?'':'none';
     });
+  }
+  function filterExclude(q){
+    const v=(q||'').trim().toLowerCase();
+    document.querySelectorAll('#excludeList .app-group').forEach(g=>{
+      let any=false;
+      g.querySelectorAll('.li').forEach(r=>{
+        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
+        const hit=!v||t.includes(v);
+        r.style.display=hit?'':'none';
+        if(hit) any=true;
+      });
+      g.style.display=any?'':'none';
+    });
+  }
+  function selectAllExclude(){
+    const q=(document.getElementById('excludeSearch')||{}).value||'';
+    APPS.forEach(a=>excludeDraft.add(a.name));
+    renderAppPicker(document.getElementById('excludeList'),'multi',excludeDraft,q);
+    updatePickerCounts();
+  }
+  function deselectAllExclude(){
+    const q=(document.getElementById('excludeSearch')||{}).value||'';
+    excludeDraft.clear();
+    renderAppPicker(document.getElementById('excludeList'),'multi',excludeDraft,q);
+    updatePickerCounts();
+  }
+  /** AppPickerSheet.onDone → setExcludedApps(excludeSelection) → refresh count. */
+  function excludeDone(){
+    excludeSel.clear();
+    excludeDraft.forEach(n=>excludeSel.add(n));
+    closeSheets();
+    schedExcludeSub();
   }
 
   // ---------- Social Media Blocking (two gates) ----------
@@ -1452,7 +1537,15 @@
     toast('Opening: Accessibility → SafeMe…');
     setTimeout(()=>{ a11yOn=true; DEMO.home.a11y='on';
       const sel=document.getElementById('stA11y'); if(sel) sel.value='on';
+      schedA11yDismissed=false; schedWarnings();      // refresh(): banner clears on resume
       renderHome(); toast('Accessibility service enabled'); }, 1600);
+  }
+  /** ExactAlarmBanner.onEnable: opens the system screen; granting clears the banner. */
+  function openExactAlarm(){
+    toast('Opening exact-alarm settings');
+    setTimeout(()=>{ schedExactGranted=true; schedExactDismissed=false;
+      const sel=document.getElementById('stExact'); if(sel) sel.value='granted';
+      schedWarnings(); toast('Exact alarms allowed'); }, 1600);
   }
 
   // AntiTamperScreen.PreventUninstallCard: the pill label is at_activate or
