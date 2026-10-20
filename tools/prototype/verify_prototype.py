@@ -227,6 +227,15 @@ HOOK_CLASSES = {
 }
 
 
+def tpl(key: str) -> str | None:
+    """Read one verbatim copy template out of the prototype's T table."""
+    table = re.search(r"const T = \{(.*?)\n  \};", read(JS), re.S)
+    if not table:
+        return None
+    m = re.search(rf"{key}:\s*'([^']*)'", table.group(1))
+    return m.group(1) if m else None
+
+
 def group_a(rep: Report, ctx):
     html, css = ctx["html"], ctx["css"]
     rep.check("A", "CSS braces balanced", css.count("{") == css.count("}"),
@@ -512,19 +521,19 @@ def group_h(rep: Report, ctx):
     layers_active = strings["home_hero_layers_active"]    # "%1$d of %2$d layers active"
     attention = strings["home_hero_attention"]            # "%1$d need attention"
     rep.check("H", "hero subtitle: all-active branch == home_hero_all_active",
-              "'All ' + d.total + ' layers active'" in js
-              and all_active.replace("%1$d", "N") == "All N layers active",
-              f"prototype text vs {all_active!r}")
+              "fmt(T.heroAll, d.total)" in js and tpl("heroAll") == all_active,
+              f"T.heroAll={tpl('heroAll')!r} vs {all_active!r}")
     rep.check("H", "hero subtitle: partial branch == home_hero_layers_active + ' · ' + home_hero_attention",
-              "d.layers + ' of ' + d.total + ' layers active · ' + d.attention + ' need attention'" in js
-              and layers_active == "%1$d of %2$d layers active"
-              and attention == "%1$d need attention",
-              f"{layers_active!r} / {attention!r} vs prototype concat")
+              "fmt(T.heroLayers, d.layers, d.total)" in js
+              and "fmt(T.heroAttention, d.attention)" in js
+              and tpl("heroLayers") == layers_active
+              and tpl("heroAttention") == attention,
+              f"T.heroLayers={tpl('heroLayers')!r} T.heroAttention={tpl('heroAttention')!r}")
     rep.check("H", "hero subtitle: paused branch == home_hero_resume",
               f"'{strings['home_hero_resume']}'" in js,
               f"missing {strings['home_hero_resume']!r}")
     rep.check("H", "subtitle separator is ' · ' (U+00B7)",
-              "' layers active · ' + d.attention" in js.replace("\\n", " "),
+              "fmt(T.heroLayers, d.layers, d.total) + ' · '" in js,
               "separator drifted from the Compose concat")
 
     # --- pill -------------------------------------------------------------- #
@@ -591,7 +600,8 @@ def group_h(rep: Report, ctx):
               "date line format differs")
     rep.check("H", "greeting string is '<greeting>, <user>' (home_header_greeting)",
               strings["home_header_greeting"] == "%1$s, %2$s"
-              and "DEMO_STR[which] + ', ' + DEMO_STR.userName" in js,
+              and "fmt(T.greeting, DEMO_STR[which], DEMO_STR.userName)" in js
+              and tpl("greeting") == strings["home_header_greeting"],
               "greeting composition differs")
 
     # --- quick actions ----------------------------------------------------- #
@@ -614,7 +624,7 @@ def group_h(rep: Report, ctx):
               f"kotlin {clamp.groups() if clamp else None} vs prototype "
               f"{proto_clamp.groups() if proto_clamp else None}")
     rep.check("H", "preview countdown uses bs_closing (full stop, not an ellipsis)",
-              "'Closing in '+bsDwell+'s.'" in js
+              "fmt(T.closing, bsDwell)" in js and tpl("closing") == strings["bs_closing"]
               and strings["bs_closing"] == "Closing in %1$ds."
               and "Closing in 5s." in html,
               "preview copy drifted")
@@ -646,24 +656,25 @@ def group_h(rep: Report, ctx):
     rep.check("H", "vpn sub = preset | 'Custom · v4[ · v6]' (vpnStatusSub)",
               strings["vpn_custom_status_v4"] == "Custom · %1$s"
               and strings["vpn_custom_status_v4v6"] == "Custom · %1$s · %2$s"
-              and "'Custom · '+v.customV4+(v.customV6?' · '+v.customV6:'')" in js,
+              and "fmt(T.vpnCustomV4V6, v.customV4, v.customV6)" in js
+              and "fmt(T.vpnCustomV4, v.customV4)" in js,
               "custom preset line drifted")
     rep.check("H", "vpn sub wraps in vpn_sub_system_prefix",
               strings["vpn_sub_system_prefix"] == "System-wide · %1$s"
-              and "v.systemDns ? ('System-wide · '+base) : base" in js,
+              and "v.systemDns ? fmt(T.vpnSystem, base) : base" in js,
               "system-wide prefix drifted")
     rep.check("H", "vpn sub appends vpn_sub_exempt",
               strings["vpn_sub_exempt"] == "%1$s · %2$d exempt"
-              and "scoped+' · '+v.exempt+' exempt'" in js,
+              and "fmt(T.vpnExempt, scoped, v.exempt)" in js,
               "exempt suffix drifted")
     rep.check("H", "vpn sub appends vpn_sub_schedule_suffix last",
               strings["vpn_sub_schedule_suffix"] == "%1$s · schedule block active"
-              and "(withExempt+' · schedule block active')" in js,
+              and "v.scheduleBlocking ? fmt(T.vpnSchedule, withExempt) : withExempt" in js,
               "schedule suffix drifted")
     rep.check("H", "vpn whitelist row uses vpn_whitelist_none / _count",
               strings["vpn_whitelist_none"] in js
               and strings["vpn_whitelist_count"] == "%1$d app(s) exempt"
-              and "v.exempt+' app(s) exempt'" in js,
+              and "fmt(T.vpnWlCount, v.exempt)" in js,
               "whitelist copy drifted")
 
     # --- app lock gate (B-16) --------------------------------------------- #
@@ -702,9 +713,29 @@ def group_h(rep: Report, ctx):
               and strings["al_gate_forgot_password"] == "Forgot password?",
               "forgot copy drifted")
     rep.check("H", "gate subtitle uses al_gate_sub for every method",
-              "'Enter your '+methodLabel()+' to unlock'" in js
+              "fmt(T.gateSub, methodLabel())" in js
               and strings["al_gate_sub"] == "Enter your %1$s to unlock",
               "gate subtitle drifted")
+
+    rep.check("H", "every T template is byte-identical to its string resource",
+              tpl_cases := all(tpl(k) == strings[r] for k, r in (
+                  ("heroAll", "home_hero_all_active"),
+                  ("heroLayers", "home_hero_layers_active"),
+                  ("heroAttention", "home_hero_attention"),
+                  ("vpnCustomV4", "vpn_custom_status_v4"),
+                  ("vpnCustomV4V6", "vpn_custom_status_v4v6"),
+                  ("vpnExempt", "vpn_sub_exempt"),
+                  ("vpnSystem", "vpn_sub_system_prefix"),
+                  ("vpnSchedule", "vpn_sub_schedule_suffix"),
+                  ("vpnWlCount", "vpn_whitelist_count"),
+                  ("lockout", "al_gate_locked_out"),
+                  ("gateSub", "al_gate_sub"),
+                  ("closing", "bs_closing"),
+              )),
+              "a template drifted from strings.xml")
+    rep.check("H", "fmt() substitutes positional args like getString()",
+              "t.replace(/%([1-9])\\$[sd]/g" in js,
+              "fmt() no longer handles positional placeholders")
 
     rep.check("H", "empty quick actions use home_quick_actions_empty",
               strings["home_quick_actions_empty"] in js,

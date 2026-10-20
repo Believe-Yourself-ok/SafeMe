@@ -103,6 +103,146 @@
     if(document.getElementById('sc-'+name)){ show(name, stack[stack.length-1]!==name); }
   });
 
+  // ---------- DEMO state (SAD-319 Phase 3) ----------
+  // One object drives every prototype state so each production variant is
+  // reachable from the toolbar instead of being hardcoded in markup.
+  const DEMO = {
+    home: {
+      layers: 8, total: 10, attention: 2,
+      paused: false,
+      a11y: 'off',                  // 'off' | 'checking' | 'on'
+      greeting: 'live',             // 'live' -> derived from the clock, like HomeViewModel
+      bioAvailable: true,           // AppLockBiometrics.isAvailable(device)
+      blockedToday: 0,
+      schedules: 0
+    },
+    vpn: {
+      running: true,
+      preset: 'cloudflare',         // 'cloudflare' | 'adguard' | 'custom'
+      customV4: '1.1.1.1', customV6: '',
+      exempt: 0,
+      systemDns: false,             // vpn_sub_system_prefix
+      scheduleBlocking: false       // vpn_sub_schedule_suffix
+    }
+  };
+  // Copy that production formats from resources (%1$s / %2$d). Keeping the
+  // templates verbatim — instead of concatenating fragments — is what lets the
+  // parity verifier prove the prototype says exactly what strings.xml says.
+  const T = {
+    heroAll:        'All %1$d layers active',
+    heroLayers:     '%1$d of %2$d layers active',
+    heroAttention:  '%1$d need attention',
+    greeting:       '%1$s, %2$s',
+    vpnCustomV4:    'Custom · %1$s',
+    vpnCustomV4V6:  'Custom · %1$s · %2$s',
+    vpnExempt:      '%1$s · %2$d exempt',
+    vpnSystem:      'System-wide · %1$s',
+    vpnSchedule:    '%1$s · schedule block active',
+    vpnWlCount:     '%1$d app(s) exempt',
+    lockout:        'Too many attempts — try again in %1$s',
+    gateSub:        'Enter your %1$s to unlock',
+    closing:        'Closing in %1$ds.'
+  };
+  /** getString()-style substitution: %1$s / %2$d, in any order. */
+  function fmt(t, ...args){
+    return t.replace(/%([1-9])\$[sd]/g, (m,i)=>String(args[Number(i)-1]));
+  }
+
+  const DEMO_STR = {
+    protected: 'Protected', paused: 'Paused', attention: 'Attention',
+    full: 'Fully protected', partial: 'Partially protected', pausedTitle: 'Protection paused',
+    resume: 'Turn on master protection to resume',
+    morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening',
+    userName: 'Alex'
+  };
+  /** Mirrors HomeViewModel.currentGreeting(): 5..11 morning, 12..16 afternoon, else evening. */
+  function clockGreeting(){
+    const h=new Date().getHours();
+    return h>=5&&h<=11 ? 'morning' : (h>=12&&h<=16 ? 'afternoon' : 'evening');
+  }
+  /** Mirrors HomeViewModel.currentDateLine(): SimpleDateFormat("EEEE, h:mm a"). */
+  function clockDateLine(){
+    const d=new Date();
+    const day=d.toLocaleDateString('en-US',{weekday:'long'});
+    let h=d.getHours()%12; if(h===0) h=12;
+    const mm=String(d.getMinutes()).padStart(2,'0');
+    return day+', '+h+':'+mm+' '+(d.getHours()<12?'AM':'PM');
+  }
+  function setDemo(key, value){
+    const d = DEMO.home;
+    if(key === 'hero'){
+      if(value === 'full'){ d.paused = false; d.attention = 0; d.layers = d.total; }
+      if(value === 'partial'){ d.paused = false; d.layers = 8; d.attention = 2; }
+      if(value === 'paused'){ d.paused = true; }
+    }
+    if(key === 'a11y'){ d.a11y = value; /* keep the simulated service flag in step */ a11yOn = value === 'on'; }
+    if(key === 'greeting') d.greeting = value;
+    if(key === 'lock') setDemoLock(value);
+    if(key === 'bio'){ DEMO.home.bioAvailable = value === 'available'; paintLockBio(); }
+    if(key === 'vpn') setDemoVpn(value);
+    renderHome();
+  }
+
+  /** App Lock gate: closed / gate / lockout — the three states the gate can be in. */
+  function setDemoLock(value){
+    if(value === 'closed'){ closeLockov(); return; }
+    if(lockState !== 'on'){ lockState='on'; lockMethod='pin'; lockCode='1234'; renderLock(); }
+    lockFails=0; lockCooldownUntil=0;
+    if(value === 'lockout'){ demoLockout(); return; }
+    lockNow();
+  }
+
+  /** Home: title / subtitle / ring / pill / banner, exactly as HomeViewModel composes them. */
+  function renderHome(){
+    const d = DEMO.home;
+    const paused = d.paused;
+    const clean = d.attention === 0;
+    const title = paused ? DEMO_STR.pausedTitle : (clean ? DEMO_STR.full : DEMO_STR.partial);
+    const sub = paused ? DEMO_STR.resume
+      : (clean ? fmt(T.heroAll, d.total)
+               : fmt(T.heroLayers, d.layers, d.total) + ' · ' + fmt(T.heroAttention, d.attention));
+
+    const t = document.getElementById('homeHeroTitle'); if(t) t.textContent = title;
+    const s = document.getElementById('homeHeroSub');   if(s) s.textContent = sub;
+
+    const ring = document.getElementById('homeHeroRing');
+    if(ring){
+      // HomeViewModel: heroProgress = if (paused) 0f else layers.progress
+      const progress = paused ? 0 : (d.total ? d.layers / d.total : 0);
+      ring.setAttribute('stroke-dashoffset', String(Math.round(163.4 * (1 - progress) * 10) / 10));
+    }
+
+    // pill: paused → amber "Paused"; clean → green "Protected"; else amber "Attention"
+    const pill = document.getElementById('homePill');
+    if(pill){
+      const green = !paused && clean;
+      pill.className = 'pill ' + (green ? 'g' : 'o');
+      const label = paused ? DEMO_STR.paused : (green ? DEMO_STR.protected : DEMO_STR.attention);
+      pill.innerHTML = '<span class="pdot"></span>' + label;
+    }
+
+    const g = document.getElementById('homeGreeting');
+    if(g){
+      const which = d.greeting === 'live' ? clockGreeting() : d.greeting;
+      g.textContent = fmt(T.greeting, DEMO_STR[which], DEMO_STR.userName);
+    }
+    const dl = document.getElementById('homeDate');
+    if(dl) dl.textContent = clockDateLine();
+
+    // MasterProtectionCard(enabled = state.masterProtection) — paused == switch off
+    const master = document.getElementById('homeMaster');
+    if(master) master.classList.toggle('on', !paused);
+
+    // banner renders only when accessibility is known-off (HomeScreen.kt:129)
+    const banner = document.getElementById('a11yBanner');
+    if(banner) banner.style.display = d.a11y === 'off' ? 'flex' : 'none';
+
+    const blocked = document.getElementById('homeBlocked');
+    if(blocked) blocked.textContent = String(d.blockedToday);
+    const sched = document.getElementById('homeSchedules');
+    if(sched) sched.textContent = String(d.schedules);
+  }
+
   // ---------- Generic toggle ----------
   document.addEventListener('click', e=>{
     const t = e.target.closest('.sw[data-toggle]');
@@ -334,7 +474,7 @@
   function renderBlockPreview(){
     const msg=document.getElementById('bsPreviewMsg'); if(msg) msg.textContent=bsMsg;
     // bs_closing = "Closing in %1$ds." — a full stop, not an ellipsis
-    const cnt=document.getElementById('bsPreviewCount'); if(cnt) cnt.textContent='Closing in '+bsDwell+'s.';
+    const cnt=document.getElementById('bsPreviewCount'); if(cnt) cnt.textContent=fmt(T.closing, bsDwell);
     const dv=document.getElementById('bsDwellVal'); if(dv) dv.textContent=bsDwell+'s';
     const is=document.getElementById('bsImgSub'); if(is) is.textContent=bsImg?(bsImg+' · persistable'):'None · SAF persistable URI';
     const pi=document.getElementById('bsPreviewImg'); if(pi){ if(bsImg){ pi.style.display='block'; pi.className='img-'+bsImg; } else { pi.style.display='none'; pi.className=''; } }
@@ -510,7 +650,7 @@
   function closeLockov(){ document.getElementById('lockov').classList.remove('show'); }
   function renderUnlock(){
     const b=document.getElementById('unlockBody');
-    document.getElementById('lockovSub').textContent='Enter your '+methodLabel()+' to unlock';
+    document.getElementById('lockovSub').textContent=fmt(T.gateSub, methodLabel());
     if(lockMethod==='pin'){
       b.innerHTML='<div class="pindots" id="unlockDots">'+'<span class="pindot"></span>'.repeat(lockCode.length)+'</div><div class="keypad">'+
         ['1','2','3','4','5','6','7','8','9'].map(n=>'<button onclick="unlockPin(\''+n+'\')">'+n+'</button>').join('')+
@@ -544,7 +684,7 @@
     const left=lockGuardRemaining();
     const lockedOut = lockFails>=10;
     err.textContent = left>0
-      ? 'Too many attempts — try again in '+formatLockout(left)
+      ? fmt(T.lockout, formatLockout(left))
       : (lockFails>0 && lockFails<10 ? 'Wrong code — try again' : '');
   }
   function registerFail(){
@@ -1124,16 +1264,16 @@
       if(!running){ s.textContent='Tap to re-enable protection'; }
       else {
         const base = (v.preset==='custom' && v.customV4)
-          ? ('Custom · '+v.customV4+(v.customV6?' · '+v.customV6:''))
+          ? (v.customV6 ? fmt(T.vpnCustomV4V6, v.customV4, v.customV6) : fmt(T.vpnCustomV4, v.customV4))
           : VPN_LABEL[v.preset];
-        const scoped = v.systemDns ? ('System-wide · '+base) : base;
-        const withExempt = scoped+' · '+v.exempt+' exempt';
-        s.textContent = v.scheduleBlocking ? (withExempt+' · schedule block active') : withExempt;
+        const scoped = v.systemDns ? fmt(T.vpnSystem, base) : base;
+        const withExempt = fmt(T.vpnExempt, scoped, v.exempt);
+        s.textContent = v.scheduleBlocking ? fmt(T.vpnSchedule, withExempt) : withExempt;
       }
     }
     const sub=document.getElementById('vpnWhitelistSub');
     // vpn_whitelist_none / vpn_whitelist_count ("%1$d app(s) exempt")
-    if(sub) sub.textContent = v.exempt ? v.exempt+' app(s) exempt' : 'No apps exempt';
+    if(sub) sub.textContent = v.exempt ? fmt(T.vpnWlCount, v.exempt) : 'No apps exempt';
   }
   function setDemoVpn(value){
     const v = DEMO.vpn;
@@ -1145,123 +1285,6 @@
     vpnStatus();
   }
   // ---------- Accessibility status ----------
-  // ---------- DEMO state (SAD-319 Phase 3) ----------
-  // One object drives every prototype state so each production variant is
-  // reachable from the toolbar instead of being hardcoded in markup.
-  const DEMO = {
-    home: {
-      layers: 8, total: 10, attention: 2,
-      paused: false,
-      a11y: 'off',                  // 'off' | 'checking' | 'on'
-      greeting: 'live',             // 'live' -> derived from the clock, like HomeViewModel
-      bioAvailable: true,           // AppLockBiometrics.isAvailable(device)
-      blockedToday: 0,
-      schedules: 0
-    },
-    vpn: {
-      running: true,
-      preset: 'cloudflare',         // 'cloudflare' | 'adguard' | 'custom'
-      customV4: '1.1.1.1', customV6: '',
-      exempt: 0,
-      systemDns: false,             // vpn_sub_system_prefix
-      scheduleBlocking: false       // vpn_sub_schedule_suffix
-    }
-  };
-  const DEMO_STR = {
-    protected: 'Protected', paused: 'Paused', attention: 'Attention',
-    full: 'Fully protected', partial: 'Partially protected', pausedTitle: 'Protection paused',
-    resume: 'Turn on master protection to resume',
-    morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening',
-    userName: 'Alex'
-  };
-  /** Mirrors HomeViewModel.currentGreeting(): 5..11 morning, 12..16 afternoon, else evening. */
-  function clockGreeting(){
-    const h=new Date().getHours();
-    return h>=5&&h<=11 ? 'morning' : (h>=12&&h<=16 ? 'afternoon' : 'evening');
-  }
-  /** Mirrors HomeViewModel.currentDateLine(): SimpleDateFormat("EEEE, h:mm a"). */
-  function clockDateLine(){
-    const d=new Date();
-    const day=d.toLocaleDateString('en-US',{weekday:'long'});
-    let h=d.getHours()%12; if(h===0) h=12;
-    const mm=String(d.getMinutes()).padStart(2,'0');
-    return day+', '+h+':'+mm+' '+(d.getHours()<12?'AM':'PM');
-  }
-  function setDemo(key, value){
-    const d = DEMO.home;
-    if(key === 'hero'){
-      if(value === 'full'){ d.paused = false; d.attention = 0; d.layers = d.total; }
-      if(value === 'partial'){ d.paused = false; d.layers = 8; d.attention = 2; }
-      if(value === 'paused'){ d.paused = true; }
-    }
-    if(key === 'a11y'){ d.a11y = value; /* keep the simulated service flag in step */ a11yOn = value === 'on'; }
-    if(key === 'greeting') d.greeting = value;
-    if(key === 'lock') setDemoLock(value);
-    if(key === 'bio'){ DEMO.home.bioAvailable = value === 'available'; paintLockBio(); }
-    if(key === 'vpn') setDemoVpn(value);
-    renderHome();
-  }
-
-  /** App Lock gate: closed / gate / lockout — the three states the gate can be in. */
-  function setDemoLock(value){
-    if(value === 'closed'){ closeLockov(); return; }
-    if(lockState !== 'on'){ lockState='on'; lockMethod='pin'; lockCode='1234'; renderLock(); }
-    lockFails=0; lockCooldownUntil=0;
-    if(value === 'lockout'){ demoLockout(); return; }
-    lockNow();
-  }
-
-  /** Home: title / subtitle / ring / pill / banner, exactly as HomeViewModel composes them. */
-  function renderHome(){
-    const d = DEMO.home;
-    const paused = d.paused;
-    const clean = d.attention === 0;
-    const title = paused ? DEMO_STR.pausedTitle : (clean ? DEMO_STR.full : DEMO_STR.partial);
-    const sub = paused ? DEMO_STR.resume
-      : (clean ? 'All ' + d.total + ' layers active'
-               : d.layers + ' of ' + d.total + ' layers active · ' + d.attention + ' need attention');
-
-    const t = document.getElementById('homeHeroTitle'); if(t) t.textContent = title;
-    const s = document.getElementById('homeHeroSub');   if(s) s.textContent = sub;
-
-    const ring = document.getElementById('homeHeroRing');
-    if(ring){
-      // HomeViewModel: heroProgress = if (paused) 0f else layers.progress
-      const progress = paused ? 0 : (d.total ? d.layers / d.total : 0);
-      ring.setAttribute('stroke-dashoffset', String(Math.round(163.4 * (1 - progress) * 10) / 10));
-    }
-
-    // pill: paused → amber "Paused"; clean → green "Protected"; else amber "Attention"
-    const pill = document.getElementById('homePill');
-    if(pill){
-      const green = !paused && clean;
-      pill.className = 'pill ' + (green ? 'g' : 'o');
-      const label = paused ? DEMO_STR.paused : (green ? DEMO_STR.protected : DEMO_STR.attention);
-      pill.innerHTML = '<span class="pdot"></span>' + label;
-    }
-
-    const g = document.getElementById('homeGreeting');
-    if(g){
-      const which = d.greeting === 'live' ? clockGreeting() : d.greeting;
-      g.textContent = DEMO_STR[which] + ', ' + DEMO_STR.userName;
-    }
-    const dl = document.getElementById('homeDate');
-    if(dl) dl.textContent = clockDateLine();
-
-    // MasterProtectionCard(enabled = state.masterProtection) — paused == switch off
-    const master = document.getElementById('homeMaster');
-    if(master) master.classList.toggle('on', !paused);
-
-    // banner renders only when accessibility is known-off (HomeScreen.kt:129)
-    const banner = document.getElementById('a11yBanner');
-    if(banner) banner.style.display = d.a11y === 'off' ? 'flex' : 'none';
-
-    const blocked = document.getElementById('homeBlocked');
-    if(blocked) blocked.textContent = String(d.blockedToday);
-    const sched = document.getElementById('homeSchedules');
-    if(sched) sched.textContent = String(d.schedules);
-  }
-
   let a11yOn=false;
   function openA11y(){
     toast('Opening: Accessibility → SafeMe…');

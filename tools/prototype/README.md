@@ -40,5 +40,14 @@ covered by a `smoke` assertion. Add the control in the same commit as the state
 object in `js/app.js`, and a matching group-H assertion that pins the rendered
 copy to `strings.xml`.
 
+## Formatted copy
+
+Any string production formats from resources (`%1$s`, `%2$d`) must live verbatim
+in the prototype's `T` table in `js/app.js` and be rendered with `fmt(T.key, …)`,
+never by concatenating fragments. Group F searches the prototype for the
+resource text with its placeholders intact, and group H additionally asserts
+that every `T` entry is byte-identical to its `strings.xml` value — concatenation
+silently passes the first check and fails the second.
+
 See `PROTOTYPE_PARITY_PLAN_SAD-319.md` at the repo root for the full drift
 register, phase plan, and the device sign-off checklist.
