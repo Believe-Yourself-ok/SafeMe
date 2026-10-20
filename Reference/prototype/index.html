@@ -952,7 +952,7 @@
       <h3>Choose apps</h3>
       <div class="s-sub">Search &amp; multi-select, then Done.</div>
       <label class="field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="appSearch" placeholder="Search apps…" oninput="filterApps(this.value)"></label>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm btn-secondary" style="flex:1" id="selAllAppsBtn" onclick="selectAllApps()">Select All (12)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllAppsBtn" onclick="deselectAllApps()">Deselect All (12)</button></div>
+      <div class="picker-bulk"><button class="btn sm btn-secondary" style="flex:1" id="selAllAppsBtn" onclick="selectAllApps()">Select All (12)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllAppsBtn" onclick="deselectAllApps()">Deselect All (12)</button></div>
       <div class="app-picker" id="appList"></div>
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="appsDone()">Done</button>
     </div>
@@ -963,7 +963,7 @@
       <h3>Exclude apps</h3>
       <div class="s-sub">Excluded apps are never blocked by keyword, porn keyword, website, or image/video-search blocking.</div>
       <label class="field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="blkExcludeSearch" placeholder="Search apps…" oninput="filterBlkExclude(this.value)"></label>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm btn-secondary" style="flex:1" id="selAllBlkExcludeBtn" onclick="selectAllBlkExclude()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllBlkExcludeBtn" onclick="deselectAllBlkExclude()">Deselect All (0)</button></div>
+      <div class="picker-bulk"><button class="btn sm btn-secondary" style="flex:1" id="selAllBlkExcludeBtn" onclick="selectAllBlkExclude()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllBlkExcludeBtn" onclick="deselectAllBlkExclude()">Deselect All (0)</button></div>
       <div class="app-picker" id="blkExcludeList"></div>
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="blkExcludeDone()">Done</button>
     </div>
@@ -974,7 +974,7 @@
       <h3>Exclude apps</h3>
       <div class="s-sub">Excluded apps are skipped by every schedule and hidden from schedule app pickers.</div>
       <label class="field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="excludeSearch" placeholder="Search apps…" oninput="filterExclude(this.value)"></label>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm btn-secondary" style="flex:1" id="selAllExcludeBtn" onclick="selectAllExclude()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllExcludeBtn" onclick="deselectAllExclude()">Deselect All (0)</button></div>
+      <div class="picker-bulk"><button class="btn sm btn-secondary" style="flex:1" id="selAllExcludeBtn" onclick="selectAllExclude()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllExcludeBtn" onclick="deselectAllExclude()">Deselect All (0)</button></div>
       <div class="app-picker" id="excludeList"></div>
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="excludeDone()">Done</button>
     </div>
@@ -996,7 +996,7 @@
       <h3>VPN whitelist</h3>
       <div class="s-sub">Select apps exempt from filtering.</div>
       <label class="field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="vpnAppSearch" placeholder="Search apps…" oninput="filterVpnApps(this.value)"></label>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm btn-secondary" style="flex:1" id="selAllVpnBtn" onclick="selectAllVpnApps()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllVpnBtn" onclick="deselectAllVpnApps()">Deselect All (0)</button></div>
+      <div class="picker-bulk"><button class="btn sm btn-secondary" style="flex:1" id="selAllVpnBtn" onclick="selectAllVpnApps()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllVpnBtn" onclick="deselectAllVpnApps()">Deselect All (0)</button></div>
       <div class="app-picker" id="vpnAppList"></div>
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="vpnAppsDone()">Done</button>
     </div>
@@ -1007,9 +1007,9 @@
       <h3>Block entire apps</h3>
       <div class="s-sub">Pick apps to block completely — <b>All Apps</b> (includes TikTok &amp; Instagram). Persistent launch gate.</div>
       <label class="field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="socialAppSearch" placeholder="Search apps… (try TikTok, Instagram)" oninput="filterSocialApps(this.value)"></label>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm btn-secondary" style="flex:1" id="selAllSocialBtn" onclick="selectAllSocialApps()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllSocialBtn" onclick="deselectAllSocialApps()">Deselect All (0)</button></div>
+      <div class="picker-bulk"><button class="btn sm btn-secondary" style="flex:1" id="selAllSocialBtn" onclick="selectAllSocialApps()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllSocialBtn" onclick="deselectAllSocialApps()">Deselect All (0)</button></div>
       <div class="app-picker" id="socialAppList"></div>
-      <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="socialAppsDone()">Done</button>
+      <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="socialAppsDone()">Done</button>
     </div>
 
     <!-- Restore confirmation -->

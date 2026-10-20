@@ -389,6 +389,36 @@
   function appChip(a){
     return '<div class="ic" style="background:'+a.bg+';color:'+a.fg+'"><svg viewBox="0 0 24 24">'+a.ic+'</svg></div>';
   }
+  function pickerEmptyCopy(host){
+    return host.id==='socialAppList' ? 'No apps match your search' : 'No apps found';
+  }
+  // AppCatalog.groupApps() filters the model and AppPickerSheet renders
+  // sche_apps_empty when the result is empty; the prototype filters in place,
+  // so the same empty box has to be toggled explicitly.
+  function filterPickerGroups(hostId, q){
+    const host=document.getElementById(hostId); if(!host) return;
+    const v=(q||'').trim().toLowerCase();
+    let anyRow=false;
+    host.querySelectorAll('.app-group').forEach(g=>{
+      let any=false;
+      g.querySelectorAll('.li').forEach(r=>{
+        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
+        const hit=!v||t.includes(v);
+        r.style.display=hit?'':'none';
+        if(hit) any=true;
+      });
+      g.style.display=any?'':'none';
+      if(any) anyRow=true;
+    });
+    const prev=host.querySelector('.app-empty'); if(prev) prev.remove();
+    host.classList.toggle('is-empty', !anyRow);
+    if(!anyRow){
+      const d=document.createElement('div');
+      d.className='app-empty';
+      d.textContent=pickerEmptyCopy(host);
+      host.appendChild(d);
+    }
+  }
   // Shared renderer: groups the app catalog by category with consistent headers everywhere.
   function renderAppPicker(host, mode, sel, query){
     if(!host) return;
@@ -414,7 +444,8 @@
            + '<div class="group-label">'+cat+'</div>'
            + '<div class="list">'+rows+'</div></div>';
     });
-    if(!html) html = '<div class="app-empty">No apps match your search</div>';
+    // AppPickerSheet renders sche_apps_empty; SocialPickerSheet has its own literal.
+    if(!html) html = '<div class="app-empty">'+pickerEmptyCopy(host)+'</div>';
     host.innerHTML = html;
   }
   // Rebuild the active picker from the shared catalog when its sheet opens.
@@ -1203,14 +1234,12 @@
     APPS.forEach(a=>appPickSel.add(a.name));
     renderAppPicker(document.getElementById('appList'),'multi',appPickSel,q);
     updatePickerCounts();
-    toast('All apps selected');
   }
   function deselectAllApps(){
     const q=(document.getElementById('appSearch')||{}).value||'';
     appPickSel.clear();
     renderAppPicker(document.getElementById('appList'),'multi',appPickSel,q);
     updatePickerCounts();
-    toast('Deselected all apps');
   }
   function appsDone(){
     const names=[...appPickSel];
@@ -1222,32 +1251,8 @@
     }
     closeSheets(); toast(names.length+' app'+(names.length===1?'':'s')+' selected');
   }
-  function filterApps(q){
-    const v=(q||'').trim().toLowerCase();
-    document.querySelectorAll('#appList .app-group').forEach(g=>{
-      let any=false;
-      g.querySelectorAll('.li').forEach(r=>{
-        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
-        const hit=!v||t.includes(v);
-        r.style.display=hit?'':'none';
-        if(hit) any=true;
-      });
-      g.style.display=any?'':'none';
-    });
-  }
-  function filterExclude(q){
-    const v=(q||'').trim().toLowerCase();
-    document.querySelectorAll('#excludeList .app-group').forEach(g=>{
-      let any=false;
-      g.querySelectorAll('.li').forEach(r=>{
-        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
-        const hit=!v||t.includes(v);
-        r.style.display=hit?'':'none';
-        if(hit) any=true;
-      });
-      g.style.display=any?'':'none';
-    });
-  }
+  function filterApps(q){ filterPickerGroups('appList', q) }
+  function filterExclude(q){ filterPickerGroups('excludeList', q) }
   function selectAllExclude(){
     const q=(document.getElementById('excludeSearch')||{}).value||'';
     APPS.forEach(a=>excludeDraft.add(a.name));
@@ -1268,19 +1273,7 @@
     schedExcludeSub();
   }
 
-  function filterBlkExclude(q){
-    const v=(q||'').trim().toLowerCase();
-    document.querySelectorAll('#blkExcludeList .app-group').forEach(g=>{
-      let any=false;
-      g.querySelectorAll('.li').forEach(r=>{
-        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
-        const hit=!v||t.includes(v);
-        r.style.display=hit?'':'none';
-        if(hit) any=true;
-      });
-      g.style.display=any?'':'none';
-    });
-  }
+  function filterBlkExclude(q){ filterPickerGroups('blkExcludeList', q) }
   function selectAllBlkExclude(){
     const q=(document.getElementById('blkExcludeSearch')||{}).value||'';
     APPS.forEach(a=>blkExcludeDraft.add(a.name));
@@ -1472,24 +1465,14 @@
     toast(labels[key]+' '+(on?'blocked':'allowed'));
   }
   function openSocialApps(){ refreshAppPicker('sheetSocialApps'); document.getElementById('scrim').classList.add('show'); document.getElementById('sheetSocialApps').classList.add('show'); }
-  function filterSocialApps(q){
-    const v=(q||'').trim().toLowerCase();
-    document.querySelectorAll('#socialAppList .app-group').forEach(g=>{
-      let any=false;
-      g.querySelectorAll('.li').forEach(r=>{
-        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
-        const hit=!v||t.includes(v);
-        r.style.display=hit?'':'none';
-        if(hit) any=true;
-      });
-      g.style.display=any?'':'none';
-    });
-  }
+  function filterSocialApps(q){ filterPickerGroups('socialAppList', q) }
   function selectAllSocialApps(){
     const q=(document.getElementById('socialAppSearch')||{}).value||'';
     APPS.forEach(a=>SOCIAL.wholeBlocked.add(a.name));
     renderAppPicker(document.getElementById('socialAppList'),'multi',SOCIAL.wholeBlocked,q);
-    updatePickerCounts(); renderSocial(); saveSocial(); toast(APPS.length+' apps blocked (whole-app)');
+    updatePickerCounts(); renderSocial(); saveSocial();
+    const n=SOCIAL.wholeBlocked.size;
+    toast(n+' app'+(n===1?'':'s')+' blocked (whole-app)');
   }
   function deselectAllSocialApps(){
     const q=(document.getElementById('socialAppSearch')||{}).value||'';
@@ -1499,7 +1482,6 @@
   }
   function socialAppsDone(){
     saveSocial(); renderSocial(); closeSheets();
-    toast(SOCIAL.wholeBlocked.size ? SOCIAL.wholeBlocked.size+' app'+(SOCIAL.wholeBlocked.size===1?'':'s')+' blocked (whole-app)' : 'No whole-app blocks');
   }
 
   // ---------- DNS & VPN ----------
@@ -1518,33 +1500,19 @@
     APPS.forEach(a=>vpnPickSel.add(a.name));
     renderAppPicker(document.getElementById('vpnAppList'),'multi',vpnPickSel,q);
     updatePickerCounts();
-    toast('All apps selected');
   }
   function deselectAllVpnApps(){
     const q=(document.getElementById('vpnAppSearch')||{}).value||'';
     vpnPickSel.clear();
     renderAppPicker(document.getElementById('vpnAppList'),'multi',vpnPickSel,q);
     updatePickerCounts();
-    toast('Deselected all apps');
   }
   function vpnAppsDone(){
     vpnWhitelist=[...vpnPickSel];
     const sub=document.getElementById('vpnWhitelistSub'); if(sub) sub.textContent=vpnWhitelist.length?vpnWhitelist.length+' app'+(vpnWhitelist.length===1?'':'s')+' exempt':'No apps exempt';
     closeSheets(); toast(vpnWhitelist.length?vpnWhitelist.length+' app'+(vpnWhitelist.length===1?'':'s')+' whitelisted':'Whitelist cleared'); vpnStatus();
   }
-  function filterVpnApps(q){
-    const v=(q||'').trim().toLowerCase();
-    document.querySelectorAll('#vpnAppList .app-group').forEach(g=>{
-      let any=false;
-      g.querySelectorAll('.li').forEach(r=>{
-        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
-        const hit=!v||t.includes(v);
-        r.style.display=hit?'':'none';
-        if(hit) any=true;
-      });
-      g.style.display=any?'':'none';
-    });
-  }
+  function filterVpnApps(q){ filterPickerGroups('vpnAppList', q) }
   function setVpnNotif(btn){
     vpnNotif=btn.textContent;
     const w=document.getElementById('vpnNotifWrap'); if(w) w.style.display=vpnNotif==='Custom'?'':'none';

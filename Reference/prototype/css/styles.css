@@ -503,10 +503,26 @@
   .img-peak{background:linear-gradient(135deg,#3A2C1F,#B07A4B,#F4D9B8)}
   .group-label{font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);margin:16px 2px 8px}
   /* ---------- App picker (grouped by category) ---------- */
-  .app-picker{margin-top:14px;max-height:min(44vh,380px);overflow-y:auto;padding-right:2px}
+  .app-picker{margin-top:14px;max-height:380px;overflow-y:auto;padding-right:2px}
   .app-group + .app-group{margin-top:16px}
   .app-group .group-label{margin-top:0}
-  .app-empty{text-align:center;color:var(--ink-3);font-size:13px;padding:26px 0}
+  .app-empty{text-align:center;color:var(--ink-3);font-size:14px;padding:28px 0}
+  /* AppPickerSheet.SelectAllRow: gap 10 between the two 38dp pills, 14 below the
+     search field (SocialPickerSheet keeps 12 — see #sheetSocialApps below). */
+  .picker-bulk{display:flex;gap:10px;margin-top:14px}
+
+  /* SocialPickerSheet is a hand-rolled picker, not AppPickerSheet: 320dp fixed
+     list, 160dp empty box (13sp ink-2), 12dp gaps, 8dp rows with a 14sp
+     medium label over an 11sp package, and 18dp above Done. */
+  #sheetSocialApps .picker-bulk{margin-top:12px}
+  #sheetSocialApps .app-picker{margin-top:12px;height:320px;max-height:320px}
+  /* SocialPickerSheet replaces the 320dp list with a 160dp box when empty. */
+  #sheetSocialApps .app-picker.is-empty{height:auto}
+  #sheetSocialApps .app-empty{display:flex;align-items:center;justify-content:center;
+                              height:160px;padding:0;font-size:13px;color:var(--ink-2)}
+  #sheetSocialApps .app-picker .li{padding:8px;min-height:0}
+  #sheetSocialApps .app-picker .li .tx .t{font-size:14px;font-weight:500}
+  #sheetSocialApps .app-picker .li .tx .s{font-size:11px}
   .checkbox{width:24px;height:24px;border-radius:8px;border:2px solid var(--ink-3);display:flex;align-items:center;justify-content:center;flex:none;transition:.15s;overflow:hidden}
   .checkbox svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
   .checkbox.on{background:var(--brand);border-color:var(--brand)}

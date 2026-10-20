@@ -475,6 +475,35 @@ def group_e(rep: Report, ctx):
               f".ring .fg stroke={r.get('.ring .fg', {}).get('stroke')} (production: Color.White)")
 
 
+    # --- Phase 5(a): the app-picker sheets -----------------------------------
+    # AppPickerSheet: search -> 14 -> SelectAllRow(gap 10) -> 14 -> list(max
+    # 380dp) -> 16 -> Done. SocialPickerSheet is hand-rolled: 12dp gaps, a fixed
+    # 320dp list and a 160dp empty box. SelectAllButton is brandSoft r999 at 38dp
+    # both sides, so the two pills are equal.
+    eq(".picker-bulk", "gap", 10, "picker bulk row gap 10 (SelectAllRow)")
+    eq(".picker-bulk", "margin-top", 14, "picker bulk row 14 below the search field")
+    eq("#sheetSocialApps .picker-bulk", "margin-top", 12, "social bulk row 12 below the search field")
+    eq(".app-picker", "margin-top", 14, "picker list 14 below the bulk row")
+    eq(".app-picker", "max-height", 380, "picker list capped at 380dp")
+    eq("#sheetSocialApps .app-picker", "height", 320, "social picker list fixed 320dp")
+    eq("#sheetSocialApps .app-picker", "margin-top", 12, "social picker list 12 below the bulk row")
+    eq(".app-empty", "font-size", 14, "sche_apps_empty is 14sp")
+    eq(".app-empty", "padding", 28, "sche_apps_empty box padding 28")
+    eq("#sheetSocialApps .app-empty", "font-size", 13, "social empty state is 13sp")
+    eq("#sheetSocialApps .app-empty", "height", 160, "social empty box is 160dp tall")
+    eq("#sheetSocialApps .app-picker .li", "padding", 8, "social picker row padding 8")
+    eq("#sheetSocialApps .app-picker .li .tx .t", "font-size", 14, "social picker label 14sp")
+    rep.check("E", "social picker label is 14sp/500 (Medium)",
+              r.get("#sheetSocialApps .app-picker .li .tx .t", {}).get("font-weight") == "500",
+              f"font-weight={r.get('#sheetSocialApps .app-picker .li .tx .t', {}).get('font-weight')}")
+    eq("#sheetSocialApps .app-picker .li .tx .s", "font-size", 11, "social picker package 11sp")
+    # empty branch: production renders a 160dp box INSTEAD of the list, not inside it
+    rep.check("E", "social empty state replaces the 320dp list (160dp box only)",
+              r.get("#sheetSocialApps .app-picker.is-empty", {}).get("height") == "auto"
+              and "classList.toggle('is-empty'" in ctx["js"],
+              "the 160dp box would sit inside a 320dp list")
+
+
 # production strings that the prototype must render (drift register A-01..A-20)
 REQUIRED_COPY = {
     "home_hero_title": "Fully protected",
@@ -524,6 +553,14 @@ def group_f(rep: Report, ctx):
     rep.check("F", "About shows the real version + package",
               version in ctx["html"] and appid in ctx["html"],
               f"expected {version} / {appid}")
+
+    # AppPickerSheet renders sche_apps_empty; SocialPickerSheet has its own
+    # inline literal. Both must match production character for character.
+    social_kt = read(UI / "screens/socialblocking/SocialBlockingScreen.kt")
+    rep.check("F", "app-picker empty state uses sche_apps_empty",
+              f"'{strings['sche_apps_empty']}'" in ctx["js"]
+              and "No apps match your search" in social_kt,
+              f"expected {strings['sche_apps_empty']!r} in app.js")
 
     rep.check("F", "format placeholders preserved in prototype copy",
               not re.search(r"%[0-9]\$[sd]", ctx["html"]),
@@ -825,6 +862,27 @@ def group_g(rep: Report, ctx):
               and "stringResource(R.string.perm_granted)" in read(
                   UI / "screens/permissions/PermissionScreen.kt"),
               "perm_granted copy drifted")
+
+    # Phase 5(a): production's picker bulk callbacks only mutate state
+    # (ScheduleEditViewModel.selectAllApps / VpnViewModel) — no toast. Social's
+    # setWholeBlocked does toast, but on the select call, not on Done.
+    def body(name: str) -> str:
+        m = re.search(rf"function {name}\(\)\{{(.*?)\n  \}}", js, re.S)
+        return m.group(1) if m else ""
+
+    silent = [n for n in ("selectAllApps", "deselectAllApps",
+                          "selectAllVpnApps", "deselectAllVpnApps", "socialAppsDone")
+              if "toast(" in body(n)]
+    rep.check("H", "picker bulk actions and Done stay silent (no invented toast)",
+              not silent, f"still toasting: {silent}")
+
+    social_sel = body("selectAllSocialApps")
+    sos = read(UI / "screens/socialblocking/SocialBlockingScreen.kt")
+    rep.check("H", "social Select All commits with the selected count",
+              "SOCIAL.wholeBlocked.size" in social_sel
+              and "APPS.length+' apps blocked" not in social_sel
+              and "setWholeBlocked(allApps.map { it.packageName }.toSet())" in sos,
+              "social bulk select still reports the catalog length")
 
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",

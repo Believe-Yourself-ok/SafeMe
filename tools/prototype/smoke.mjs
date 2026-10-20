@@ -597,6 +597,69 @@ async function main () {
     && headerStates.empty.startsWith('No quick actions yet'),
     JSON.stringify(headerStates))
 
+  // ---- app-picker sheets: AppPickerSheet vs SocialPickerSheet ------------- #
+  const pickers = await page.evaluate(async () => {
+    const cs = (el, prop) => getComputedStyle(el)[prop]
+    const wait = ms => new Promise(r => setTimeout(r, ms))
+    window.openSheet('sheetApps')
+    await wait(60)
+    const bulk = document.querySelector('#sheetApps .picker-bulk')
+    const list = document.getElementById('appList')
+    const rows = {
+      gap: cs(bulk, 'gap'),
+      bulkTop: cs(bulk, 'marginTop'),
+      listTop: cs(list, 'marginTop'),
+      listMax: cs(list, 'maxHeight'),
+    }
+    window.filterApps('zzzz')
+    await wait(40)
+    const emptyApp = document.querySelector('#appList .app-empty')
+    rows.emptyText = emptyApp ? emptyApp.textContent : null
+    rows.emptySize = emptyApp ? cs(emptyApp, 'fontSize') : null
+    // bulk actions are silent in production
+    document.getElementById('toasts').innerHTML = ''
+    window.selectAllApps(); await wait(30)
+    const toastAfterSelect = document.getElementById('toasts').children.length
+    window.deselectAllApps(); await wait(30)
+    document.getElementById('appSearch').value = ''
+    window.closeSheets(); await wait(80)
+
+    window.openSheet('sheetSocialApps')
+    await wait(60)
+    const sList = document.getElementById('socialAppList')
+    const sRow = document.querySelector('#socialAppList .li')
+    const sT = sRow ? sRow.querySelector('.t') : null
+    const social = {
+      listHeight: cs(sList, 'height'),
+      bulkTop: cs(document.querySelector('#sheetSocialApps .picker-bulk'), 'marginTop'),
+      rowPad: sRow ? cs(sRow, 'padding') : null,
+      labelSize: sT ? cs(sT, 'fontSize') : null,
+      labelWeight: sT ? cs(sT, 'fontWeight') : null,
+      doneTop: cs(document.querySelector('#sheetSocialApps .btn-primary'), 'marginTop'),
+    }
+    document.getElementById('socialAppSearch').value = 'zzzz'
+    window.filterSocialApps('zzzz')
+    await wait(40)
+    const sEmpty = document.querySelector('#socialAppList .app-empty')
+    social.emptyText = sEmpty ? sEmpty.textContent : null
+    social.emptyHeight = sEmpty ? cs(sEmpty, 'height') : null
+    social.listHeightEmpty = cs(sList, 'height')
+    window.closeSheets()
+    return { rows, toastAfterSelect, social }
+  })
+  check('pickers: AppPickerSheet gaps/380dp/empty copy; SocialPickerSheet 320dp rows',
+    pickers.rows.gap === '10px' && pickers.rows.bulkTop === '14px'
+    && pickers.rows.listTop === '14px' && pickers.rows.listMax === '380px'
+    && pickers.rows.emptyText === 'No apps found' && pickers.rows.emptySize === '14px'
+    && pickers.toastAfterSelect === 0
+    && pickers.social.listHeight === '320px' && pickers.social.bulkTop === '12px'
+    && pickers.social.rowPad === '8px' && pickers.social.labelSize === '14px'
+    && pickers.social.labelWeight === '500' && pickers.social.doneTop === '18px'
+    && pickers.social.emptyText === 'No apps match your search'
+    && pickers.social.emptyHeight === '160px'
+    && pickers.social.listHeightEmpty === '160px',
+    JSON.stringify(pickers))
+
   // ---- toast docks above the bottom nav on a tab root --------------------
   const toastGap = await page.evaluate(async () => {
     window.nav('home')
