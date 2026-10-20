@@ -1178,6 +1178,7 @@ def group_g(rep: Report, ctx):
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")
+    group_g_phase5(rep, ctx)
 
 
 def group_h(rep: Report, ctx):
@@ -1631,6 +1632,96 @@ def group_i(rep: Report, ctx):
     baked = [i for i in DYNAMIC_IDS
              if re.search(rf'id="{i}"[^>]*>\s*[A-Za-z0-9]', ctx["html"])]
     rep.check("I", "JS-rendered containers ship empty", not baked, f"baked copy in {baked}")
+
+
+# --------------------------------------------------------------------------- #
+# Phase 5 close-out: every sheet, its title/sub and its Kotlin home
+# --------------------------------------------------------------------------- #
+# sheet id → (title string keys, subtitle string keys, kotlin file, kotlin marker)
+# Title keys hold an add/edit or per-step variant when the sheet switches.
+SHEET_TABLE = {
+    "sheetKw":          (["kw_sheet_add_keyword", "kw_sheet_edit_keyword"], [],
+                         "keywords/KeywordManagerScreen.kt", "private fun KeywordSheet("),
+    "sheetSite":        (["kw_sheet_add_website", "kw_sheet_edit_website"], [],
+                         "keywords/KeywordManagerScreen.kt", "private fun WebsiteSheet("),
+    "sheetTitle":       (["tb_sheet_add", "tb_sheet_edit"], ["tb_sheet_subtitle"],
+                         "titleblock/TitleBlockScreen.kt", "R.string.tb_sheet_edit"),
+    "sheetLockSetup":   (["al_setup_method", "al_setup_create", "al_setup_confirm"],
+                         ["al_setup_method_sub", "al_setup_create_sub", "al_setup_confirm_sub"],
+                         "applock/AppLockSheets.kt", "fun AppLockSetupSheet("),
+    "sheetAutoLock":    (["al_auto_sheet_title"], ["al_auto_sheet_sub"],
+                         "applock/AppLockSheets.kt", "fun AutoLockSheet("),
+    "sheetBsImg":       (["bs_motivation_image"], ["bs_img_sub_sheet"],
+                         "blockscreen/BlockSheets.kt", "fun MotivationImageSheet("),
+    "sheetBsMsg":       (["bs_custom_message"], ["bs_msg_sub_sheet"],
+                         "blockscreen/BlockSheets.kt", "fun CustomMessageSheet("),
+    "sheetTime":        (["sche_time_sheet_title"], ["sche_time_sheet_sub"],
+                         "schedule/ScheduleSheets.kt", "fun TimePickerSheet("),
+    "sheetApps":        (["sche_apps_sheet_title"], ["sche_apps_sheet_sub"],
+                         "schedule/ScheduleSheets.kt", "fun AppPickerSheet("),
+    "sheetExclude":     (["sch_exclude_sheet_title"], ["sch_exclude_sheet_sub"],
+                         "schedule/ScheduleScreen.kt", "sch_exclude_sheet_title"),
+    "sheetBlkExclude":  (["blk_exclude_sheet_title"], ["blk_exclude_sheet_sub"],
+                         "blocking/OtherFeaturesScreen.kt", "blk_exclude_sheet_title"),
+    "sheetDnsCustom":   (["vpn_sheet_dns_title"], ["vpn_sheet_dns_sub"],
+                         "vpn/DnsVpnSheets.kt", "fun CustomDnsSheet("),
+    "sheetVpnApps":     (["vpn_sheet_apps_title"], ["vpn_sheet_apps_sub"],
+                         "vpn/DnsVpnSheets.kt", "fun VpnAppsSheet("),
+    # SocialPickerSheet hard-codes its title/sub as literals, not resources.
+    "sheetSocialApps":  ([], [],
+                         "socialblocking/SocialBlockingScreen.kt", "private fun SocialPickerSheet("),
+}
+
+
+def sheet_body(html: str, sheet_id: str) -> str:
+    """Inner HTML of one sheet (balanced enough for these hand-written files)."""
+    start = html.index(f'id="{sheet_id}"')
+    depth, i = 1, html.index(">", start) + 1
+    while depth:
+        nxt_open = html.find("<div", i)
+        nxt_close = html.find("</div>", i)
+        if nxt_close == -1:
+            break
+        if nxt_open != -1 and nxt_open < nxt_close:
+            depth += 1
+            i = nxt_open + 4
+        else:
+            depth -= 1
+            i = nxt_close + 6
+    return html[start:i]
+
+
+def group_g_phase5(rep: Report, ctx):
+    """Phase 5 close-out: structural sweep across all 14 sheets."""
+    html = ctx["html"]
+    strings = strings_xml()
+    missing_grab, missing_title, unbacked = [], [], []
+    for sheet_id, (titles, subs, kt, marker) in SHEET_TABLE.items():
+        body = sheet_body(html, sheet_id)
+        if 'class="grab"' not in body:
+            missing_grab.append(sheet_id)
+        # every sheet renders a title; it is either a resource string or, for
+        # SocialPickerSheet, the production literal
+        rendered = [t for t in titles if strings.get(t, "\x00") in body]
+        literal_ok = sheet_id == "sheetSocialApps" and ">Block entire apps<" in body
+        if titles and not rendered and not literal_ok:
+            missing_title.append(sheet_id)
+        if not titles and not literal_ok:
+            missing_title.append(sheet_id)
+        # HTML entities (& -> &amp;) and step-switched subtitles (written by JS)
+        # both count as "rendered".
+        body_plain = html_mod.unescape(body)
+        for key in subs:
+            want = strings.get(key, "\x00")
+            if want not in body and want not in body_plain and want not in ctx["js"]:
+                unbacked.append(f"{sheet_id}:{key}")
+        if marker not in read(UI / "screens" / kt):
+            unbacked.append(f"{sheet_id}:kotlin")
+    rep.check("G", "every sheet renders a grab bar", not missing_grab, f"no grab: {missing_grab}")
+    rep.check("G", "every sheet's title comes from its production string",
+              not missing_title, f"title not found: {missing_title}")
+    rep.check("G", "every sheet's subtitle/owner exists in its Kotlin source",
+              not unbacked, f"unbacked: {unbacked}")
 
 
 GROUPS = {"A": group_a, "B": group_b, "C": group_c, "D": group_d,
