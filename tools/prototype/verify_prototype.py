@@ -18,7 +18,8 @@ Groups
     F  copy                    (production strings present, placeholders intact)
     G  drift-register closure  (the 42 rows of the plan: added/fixed/deleted)
     H  state machines          (every prototype state variant vs its ViewModel)
-    I  copy provenance         (every visible string on every screen is production copy)
+    I  copy provenance          (every visible string on every screen is production copy)
+    J  icon parity              (every glyph the prototype draws is a production ImageVector)
 
 Exit code 0 only when every selected assertion passes.
 """
@@ -1471,7 +1472,8 @@ def group_h(rep: Report, ctx):
               and "fmt(v.exempt === 1 ? T.vpnWlOne : T.vpnWlMany, v.exempt)" in js,
               f"T.vpnWlOne={tpl('vpnWlOne')!r} T.vpnWlMany={tpl('vpnWlMany')!r}")
     doc = DEVIATIONS_DOC.read_text() if DEVIATIONS_DOC.exists() else ""
-    rows = [ln for ln in doc.splitlines() if ln.startswith("| `")]
+    copy_section = doc.split("## Copy", 1)[-1].split("\n## ", 1)[0]  # icon rows live in their own table
+    rows = [ln for ln in copy_section.splitlines() if ln.startswith("| `")]
     rep.check("H", "every copy deviation is registered in DEVIATIONS.md",
               len(rows) == len(DEVIATIONS)
               and all(f"`{k}`" in doc and dev["prod"] in doc
@@ -1724,8 +1726,158 @@ def group_g_phase5(rep: Report, ctx):
               not unbacked, f"unbacked: {unbacked}")
 
 
+# --------------------------------------------------------------------------- #
+# J · icon parity — every glyph the prototype draws is a production glyph
+# --------------------------------------------------------------------------- #
+ICON_TOL = 0.5  # max point deviation, in viewBox units at 24dp
+
+# Progress rings are drawn in their own viewBox inside a sized box: they are
+# decoration, not icon slots, and production has no counterpart.
+ICON_DECOR_VIEWBOX = {"0 0 64 64", "0 0 120 120"}
+
+# Prototype glyph sources that are not app chrome. Each is demo data or a
+# text-glyph affordance, so there is no production ImageVector to match.
+ICON_SKIP_REGIONS = [
+    ("js", "const APPS = [", "  ];",
+     "app rows show real launcher icons in production (PackageManager), so the "
+     "prototype draws brand placeholders"),
+    ("js", "const DEMO_SERVICES = [", "  ];",
+     "fabricated demo services in the picker"),
+    ("js", "function appByName", "\n  }\n",
+     "avatar fallback for an app name that is not in the demo catalog"),
+    ("js", "function qaRow(a,on,i,total){", "\n  }\n",
+     "quick-action editor affordances; production draws these as text glyphs "
+     "(QuickActionsEditScreen.kt uses ArrowButton(\u2191), RemoveBadge(\u2715), AddBadge)"),
+]
+
+# Production icons that no prototype glyph reproduces, with the reason. Checked
+# in both directions so the table cannot drift from the code.
+PRODUCTION_ONLY = {
+    "A11yPersonIcon": "declared in PermissionIcons.kt, never referenced by a screen",
+    "BatteryIcon": "declared in PermissionIcons.kt, never referenced by a screen",
+    "BellIcon": "declared in PermissionIcons.kt, never referenced by a screen",
+    "SchSearchIcon": "geometry deviation — see GEOMETRY_DEVIATIONS",
+}
+
+# Production glyphs whose Kotlin is defective. The prototype draws the glyph the
+# rest of the family draws instead of copying the defect.
+GEOMETRY_DEVIATIONS = {
+    "SchSearchIcon": (
+        "ScheduleSheets.kt draws the search circle from `moveTo(11, 11)` — the "
+        "centre — so the r=7 circle around it reaches x=25 and is clipped by the "
+        "24dp viewport. Its own handle (M21 21 L16.7 16.7) and the sibling "
+        "KwSearchIcon / VpnSearchIcon both centre the circle at (11, 11). The "
+        "prototype keeps the centred glyph; a Kotlin fix is out of scope."
+    ),
+}
+
+
+def _skip_ranges(src: str, start: str, end: str) -> list[tuple[int, int]]:
+    i = src.find(start)
+    if i < 0:
+        return []
+    j = src.find(end, i + len(start))
+    return [(i, (j + len(end)) if j > i else len(src))]
+
+
+def icon_glyphs(ctx) -> tuple[list[tuple[str, int, list]], list[str]]:
+    """(glyphs, skipped notes) for the prototype's two glyph sources."""
+    import icon_parity as icons
+
+    out: list[tuple[str, int, list]] = []
+    notes: list[str] = []
+    for tag, path in (("html", INDEX), ("js", JS)):
+        src = ctx[tag]
+        ranges: list[tuple[int, int]] = []
+        for region_tag, start, end, why in ICON_SKIP_REGIONS:
+            if region_tag != tag:
+                continue
+            hit = _skip_ranges(src, start, end)
+            if not hit:
+                notes.append(f"skip region not found: {start!r}")
+            ranges.extend(hit)
+        glyphs = icons.svg_glyphs(src) + (icons.path_map_glyphs(src) if tag == "js" else [])
+        for offset, d, viewbox in glyphs:
+            if "'" in d or "+" in d:
+                continue  # a JS template hole, not a glyph
+            if viewbox in ICON_DECOR_VIEWBOX:
+                notes.append(f"{tag}:{src.count(chr(10), 0, offset) + 1} decorative ring")
+                continue
+            if any(a <= offset <= b for a, b in ranges):
+                continue
+            line = src.count("\n", 0, offset) + 1
+            out.append((tag, line, icons.svg_to_segments(d)))
+    return out, notes
+
+
+def group_j(rep: Report, ctx):
+    import icon_parity as icons
+
+    production = icons.all_kotlin_icons(UI)
+    declared = {m.group(1) for f in UI.rglob("*Icons.kt")
+                for m in re.finditer(r"(?:internal )?val (\w+):\s*ImageVector", read(f))}
+    unparsed = sorted(declared - set(production))
+    rep.check("J", "every ImageVector in *Icons.kt parses into geometry",
+              not unparsed and len(production) == len(declared),
+              f"declared {len(declared)}, parsed {len(production)}, unparsed: {unparsed}")
+
+    glyphs, notes = icon_glyphs(ctx)
+    if any(n.startswith("skip region not found") for n in notes):
+        rep.check("J", "every declared demo-data region still exists", False, "; ".join(notes))
+    else:
+        rep.check("J", "every declared demo-data region still exists", True)
+
+    pool = [(name, segs) for name, (_, segs) in production.items()]
+    offenders = []
+    used: set[str] = set()
+    for tag, line, segs in glyphs:
+        dist, name = icons.match(segs, pool)
+        if dist <= ICON_TOL:
+            used.add(name)
+        else:
+            offenders.append(f"{tag}:{line} (nearest {name or 'none'}"
+                             f"{', ' + format(dist, '.2f') if dist != float('inf') else ''})")
+    rep.check("J", "every prototype icon is a production glyph",
+              not offenders, f"labels differ: {offenders}")
+    rep.check("J", f"the prototype draws {len(used)} of {len(production)} production icons",
+              len(used) >= 45 and len(glyphs) >= 150,
+              f"{len(used)} icons / {len(glyphs)} glyphs")
+
+    missing = {}
+    for name, (_, segs) in production.items():
+        dist, _ = icons.match(segs, [(f"{tag}:{line}", g) for tag, line, g in glyphs])
+        if dist > ICON_TOL:
+            missing[name] = dist
+    rep.check("J", "production icons the prototype does not draw are the documented set",
+              set(missing) == set(PRODUCTION_ONLY),
+              f"undocumented: {sorted(set(missing) - set(PRODUCTION_ONLY))} · "
+              f"stale: {sorted(set(PRODUCTION_ONLY) - set(missing))}")
+
+    # the documented reasons must stay true
+    stale_reason = []
+    for name, why in PRODUCTION_ONLY.items():
+        if why.startswith("geometry deviation"):
+            continue
+        word = re.compile(rf"\b{name}\b")
+        holders = [f.name for f in UI.rglob("*Icons.kt") if word.search(read(f))]
+        refs = sorted(f.name for f in UI.rglob("*.kt")
+                      if word.search(read(f)) and f.name not in holders)
+        if len(holders) != 1 or refs:
+            stale_reason.append(f"{name}: declared in {holders}, referenced by {refs}")
+    rep.check("J", "an icon listed as unused really has no screen reference",
+              not stale_reason, "; ".join(stale_reason))
+
+    devs = read(ROOT / "tools/prototype/DEVIATIONS.md")
+    bad = [f"{n} not in DEVIATIONS.md" for n in GEOMETRY_DEVIATIONS if n not in devs]
+    bad += [f"{n} missing from PRODUCTION_ONLY" for n in GEOMETRY_DEVIATIONS
+            if n not in PRODUCTION_ONLY]
+    rep.check("J", "every geometry deviation is registered in DEVIATIONS.md",
+              not bad, "; ".join(bad))
+
+
 GROUPS = {"A": group_a, "B": group_b, "C": group_c, "D": group_d,
-          "E": group_e, "F": group_f, "G": group_g, "H": group_h, "I": group_i}
+          "E": group_e, "F": group_f, "G": group_g, "H": group_h, "I": group_i,
+          "J": group_j}
 
 
 def main() -> int:
@@ -1737,7 +1889,7 @@ def main() -> int:
     args = ap.parse_args()
     if args.list:
         print("groups: A integrity · B wiring · C screens · D tokens · E geometry · "
-              "F copy · G drift · H state machines · I copy provenance")
+              "F copy · G drift · H state machines · I copy provenance · J icons")
         return 0
 
     html, css, js = read(INDEX), read(CSS), read(JS)

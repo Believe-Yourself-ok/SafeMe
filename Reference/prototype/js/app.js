@@ -824,7 +824,7 @@
         '<button class="sym" style="visibility:hidden"></button><button onclick="unlockPin(\'0\')">0</button><button class="sym" onclick="unlockBack()">⌫</button></div>';
     }
     else if(lockMethod==='password'){
-      b.innerHTML='<label class="field" style="margin-top:16px"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 00-4 4v3H6a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1v-9a1 1 0 00-1-1h-2V7a4 4 0 00-4-4z"/></svg><input id="unlockPass" type="password" placeholder="Enter password" oninput="unlockPass(this.value)"></label>';
+      b.innerHTML='<label class="field" style="margin-top:16px"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 00-4 4v3H6a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1v-9a1 1 0 00-1-1h-2V7a4 4 0 00-4-4zM12 14v3"/></svg><input id="unlockPass" type="password" placeholder="Enter password" oninput="unlockPass(this.value)"></label>';
     }
     else {
       b.innerHTML='<div class="patgrid" id="unlockPat">'+[1,2,3,4,5,6,7,8,9].map(i=>'<button data-i="'+i+'" onclick="patUnlock(this)"></button>').join('')+'</div><div class="s-sub" style="text-align:center;margin-top:12px">Draw your pattern</div>';
@@ -1750,12 +1750,12 @@
   function kwRowHTML(v){
     const art = kwSelType==='keywords'
       ? '<path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/>'
-      : '<circle cx="12" cy="12" r="9"/><path d="M12 2a14.5 14.5 0 000 20 14.5 14.5 0 000-20M2 12h20"/>';
+      : '<path d="M2 12a10 10 0 0120 0 10 10 0 01-20 0M12 2a14.5 14.5 0 010 20 14.5 14.5 0 010-20M2 12h18"/>';
     const sub = kwOverride() ? (kwSelType==='keywords'?'Whitelisted':'Trusted') : ((KWCAT[v]||'Custom')+' · blocked');
     return '<div class="kw-row" data-val="'+v+'"><div class="ic '+(kwOverride()?'g':'r')+'"><svg viewBox="0 0 24 24">'+art+'</svg></div>'
       + '<div class="tx"><div class="t">'+v+'</div><div class="s">'+sub+'</div></div>'
-      + '<button class="act" onclick="kwEdit(this)"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>'
-      + '<button class="act" style="color:var(--danger)" onclick="kwRemove(this)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button></div>';
+      + '<button class="act" onclick="kwEdit(this)"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75z"/></svg></button>'
+      + '<button class="act" style="color:var(--danger)" onclick="kwRemove(this)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6M10 11v6M14 11v6"/></svg></button></div>';
   }
   function kwAdd(){
     kwEditing=null; siteEditing=null; kwSource='screen';
@@ -1874,12 +1874,12 @@
   ];
   const QA_ICON={
     keyword:'M4 9h16M4 15h16M10 3L8 21M16 3l-2 18',
-    schedule:'M4 5h16v16H4z|M4 10h16M9 3v4M15 3v4',
+    schedule:'M4 5a3 3 0 013-3h10a3 3 0 013 3v14a3 3 0 01-3 3H7a3 3 0 01-3-3z|M4 10h16|M9 3v4M15 3v4',
     backup:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3',
-    applock:'M6 11h12v9H6z|M9 11V8a3 3 0 016 0v3',
-    websites:'M12 2a14.5 14.5 0 000 20 14.5 14.5 0 000-20M2 12h20',
-    vpn:'M12 2l8 3v5c0 5-3 9-8 12-5-3-8-7-8-12V5z|M9 12l2 2 4-4',
-    history:'M12 7v5l3 2|M21 12a9 9 0 11-3-6.7'
+    applock:'M6 10V7a6 6 0 0112 0v3|M5 10h14a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7a2 2 0 012-2z|M12 14v3',
+    websites:'M12 3a9 9 0 000 18 9 9 0 000-18|M3 12h18|M12 3a15 15 0 010 18 15 15 0 010-18',
+    vpn:'M12 3l8 3v6a8 8 0 01-8 6 8 8 0 01-8-6V6z|M9 12l2 2 4-4',
+    history:'M3 12a9 9 0 019-9 9 9 0 019 9 9 9 0 01-9 9 9 9 0 01-8.2-5.5|M3 12V7|M3 12h5|M12 7v5l3 2'
   };
   const QA_TARGET={keyword:'keywords',schedule:'scheduleedit',backup:'backup',applock:'applock',websites:'keywords',vpn:'vpn',history:'history'};
   let qaOn=['keyword','schedule','backup','applock'];

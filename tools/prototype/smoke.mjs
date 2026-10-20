@@ -908,6 +908,25 @@ async function main () {
     && pickers.social.listHeightEmpty === '160px',
     JSON.stringify(pickers))
 
+  // ---- JS-rendered row glyphs are the production vectors ----------------
+  // The row buttons are built in JS (kwRowHTML), so they never appear in
+  // index.html and only a live DOM can prove they render production's icon.
+  // Group J of the verifier holds the same geometry against the Kotlin source;
+  // here the two paths are pinned so a JS-side edit cannot drift unnoticed.
+  const rowGlyphs = await page.evaluate(async () => {
+    window.closeSheets(); window.nav('keywords'); window.kwType('keywords')
+    await new Promise(r => setTimeout(r, 80))
+    const row = document.querySelector('#sc-keywords .kw-row')
+    const acts = [...(row ? row.querySelectorAll('.act svg path') : [])].map(p => p.getAttribute('d'))
+    return { count: acts.length, edit: acts[0] || '', remove: acts[1] || '' }
+  })
+  const PROD_KW_EDIT = 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04c.39-.39.39-1.02 0-1.41'
+  const PROD_KW_TRASH = 'M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6'
+  check('keyword row actions draw the production KwEdit/KwTrash vectors',
+    rowGlyphs.count === 2 && rowGlyphs.edit.startsWith(PROD_KW_EDIT)
+    && rowGlyphs.remove.startsWith(PROD_KW_TRASH),
+    JSON.stringify(rowGlyphs))
+
   // ---- toast docks above the bottom nav on a tab root --------------------
   const toastGap = await page.evaluate(async () => {
     window.nav('home')
