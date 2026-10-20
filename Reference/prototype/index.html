@@ -406,7 +406,7 @@
 
       <section class="screen" id="sc-antitamper">
         <div class="sub"><button class="back" onclick="back()"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Anti-Tamper</h1><p class="sub-desc">Protects SafeMe from being disabled, uninstalled, or bypassed.</p></div>
-        <div class="card" style="display:flex;align-items:center;gap:12px;margin-top:14px"><div class="ic r" style="width:40px;height:40px;border-radius:13px;background:#F9E7E5;color:var(--danger);display:flex;align-items:center;justify-content:center;flex:none"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></div><div style="flex:1"><div class="ctitle">Prevent Uninstall</div><div class="csub">Prevents uninstall · blocks our app-info page</div></div><button class="btn sm btn-secondary" onclick="toast('Activating Prevent Uninstall…')">Activate</button></div>
+        <div class="card" style="display:flex;align-items:center;gap:12px;margin-top:14px"><div class="ic r" style="width:40px;height:40px;border-radius:13px;background:#F9E7E5;color:var(--danger);display:flex;align-items:center;justify-content:center;flex:none"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></div><div style="flex:1"><div class="ctitle">Prevent Uninstall</div><div class="csub">Prevents uninstall · blocks our app-info page</div></div><button class="btn sm btn-secondary" id="atAdminBtn" onclick="atToggleAdmin()">Activate</button></div>
         <button class="protect-btn" style="margin-top:14px" onclick="nav('selfprotect')">
           <span style="display:flex;align-items:center;gap:12px">
             <span class="pb-ic"><svg viewBox="0 0 24 24"><path d="M12 2l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M12 9v6M9 12h6"/></svg></span>
@@ -439,7 +439,7 @@
             <div style="font-size:12px;line-height:18px;color:var(--ink-2);margin-top:8px">2. Run this command from a terminal:</div>
             <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:18px;font-weight:600;margin-top:8px;word-break:break-all">adb shell pm grant com.safeme.app android.permission.WRITE_SECURE_SETTINGS</div>
             <div style="display:flex;gap:8px;margin-top:12px">
-              <button class="btn btn-secondary" style="height:36px;padding:0 12px;border-radius:8px;font-size:12px" onclick="toast('Copied')">Copy</button>
+              <button class="btn btn-secondary" id="apCopyBtn" style="height:36px;padding:0 12px;border-radius:8px;font-size:12px;font-weight:600" onclick="apCopyCommand()">Copy</button>
               <button class="btn btn-secondary" style="flex:1;height:36px;padding:0 12px;border-radius:10px;font-size:12.5px" onclick="toast('Permission not detected — follow the ADB steps')">I've granted it — re-check</button>
             </div>
           </div>

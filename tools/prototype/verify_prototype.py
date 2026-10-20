@@ -577,6 +577,33 @@ def group_g(rep: Report, ctx):
               and "service is on" not in js and "Core blocking engine active" not in js,
               "a second writer, or invented enabled-state copy, is back")
 
+    # ServicePickerViewModel.listAllAccessibilityServices(...).filterNot { it.isOurs }:
+    # the picker never lists SafeMe itself, and the subtitle is the service class.
+    picker = re.search(r"const DEMO_SERVICES = \[(.*?)\n  \];", js, re.S)
+    body = picker.group(1) if picker else ""
+    vm_picker = read(UI / "screens/antitamper/ServicePickerViewModel.kt")
+    rep.check("G", "service picker excludes SafeMe's own service (B-13)",
+              bool(picker) and "filterNot { it.isOurs }" in vm_picker
+              and "com.safeme.app" not in body and "SafeMe Accessibility" not in body,
+              "the picker lists SafeMe's own accessibility service")
+    rep.check("G", "service rows carry a service-class subtitle (B-13)",
+              "cls:" in body and "x.cls" in js
+              and "entry.serviceClass.substringAfterLast('.')" in read(UI / "screens/antitamper/ServicePickerScreen.kt"),
+              "row subtitle is not the service class")
+    rep.check("G", "service picker has a centered empty state (B-13)",
+              "id=\"svcEmpty\"" in html and "svcEmpty" in js
+              and "#svcEmpty{flex:1" in ctx["css"],
+              "empty state is not the flex-centered ap_picker_empty state")
+
+    # AntiTamperScreen.PreventUninstallCard: one pill, two labels.
+    strings = strings_xml()
+    rep.check("G", "anti-tamper card toggles Activate/Deactivate (B-13)",
+              strings["at_activate"] in html and strings["at_deactivate"] in js
+              and strings["at_toast_activated"] in js and strings["at_toast_deactivated"] in js
+              and "R.string.at_deactivate else R.string.at_activate" in
+                  read(UI / "screens/antitamper/AntiTamperScreen.kt"),
+              "the device-admin pill is not state driven")
+
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")

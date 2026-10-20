@@ -963,11 +963,13 @@
     {t:'Google Play', s:'Contains'}
   ];
   const DEMO_SERVICES = [
-    {name:'SafeMe Accessibility', pkg:'com.safeme.app', on:true,
-     ic:'<path d="M12 2l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>'},
-    {name:'Keyguard AppLock', pkg:'com.example.keyguard', on:false,
+    // ServicePickerViewModel filters out SafeMe's own service (it is always
+    // protected and lives on the parent screen), so the demo list holds only
+    // third-party services. The subtitle is the service class's last segment,
+    // exactly as PickerRow renders `entry.serviceClass.substringAfterLast('.')`.
+    {name:'Keyguard AppLock', cls:'AppLockService', on:true,
      ic:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'},
-    {name:'ScreenGuard', pkg:'com.example.screenguard', on:false,
+    {name:'ScreenGuard', cls:'ScreenWatchService', on:false,
      ic:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/>'}
   ];
   let TITLES = DEMO_TITLE_RULES.slice();      // rendered copies (toggle mutates these)
@@ -1453,6 +1455,24 @@
       renderHome(); toast('Accessibility service enabled'); }, 1600);
   }
 
+  // AntiTamperScreen.PreventUninstallCard: the pill label is at_activate or
+  // at_deactivate depending on whether Device Admin is active, and the
+  // ViewModel toasts at_toast_activating -> at_toast_activated on the way in,
+  // at_toast_deactivated on the way out.
+  let atAdminActive = false;
+  function atToggleAdmin(){
+    const btn = document.getElementById('atAdminBtn');
+    if(atAdminActive){
+      atAdminActive = false;
+      if(btn) btn.textContent = 'Activate';
+      toast('Prevent Uninstall deactivated');
+      return;
+    }
+    if(btn) btn.textContent = 'Deactivate';
+    toast('Activating Prevent Uninstall…');
+    setTimeout(()=>{ atAdminActive = true; toast('Prevent Uninstall activated'); }, 1200);
+  }
+
   // ---------- Toast ----------
   function toast(msg){
     const box=document.getElementById('toasts');
@@ -1544,12 +1564,18 @@
   function svcRender(){
     const host=document.getElementById('svcList'); if(!host) return;
     host.innerHTML = SERVICES.map(x =>
-      '<div class="svc-row" data-name="'+x.name+'">'
+      '<div class="svc-row'+(x.on?' on':'')+'" data-name="'+x.name+'">'
       + '<div class="svc-ic"><svg viewBox="0 0 24 24">'+x.ic+'</svg></div>'
-      + '<div class="tx"><div class="t">'+x.name+'</div><div class="s">'+x.pkg+'</div></div>'
-      + '<div class="sw'+(x.on?' on':'')+'" data-toggle></div></div>').join('');
+      + '<div class="tx"><div class="t">'+x.name+'</div><div class="s">'+x.cls+'</div></div>'
+      + '<div class="sw'+(x.on?' on':'')+'" onclick="togSvc(this)"></div></div>').join('');
     const empty=document.getElementById('svcEmpty');
     if(empty) empty.style.display = SERVICES.length ? 'none' : 'block';
+  }
+  /** PickerRow: a protected row is outlined with brand@0.5 (ServicePickerScreen). */
+  function togSvc(el){
+    el.classList.toggle('on');
+    const row=el.closest('.svc-row'); if(row) row.classList.toggle('on', el.classList.contains('on'));
+    toast(el.classList.contains('on')?'Protected':'Not protected');
   }
   function kwRowHTML(v){
     const art = kwSelType==='keywords'
@@ -1629,6 +1655,23 @@
     const show = box.style.display==='none';
     box.style.display = show?'block':'none';
     btn.textContent = show?'Hide instructions':'Show ADB setup instructions';
+  }
+  /** AccessibilityProtectionScreen: Copy flips its own label to ap_perm_copied
+   *  on successBg / success for 2 s — it does not raise a toast. */
+  function apCopyCommand(){
+    const btn=document.getElementById('apCopyBtn'); if(!btn) return;
+    if(btn.dataset.copied==='1') return;
+    const cmd='adb shell pm grant com.safeme.app android.permission.WRITE_SECURE_SETTINGS';
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cmd).catch(()=>{});
+    btn.dataset.copied='1';
+    btn.textContent='Copied';
+    btn.style.background='var(--success-bg)';
+    btn.style.color='var(--success)';
+    setTimeout(()=>{
+      btn.dataset.copied='0';
+      btn.textContent='Copy';
+      btn.style.background=''; btn.style.color='';
+    }, 2000);
   }
   function svcSearch(inp){
     const q=(inp.value||'').trim().toLowerCase(); let n=0;
