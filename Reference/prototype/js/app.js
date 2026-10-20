@@ -762,7 +762,6 @@
   function setLockMethod(m){
     wizMethod=m;
     document.querySelectorAll('#setM .li').forEach(li=>li.querySelector('.checkbox').classList.toggle('on', li.dataset.m===m));
-    const nb=document.getElementById('setupNext'); if(nb) nb.disabled=false;
   }
   function showSetStep(n){
     ['setM','setC','setV'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.style.display=(i+1===n)?'block':'none'; });
@@ -773,8 +772,8 @@
     else { t.textContent='Confirm your lock'; sub.textContent='Enter it again to confirm'; }
     if(n===1) document.querySelectorAll('#setM .li').forEach(li=>li.querySelector('.checkbox').classList.toggle('on', li.dataset.m===wizMethod));
     document.querySelectorAll('.set-body').forEach(body=>{ body.querySelectorAll('.set-ui').forEach(ui=>{ ui.style.display=ui.dataset.m===wizMethod?'block':'none'; }); });
-    const ok1=document.getElementById('setCNext'), ok2=document.getElementById('setVDone'), nb=document.getElementById('setupNext');
-    if(nb) nb.disabled=true;
+    // step 1's Continue is always enabled in production (PrimaryButton(enabled = true))
+    const ok1=document.getElementById('setCNext'), ok2=document.getElementById('setVDone');
     if(ok1) ok1.disabled=!wizInputValid('c');
     if(ok2) ok2.disabled=!wizInputValid('v');
   }
@@ -800,7 +799,8 @@
   function saveLock(){
     const c=getWizCode('c'), v=getWizCode('v');
     if(!wizInputValid('v') || c!==v){
-      const card=document.getElementById('setV'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+      // shakeEffect sits on the sheet's whole content column (steps → actions)
+      const card=document.getElementById('sheetLockSetup'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
       resetWiz('v'); toast('Codes don\'t match — try again'); return;
     }
     lockState='on'; lockMethod=wizMethod; lockCode=c;

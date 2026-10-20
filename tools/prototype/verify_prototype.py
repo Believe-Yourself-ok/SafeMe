@@ -497,6 +497,30 @@ def group_e(rep: Report, ctx):
               r.get("#sheetSocialApps .app-picker .li .tx .t", {}).get("font-weight") == "500",
               f"font-weight={r.get('#sheetSocialApps .app-picker .li .tx .t', {}).get('font-weight')}")
     eq("#sheetSocialApps .app-picker .li .tx .s", "font-size", 11, "social picker package 11sp")
+    # --- Phase 5(e): sheetLockSetup / sheetAutoLock ------------------------ #
+    # ModalBottomSheet content carries NO top padding; the sheet's own inset
+    # spaces the grab bar (so titles sit 21px down, not 31).
+    rep.check("E", "sheets have no top padding (grab bar sits on the sheet inset)",
+              ctx["rules"].get(".sheet", {}).get("padding", "").startswith("0 20px"),
+              f".sheet padding={ctx['rules'].get('.sheet', {}).get('padding')}")
+    rep.check("E", "block-screen sheets add their own 6dp top inset",
+              ctx["rules"].get("#sheetBsImg", {}).get("padding-top") == "6px"
+              and ctx["rules"].get("#sheetBsMsg", {}).get("padding-top") == "6px"
+              and "padding(top = 6.dp, bottom = 26.dp)" in read(
+                  UI / "screens/blockscreen/BlockSheets.kt"),
+              "BlockSheets' explicit 6dp top inset is missing")
+    rep.check("E", "grab bar has no top margin of its own",
+              ctx["rules"].get(".sheet .grab", {}).get("margin") == "0 auto 16px",
+              f"margin={ctx['rules'].get('.sheet .grab', {}).get('margin')}")
+    eq(".steps", "gap", 6, "wizard step dots gap 6")
+    rep.check("E", "every reached wizard step is a 24dp brand pill",
+              px(ctx["rules"].get(".steps span.on", {}), "width") == 24
+              and ctx["rules"].get(".steps span.on", {}).get("background") == "var(--brand)"
+              and ".width(if (index < active) 24.dp else 8.dp)" in read(
+                  UI / "screens/applock/AppLockSheets.kt"),
+              f"active step = {ctx['rules'].get('.steps span.on')}")
+    eq("#autoLockList", "margin-top", 14, "auto-lock list 14 below the subtitle")
+
     # --- Phase 5(d): sheetKw / sheetSite -> KeywordSheet / WebsiteSheet ---- #
     rep.check("E", "category picker label is 12sp/600 ink-3",
               ctx["rules"].get(".cat-label", {}).get("font-size") == "12px"

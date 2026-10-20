@@ -274,11 +274,16 @@
   /* ---------- Modal ---------- */
   .scrim{position:absolute;inset:0;background:rgba(31,26,22,.42);z-index:70;opacity:0;pointer-events:none;transition:.22s}
   .scrim.show{opacity:1;pointer-events:auto}
+  /* ModalBottomSheet content padding is horizontal 20 / bottom 26-28 with NO top
+     padding — the sheet's own inset spaces the grab bar. Most sheets then put
+     GrabBar (40x5, 16 below) straight on top, so the title sits 21px down. */
   .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;z-index:75;
-         transform:translateY(105%);transition:transform .3s var(--ease);padding:10px 20px 26px;max-height:88%;
+         transform:translateY(105%);transition:transform .3s var(--ease);padding:0 20px 26px;max-height:88%;
          overflow-y:auto;box-shadow:var(--shadow-lg)}
   .sheet.show{transform:none}
-  .sheet .grab{width:40px;height:5px;border-radius:4px;background:var(--line);margin:6px auto 16px}
+  .sheet .grab{width:40px;height:5px;border-radius:4px;background:var(--line);margin:0 auto 16px}
+  /* BlockSheets adds an explicit 6dp top inset to its column. */
+  #sheetBsImg, #sheetBsMsg{padding-top:6px}
   .sheet h3{font-size:18px;font-weight:700;margin-bottom:4px}
   .sheet .s-sub{font-size:13px;color:var(--ink-2);margin-bottom:16px}
   .sheet .row2{display:flex;gap:10px}
@@ -328,9 +333,12 @@
   .setup-lock-cta .sl-chev{display:flex;align-items:center;flex:none;opacity:.95;transition:transform .18s var(--ease)}
   .setup-lock-cta:active .sl-chev{transform:translateX(3px)}
   .setup-lock-cta .sl-chev svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* AutoLockSheet: option list 14 below the subtitle, 16 above Done */
+  #autoLockList{margin-top:14px}
   .steps{display:flex;gap:6px;justify-content:center;margin:4px auto 16px}
   .steps span{width:8px;height:8px;border-radius:999px;background:var(--line);transition:.2s var(--ease)}
-  .steps span.on{width:20px;background:var(--brand)}
+  /* AppLockSheets.Steps: every reached step becomes a 24dp brand pill */
+  .steps span.on{width:24px;background:var(--brand)}
   .patgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:270px;margin:6px auto 0}
   .patgrid button{aspect-ratio:1;border-radius:50%;background:var(--brand-soft);display:flex;align-items:center;
                   justify-content:center;font-size:15px;font-weight:700;color:var(--brand-dark);transition:.15s}

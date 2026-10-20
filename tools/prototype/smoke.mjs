@@ -597,6 +597,50 @@ async function main () {
     && headerStates.empty.startsWith('No quick actions yet'),
     JSON.stringify(headerStates))
 
+  // ---- app-lock wizard + auto-lock sheet ---------------------------------- #
+  const lockSheets = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms))
+    const cs = (el, p) => getComputedStyle(el)[p]
+    window.nav('applock')
+    window.openSheet('sheetLockSetup'); await wait(80)
+    const nextLabel = document.getElementById('setupNext').textContent
+    const nextDisabled = document.getElementById('setupNext').disabled
+    const dot1 = cs(document.querySelector('#sheetLockSetup .steps span.on'), 'width')
+    window.setLockMethod('pin'); window.setupStep(2); await wait(40)
+    const dot2 = [...document.querySelectorAll('#sheetLockSetup .steps span.on')].map(d => cs(d, 'width'))
+    ;['1', '2', '3', '4'].forEach(d => window.setPin(d, 'c'))
+    window.setupStep(3); await wait(40)
+    const dots3 = document.querySelectorAll('#sheetLockSetup .steps span.on').length
+    // mismatch: the WHOLE wizard content column shakes, then resets
+    ;['9', '9', '9', '9'].forEach(d => window.setPin(d, 'v'))
+    document.getElementById('toasts').innerHTML = ''
+    window.saveLock(); await wait(60)
+    const shakeOnSheet = document.getElementById('sheetLockSetup').classList.contains('shake')
+    const shakeOnStep = document.getElementById('setV').classList.contains('shake')
+    const mismatchToast = [...document.querySelectorAll('#toasts .toast')].map(t => t.textContent)
+    window.closeSheets(); await wait(60)
+
+    window.setDemo('lock', 'gate'); window.closeLockov()
+    window.openAutoLock(); await wait(80)
+    const listTop = cs(document.getElementById('autoLockList'), 'marginTop')
+    const rowTitles = [...document.querySelectorAll('#autoLockList .li .t')].map(t => t.textContent)
+    const checked = document.querySelectorAll('#autoLockList .checkbox.on').length
+    window.closeSheets()
+    return { nextLabel, nextDisabled, dot1, dot2, dots3, shakeOnSheet, shakeOnStep,
+             mismatchToast, listTop, rowTitles, checked }
+  })
+  check('app-lock sheets: always-enabled Continue, 24dp reached steps, whole-sheet shake',
+    lockSheets.nextLabel === 'Continue' && lockSheets.nextDisabled === false
+    && lockSheets.dot1 === '24px'
+    && lockSheets.dot2.length === 2 && lockSheets.dot2.every(w => w === '24px')
+    && lockSheets.dots3 === 3
+    && lockSheets.shakeOnSheet === true && lockSheets.shakeOnStep === false
+    && lockSheets.mismatchToast.includes("Codes don't match — try again")
+    && lockSheets.listTop === '14px' && lockSheets.checked === 1
+    && lockSheets.rowTitles.length === 6
+    && lockSheets.rowTitles[0] === 'Immediately' && lockSheets.rowTitles[5] === 'Off',
+    JSON.stringify(lockSheets))
+
   // ---- keyword / website sheets: picker order, whitelist, toasts ---------- #
   const kwSheets = await page.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms))
