@@ -279,13 +279,15 @@
   // ---------- Generic toggle ----------
   document.addEventListener('click', e=>{
     const t = e.target.closest('.sw[data-toggle]');
+    if(t && t.closest('.li.row-off')) return;
     if(t){ t.classList.toggle('on');
       if(t.id==='homeMaster'){ DEMO.home.paused=!t.classList.contains('on'); renderHome(); }
       toast(t.classList.contains('on')?'On':'Off');
       // ScheduleViewModel.toggleSchedule persists `enabled`, which the banner
       // predicates and the edit screen both read back.
       if(t.closest('#schedList')){ const card=t.closest('.sched-card');
-        if(card) card.dataset.enabled=t.classList.contains('on')?'1':'0'; schedCount(); } if(t.closest('#titleList')) titleCount(); if(t.id==='vpnToggle') vpnStatus(); }
+        if(card) card.dataset.enabled=t.classList.contains('on')?'1':'0'; schedCount(); }
+      if(t.dataset.lockval!==undefined) t.dataset.lockval = t.classList.contains('on')?'1':'0'; if(t.closest('#titleList')) titleCount(); if(t.id==='vpnToggle') vpnStatus(); }
   });
 
   // ---------- In-screen tabs ----------
@@ -670,7 +672,25 @@
     const pill=document.getElementById('lockHeroPill'); pill.className='pill '+(lockState==='on'?'g':'r'); pill.innerHTML='<span class="pdot"></span>'+(lockState==='on'?'On':'Off');
     const autoMap={Immediately:'Immediately after lock','After 15 seconds':'After 15 seconds idle','After 30 seconds':'After 30 seconds idle','After 1 minute':'After 1 minute idle','After 5 minutes':'After 5 minutes idle',Off:'Never auto-lock'};
     const av=document.getElementById('autoVal'); if(av) av.textContent=autoMap[lockAuto]||lockAuto;
+    // AppLockScreen.kt:610-620 + SettingsList(enabled = state.enabled):
+    // Disable only exists while a lock is set, and every setting row is inert
+    // (switch checked = enabled && stored value) while App Lock is off.
+    const off = lockState !== 'on';
+    const dis=document.getElementById('lockDisableBtn'); if(dis) dis.style.display = off ? 'none' : 'flex';
+    document.querySelectorAll('#sc-applock .list .li').forEach(li=>{
+      li.classList.toggle('row-off', off);
+      const sw=li.querySelector('.sw[data-toggle]');
+      if(sw) sw.classList.toggle('on', !off && sw.dataset.lockval==='1');
+    });
   }
+  /** DisableButton → AlertDialog → disableLock(): lockType becomes OFF. */
+  function confirmDisableLock(){
+    closeDlg();
+    lockState='off'; lockMethod='pin';
+    renderLock(); toast('App Lock is off');
+  }
+  /** SettingsList auto-lock row: clickable(enabled = state.enabled). */
+  function openAutoLock(){ if(lockState!=='on') return; openSheet('sheetAutoLock'); }
   function openLockSetup(){
     wizMethod=lockMethod; wizPin=''; wizValPin=''; patOrder=[]; patOrderV=[];
     const pc=document.getElementById('pcInput'); if(pc) pc.value='';

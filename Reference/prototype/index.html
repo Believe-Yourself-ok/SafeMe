@@ -495,10 +495,11 @@
         </button>
         <div class="sec-t">Lock settings</div>
         <div class="list">
-          <div class="li" onclick="openSheet('sheetAutoLock')"><div class="ic d"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="tx"><div class="t">Auto-lock</div><div class="s" id="autoVal">Immediately after lock</div></div><span class="chev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></div>
-          <div class="li"><div class="ic g"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 00-4 4v3H6a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1v-9a1 1 0 00-1-1h-2V7a4 4 0 00-4-4z"/><path d="M12 14v3"/></svg></div><div class="tx"><div class="t">Touch ID / Face ID</div><div class="s">Unlock with biometrics</div></div><div class="sw on" data-toggle></div></div>
-          <div class="li"><div class="ic o"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 00-4 4v3H6a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1v-9a1 1 0 00-1-1h-2V7a4 4 0 00-4-4z"/></svg></div><div class="tx"><div class="t">Disable "Forgot Password"</div><div class="s">Hides the recovery option</div></div><div class="sw" data-toggle></div></div>
+          <div class="li" onclick="openAutoLock()"><div class="ic d"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="tx"><div class="t">Auto-lock</div><div class="s" id="autoVal">Immediately after lock</div></div><span class="chev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></div>
+          <div class="li"><div class="ic g"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 00-4 4v3H6a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1v-9a1 1 0 00-1-1h-2V7a4 4 0 00-4-4z"/><path d="M12 14v3"/></svg></div><div class="tx"><div class="t">Touch ID / Face ID</div><div class="s">Unlock with biometrics</div></div><div class="sw on" data-toggle data-lockval="1"></div></div>
+          <div class="li"><div class="ic o"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 00-4 4v3H6a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1v-9a1 1 0 00-1-1h-2V7a4 4 0 00-4-4z"/></svg></div><div class="tx"><div class="t">Disable "Forgot Password"</div><div class="s">Hides the recovery option</div></div><div class="sw" data-toggle data-lockval="0"></div></div>
         </div>
+        <button class="btn btn-danger btn-block" id="lockDisableBtn" style="height:52px;font-size:16px;font-weight:600;border-radius:999px;margin-top:14px;box-shadow:0 8px 20px rgba(196,69,60,.35);display:none" onclick="openDlg('dlgLockDisable')">Disable App Lock</button>
         <div class="note" style="margin-top:12px"><svg viewBox="0 0 24 24"><path d="M12 2l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg><span>Hashed with PBKDF2-HMAC-SHA256 + per-user salt, constant-time compare. Brute-force → exponential backoff → 5-min lockout.</span></div>
       </section>
 
@@ -1039,6 +1040,15 @@
         <div class="dlg-title">Delete account?</div>
         <div class="dlg-body">This removes all local data and disables protection. This can't be undone.</div>
         <div class="dlg-actions"><button class="dlg-btn" onclick="closeDlg()">Cancel</button><button class="dlg-btn danger" onclick="confirmDelete()">Delete</button></div>
+      </div>
+    </div>
+
+    <!-- App Lock disable confirm — M3 AlertDialog (AppLockScreen.kt:160-200) -->
+    <div class="dlg" id="dlgLockDisable">
+      <div class="dlg-card" role="alertdialog" aria-modal="true">
+        <div class="dlg-title">Turn off App Lock?</div>
+        <div class="dlg-body">SafeMe will stop asking for your PIN, password or pattern when you open it.</div>
+        <div class="dlg-actions"><button class="dlg-btn" onclick="closeDlg()">Cancel</button><button class="dlg-btn danger" onclick="confirmDisableLock()">Disable</button></div>
       </div>
     </div>
 

@@ -354,6 +354,143 @@ async function main () {
     && lockGate.bio === 'Use Face ID / fingerprint',
     JSON.stringify(lockGate))
 
+  // ---- app lock screen: off / on / disable dialog / wizard / biometric --- #
+  const lockScreen = await page.evaluate(async () => {
+    window.nav('applock')
+    const read = () => {
+      const rows = [...document.querySelectorAll('#sc-applock .list .li')]
+      const d = document.getElementById('lockDisableBtn')
+      return {
+        hero: document.getElementById('lockHeroTitle').textContent,
+        pill: document.getElementById('lockHeroPill').textContent.trim(),
+        disable: getComputedStyle(d).display,
+        disableH: Math.round(d.getBoundingClientRect().height),
+        rows: rows.map(r => ({
+          off: r.classList.contains('row-off'),
+          sw: r.querySelector('.sw[data-toggle]') ? r.querySelector('.sw').classList.contains('on') : null,
+          val: r.querySelector('.sw[data-toggle]') ? r.querySelector('.sw').dataset.lockval : null
+        }))
+      }
+    }
+    // start from a known state: the gate test above leaves App Lock on
+    window.confirmDisableLock()
+    await new Promise(r => setTimeout(r, 80))
+    document.getElementById('toasts').innerHTML = ''
+    const off = read()
+    document.querySelectorAll('#sc-applock .list .li')[1].querySelector('.sw').click()
+    await new Promise(r => setTimeout(r, 30))
+    const afterDimClick = read()
+    document.querySelector('#sc-applock .list .li').click()
+    await new Promise(r => setTimeout(r, 30))
+    const autoWhileOff = document.getElementById('sheetAutoLock').classList.contains('show')
+
+    // gate state turns the lock on (setDemo shares one state object with the screen)
+    window.setDemo('lock', 'gate')
+    await new Promise(r => setTimeout(r, 80))
+    window.closeLockov()
+    await new Promise(r => setTimeout(r, 60))
+    const on = read()
+    document.querySelector('#sc-applock .list .li').click()
+    await new Promise(r => setTimeout(r, 60))
+    const autoWhileOn = document.getElementById('sheetAutoLock').classList.contains('show')
+    window.closeSheets()
+
+    // DisableButton -> AlertDialog -> confirm
+    document.getElementById('lockDisableBtn').click()
+    await new Promise(r => setTimeout(r, 60))
+    const dlg = document.getElementById('dlgLockDisable')
+    const dlgOpen = dlg.classList.contains('show')
+      && !document.querySelector('#sheetLockSetup').classList.contains('show')
+    const dlgTitle = dlg.querySelector('.dlg-title').textContent
+    document.getElementById('toasts').innerHTML = ''
+    dlg.querySelectorAll('.dlg-btn')[1].click()
+    await new Promise(r => setTimeout(r, 120))
+    const afterDisable = read()
+    const disableToast = document.getElementById('toasts').textContent.trim()
+
+    // setup wizard: mismatch keeps the sheet open, a match grants the lock
+    window.openLockSetup()
+    await new Promise(r => setTimeout(r, 60))
+    document.querySelector('#setM .li').click()
+    document.getElementById('setupNext').click()
+    await new Promise(r => setTimeout(r, 40))
+    ;['1', '2', '3', '4'].forEach(d => window.setPin(d, 'c'))
+    document.getElementById('setCNext').click()
+    await new Promise(r => setTimeout(r, 40))
+    const step3 = document.getElementById('setupTitle').textContent
+    ;['1', '1', '1', '1'].forEach(d => window.setPin(d, 'v'))
+    document.getElementById('toasts').innerHTML = ''
+    document.getElementById('setVDone').click()
+    await new Promise(r => setTimeout(r, 120))
+    const mismatchToast = document.getElementById('toasts').textContent.trim()
+    const stillOpen = document.getElementById('sheetLockSetup').classList.contains('show')
+    ;['1', '2', '3', '4'].forEach(d => window.setPin(d, 'v'))
+    document.getElementById('toasts').innerHTML = ''
+    document.getElementById('setVDone').click()
+    await new Promise(r => setTimeout(r, 900))
+    const afterSetup = { hero: document.getElementById('lockHeroTitle').textContent,
+                         toast: document.getElementById('toasts').textContent.trim() }
+
+    // biometric: unavailable -> toast, and the row loses its active tint
+    window.setDemo('bio', 'unavailable')
+    window.setDemo('lock', 'gate')
+    await new Promise(r => setTimeout(r, 80))
+    const bioActiveWhenUnavailable = document.getElementById('lockBio').classList.contains('active')
+    document.getElementById('toasts').innerHTML = ''
+    window.bioUnlock()
+    await new Promise(r => setTimeout(r, 60))
+    const bioToast = document.getElementById('toasts').textContent.trim()
+    window.closeLockov()
+    window.setDemo('bio', 'available')
+
+    // dwell ceiling (BlockScreenViewModel: coerceIn(3, 120))
+    window.nav('block')
+    for (let i = 0; i < 200; i++) window.dwellStep(1)
+    const dwellMax = document.getElementById('bsDwellVal').textContent
+    for (let i = 0; i < 200; i++) window.dwellStep(-1)
+    const dwellMin = document.getElementById('bsDwellVal').textContent
+
+    return { off, afterDimClick, autoWhileOff, on, autoWhileOn, dlgOpen, dlgTitle, afterDisable,
+             disableToast, step3, mismatchToast, stillOpen, afterSetup, bioActiveWhenUnavailable,
+             bioToast, dwellMax, dwellMin }
+  })
+  check('app lock: off state dims + inerts every setting and hides Disable',
+    lockScreen.off.hero === 'App Lock is off' && lockScreen.off.pill === 'Off'
+    && lockScreen.off.disable === 'none'
+    && lockScreen.off.rows.every(r => r.off)
+    && lockScreen.off.rows[1].sw === false && lockScreen.off.rows[1].val === '1'
+    && lockScreen.afterDimClick.rows[1].sw === false     // MasterSwitch(clickable(enabled))
+    && lockScreen.autoWhileOff === false,
+    JSON.stringify(lockScreen.off))
+  check('app lock: on state restores stored switches and shows Disable (h52)',
+    lockScreen.on.hero === 'Locked with PIN' && lockScreen.on.pill === 'On'
+    && lockScreen.on.disable === 'flex' && lockScreen.on.disableH === 52
+    && lockScreen.on.rows.every(r => !r.off)
+    && lockScreen.on.rows[1].sw === true && lockScreen.autoWhileOn === true,
+    JSON.stringify(lockScreen.on))
+  check('app lock: AlertDialog confirm disables the lock with al_toast_disabled',
+    lockScreen.dlgOpen && lockScreen.dlgTitle === 'Turn off App Lock?'
+    && lockScreen.afterDisable.hero === 'App Lock is off'
+    && lockScreen.afterDisable.disable === 'none'
+    && lockScreen.afterDisable.rows.every(r => r.off)
+    && lockScreen.disableToast === 'App Lock is off',
+    JSON.stringify({ dlgOpen: lockScreen.dlgOpen, title: lockScreen.dlgTitle,
+                     after: lockScreen.afterDisable.hero, toast: lockScreen.disableToast }))
+  check('app lock: wizard mismatch keeps the sheet, a match turns the lock on',
+    lockScreen.step3 === 'Confirm your lock'
+    && lockScreen.mismatchToast.includes('Codes don\'t match — try again') && lockScreen.stillOpen
+    && lockScreen.afterSetup.hero === 'Locked with PIN'
+    && lockScreen.afterSetup.toast.includes('App Lock is on'),
+    JSON.stringify({ step3: lockScreen.step3, mismatch: lockScreen.mismatchToast,
+                     after: lockScreen.afterSetup }))
+  check('app lock: unavailable biometrics drop the active tint and toast',
+    lockScreen.bioActiveWhenUnavailable === false
+    && lockScreen.bioToast.includes("Biometrics aren't available on this device"),
+    JSON.stringify({ active: lockScreen.bioActiveWhenUnavailable, toast: lockScreen.bioToast }))
+  check('block screen: dwell clamps to 3-120s like BlockScreenViewModel',
+    lockScreen.dwellMax === '120s' && lockScreen.dwellMin === '3s',
+    `${lockScreen.dwellMin}..${lockScreen.dwellMax}`)
+
   // ---- home state machine: every variant renders like the ViewModel ------ #
   const heroStates = await page.evaluate(async () => {
     window.nav('home')

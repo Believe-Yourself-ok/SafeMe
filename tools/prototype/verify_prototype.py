@@ -711,6 +711,62 @@ def group_g(rep: Report, ctx):
               and ctx["rules"].get(".cap", {}).get("color") == "var(--ink-3)",
               "the overnight caption is not recomputed when the editor opens")
 
+    # --- B-16/B-17: AppLockScreen + BlockScreen state coverage -------------- #
+    lock_src = read(UI / "screens/applock/AppLockScreen.kt")
+    overlay_src = read(UI / "screens/applock/AppLockUnlockOverlay.kt")
+    lock_vm = read(UI / "screens/applock/AppLockViewModel.kt")
+    block_vm = read(UI / "screens/blockscreen/BlockScreenViewModel.kt")
+    rep.check("G", "Disable App Lock renders only while a lock is set (B-16)",
+              'id="lockDisableBtn"' in html
+              and strings["al_disable"] in html
+              and "if (state.enabled) {" in lock_src
+              and "DisableButton(onClick" in lock_src
+              and "lockState !== 'on'" in js,
+              "the disable button is not gated on the lock state")
+    dis_btn = re.search(r'id="lockDisableBtn"[^>]*style="([^"]+)"', html)
+    dis_css = dis_btn.group(1) if dis_btn else ""
+    rep.check("G", "DisableButton geometry == danger / 52dp / r999 / 16sp-600 (B-16)",
+              all(k in dis_css for k in ("height:52px", "font-size:16px", "font-weight:600",
+                                         "border-radius:999px"))
+              and ".height(52.dp)" in lock_src and "colors.danger" in lock_src
+              and "fontSize = 16.sp" in lock_src and "fontWeight = FontWeight.SemiBold" in lock_src,
+              "disable button geometry drifted")
+    rep.check("G", "turning App Lock off is an AlertDialog, not a sheet (B-16)",
+              'id="dlgLockDisable"' in html and 'id="sheetLockDisable"' not in html
+              and "AlertDialog(" in lock_src
+              and strings["al_disable_title"] in html and strings["al_disable_body"] in html
+              and strings["al_disable_confirm"] in html and strings["al_disable_cancel"] in html,
+              "the disable confirm is not the production AlertDialog")
+    rep.check("G", "App Lock settings are inert + dimmed while off (B-16)",
+              "MasterSwitch(" in lock_src and "checked = enabled && biometricEnabled" in lock_src
+              and "val alpha = if (enabled) 1f else 0.45f" in lock_src
+              and "!off && sw.dataset.lockval==='1'" in js
+              and "t.closest('.li.row-off')" in js
+              and "function openAutoLock(){ if(lockState!=='on') return;" in js,
+              "off-state row behaviour drifted from SettingsList/SettingRow")
+    rep.check("G", "row-off blending uses 45% icon / 50% swOff (B-16)",
+              ctx["rules"].get(".li.row-off .ic", {}).get("background", "").endswith("45%,var(--surface))")
+              and ctx["rules"].get(".li.row-off .sw", {}).get("background", "").endswith("50%,var(--surface))")
+              and '.li.row-off .ic.g' in ctx["css"] and ':root[data-theme="dark"] .li.row-off .ic.g' in ctx["css"],
+              "the disabled-row fills are not the blended 45%/50% values")
+    rep.check("G", "App Lock state copy comes from strings.xml (B-16)",
+              all(v in ctx["html"] + js.replace("\\'", "'") for v in (
+                  strings["al_mismatch"], strings["al_toast_on"], strings["al_toast_disabled"],
+                  strings["al_toast_bio_unavailable"], strings["al_gate_bio_off"],
+                  strings["al_gate_use_biometric"]))
+              and all(v in (overlay_src + lock_src + lock_vm) for v in (
+                  "al_gate_use_biometric", "al_gate_bio_off", "al_toast_bio_unavailable")),
+              "a gate/wizard string is missing on one side")
+    rep.check("G", "gate tints the biometric row by state, label stays constant (B-16)",
+              "bioActive" in overlay_src and "colors.brandDark else colors.ink3" in overlay_src
+              and "bio.classList.toggle('active', on && DEMO.home.bioAvailable)" in js,
+              "the biometric row no longer mirrors bioActive")
+    rep.check("G", "dwell countdown clamps to the same 3-120s window (B-17)",
+              "coerceIn(3, 120)" in block_vm
+              and "Math.max(3,Math.min(120,bsDwell+d))" in js
+              and "R.string.bs_closing, dwell" in read(UI / "screens/blockscreen/BlockScreen.kt"),
+              "dwell clamp drifted from BlockScreenViewModel")
+
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")

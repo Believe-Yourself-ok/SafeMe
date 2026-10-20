@@ -610,6 +610,21 @@
   /* Enable row + overnight caption (schedule editor) */
   .row14{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
          border-radius:14px;padding:14px;margin-top:12px}
+  /* AppLockScreen.SettingRow(alpha = if (enabled) 1f else 0.45f): only the icon
+     box background fades toward the surface — the glyph keeps its full tint — and
+     MasterSwitch(enabled = false) uses swOff at 50 %. Blended, not opacity, so
+     the literal per-variant fills keep matching. */
+  .li.row-off .ic{background:color-mix(in srgb,var(--brand-soft) 45%,var(--surface))}
+  .li.row-off .ic.g{background:color-mix(in srgb,#E7F0EC 45%,var(--surface))}
+  .li.row-off .ic.o{background:color-mix(in srgb,#F7EDDD 45%,var(--surface))}
+  .li.row-off .ic.r{background:color-mix(in srgb,#F9E7E5 45%,var(--surface))}
+  .li.row-off .ic.d{background:color-mix(in srgb,#3A2C1F 45%,var(--surface))}
+  .li.row-off .sw{background:color-mix(in srgb,#DDD5CC 50%,var(--surface));cursor:default}
+  :root[data-theme="dark"] .li.row-off .ic.g{background:color-mix(in srgb,#22332B 45%,var(--surface))}
+  :root[data-theme="dark"] .li.row-off .ic.o{background:color-mix(in srgb,#3A2E1E 45%,var(--surface))}
+  :root[data-theme="dark"] .li.row-off .ic.r{background:color-mix(in srgb,#3B2321 45%,var(--surface))}
+  :root[data-theme="dark"] .li.row-off .sw{background:color-mix(in srgb,#3A3228 50%,var(--surface))}
+
   /* ScheduleEditScreen.kt:406-411 — "Ends next day" caption */
   .cap{font-size:12px;color:var(--ink-3);margin-top:6px}
   /* ---------- Permission steps (production layout) ---------- */
