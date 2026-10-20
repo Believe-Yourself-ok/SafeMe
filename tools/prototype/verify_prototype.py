@@ -799,6 +799,33 @@ def group_g(rep: Report, ctx):
               len(sections) == 10 and [r.replace("&amp;", "&") for r in rows] == labels,
               f"Kotlin {labels} vs prototype {rows}")
 
+    # --- B-19 / A-19: block-screen Exclude Apps card + sheet copy ----------- #
+    other_src = read(UI / "screens/blocking/OtherFeaturesScreen.kt")
+    rep.check("G", "block Exclude Apps card mirrors ExcludeAppsCard (B-19)",
+              'id="blkExcludeSub"' in html and 'openSheet(\'sheetBlkExclude\')' in html
+              and "function blkExcludeSub" in js
+              and "R.plurals.blk_exclude_count" in other_src
+              and "stringResource(R.string.blk_exclude_sub)" in other_src
+              and "background(colors.brandSoft)" in other_src
+              and "13.5.sp" in other_src and "11.5.sp" in other_src,
+              "the block exclude card drifted from ExcludeAppsCard")
+    rep.check("G", "block Exclude Apps sheet uses blk_exclude_sheet_* (A-19)",
+              'id="sheetBlkExclude"' in html
+              and strings["blk_exclude_sheet_title"] in html
+              and strings["blk_exclude_sheet_sub"] in html
+              and "stringResource(R.string.blk_exclude_sheet_sub)" in other_src
+              and "function blkExcludeDone" in js,
+              "the block exclude sheet copy drifted")
+    rep.check("G", "block image sheet note uses bs_img_sub_sheet (A-19)",
+              strings["bs_img_sub_sheet"] in html
+              and "R.string.bs_img_sub_sheet" in read(UI / "screens/blockscreen/BlockSheets.kt"),
+              "bs_img_sub_sheet copy drifted")
+    rep.check("G", "permission pill copy uses perm_granted (A-19)",
+              strings["perm_granted"] in js
+              and "stringResource(R.string.perm_granted)" in read(
+                  UI / "screens/permissions/PermissionScreen.kt"),
+              "perm_granted copy drifted")
+
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")

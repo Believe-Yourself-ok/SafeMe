@@ -282,6 +282,38 @@ async function main () {
     && sched.flags.bothMissing.a11y === true && sched.flags.bothMissing.exact === true,
     JSON.stringify(sched.flags))
 
+  // ---- block-screen Exclude Apps card: count-driven sub ------------------ #
+  const blkExclude = await page.evaluate(async () => {
+    window.nav('otherfeatures')
+    const sub = () => document.getElementById('blkExcludeSub').textContent
+    const before = sub()
+    document.getElementById('blkExcludeSub').closest('.qa').click()
+    await new Promise(r => setTimeout(r, 80))
+    const sheet = document.getElementById('sheetBlkExclude')
+    const opened = sheet.classList.contains('show')
+      && sheet.querySelector('h3').textContent === 'Exclude apps'
+      && sheet.querySelector('.s-sub').textContent
+        === 'Excluded apps are never blocked by keyword, porn keyword, website, or image/video-search blocking.'
+    document.querySelectorAll('#blkExcludeList .li')[0].click()
+    await new Promise(r => setTimeout(r, 40))
+    const counted = document.getElementById('selAllBlkExcludeBtn').textContent
+    ;[...sheet.querySelectorAll('.btn-primary')].pop().click()
+    await new Promise(r => setTimeout(r, 80))
+    const one = sub()
+    document.getElementById('blkExcludeSub').closest('.qa').click()
+    await new Promise(r => setTimeout(r, 60))
+    ;[...document.getElementById('sheetBlkExclude').querySelectorAll('.btn-secondary')][1].click()
+    ;[...document.getElementById('sheetBlkExclude').querySelectorAll('.btn-primary')].pop().click()
+    await new Promise(r => setTimeout(r, 80))
+    return { before, opened, counted, one, cleared: sub() }
+  })
+  check('block: Exclude Apps card sub follows blk_exclude_count',
+    blkExclude.before === 'Never blocked by keywords or porn blocking'
+    && blkExclude.opened && blkExclude.counted === 'Select All (1)'
+    && blkExclude.one === '1 app excluded'
+    && blkExclude.cleared === 'Never blocked by keywords or porn blocking',
+    JSON.stringify(blkExclude))
+
   // ---- DNS/VPN status matrix -------------------------------------------- #
   const vpnStates = await page.evaluate(async () => {
     const read = () => ({

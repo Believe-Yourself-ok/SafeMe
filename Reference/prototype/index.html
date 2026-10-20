@@ -597,10 +597,10 @@
           <div style="flex:1;min-width:0"><div class="t">Block Image &amp; Video Search</div><div class="s">Adult-term searches · Google · Bing · DuckDuckGo · Yandex</div></div>
           <div class="sw" data-toggle></div>
         </div>
-        <div class="qa" style="display:flex;align-items:center;gap:12px;margin-top:10px">
-          <div class="ic g"><svg viewBox="0 0 24 24"><path d="M12 2l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
-          <div style="flex:1;min-width:0"><div class="t">Exclude Apps from Blocking</div><div class="s" id="blkExcludeSub">Never blocked by keywords or porn blocking</div></div>
-          <button class="btn btn-secondary" style="height:36px;padding:0 16px;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink)" onclick="openSheet('sheetApps')">Manage</button>
+        <div class="qa" onclick="openSheet('sheetBlkExclude')" style="display:flex;align-items:center;gap:12px;margin-top:10px">
+          <div class="ic" style="background:var(--brand-soft);color:var(--brand-dark)"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+          <div style="flex:1;min-width:0"><div class="t" style="font-size:13.5px;font-weight:700">Exclude Apps from Blocking</div><div class="s" id="blkExcludeSub" style="font-size:11.5px;line-height:15px;margin-top:2px">Never blocked by keywords or porn blocking</div></div>
+          <button class="btn" style="height:36px;padding:0 16px;font-size:13px;font-weight:600;background:var(--brand-soft);color:var(--brand-dark)" onclick="openSheet('sheetBlkExclude')">Manage</button>
         </div>
       </section>
 
@@ -910,7 +910,7 @@
     <div class="sheet" id="sheetBsImg">
       <div class="grab"></div>
       <h3>Motivation image</h3>
-      <div class="s-sub">Shown on the block screen behind your message · simulates SAF persistence.</div>
+      <div class="s-sub">Shown on the block screen behind your message • simulates SAF persistence.</div>
       <div class="img-grid">
         <button class="img-tile clear on" data-img="" onclick="pickImg(this)">No image</button>
         <button class="img-tile img-sunset" data-img="sunset" onclick="pickImg(this)"></button>
@@ -955,6 +955,17 @@
       <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm btn-secondary" style="flex:1" id="selAllAppsBtn" onclick="selectAllApps()">Select All (12)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllAppsBtn" onclick="deselectAllApps()">Deselect All (12)</button></div>
       <div class="app-picker" id="appList"></div>
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="appsDone()">Done</button>
+    </div>
+
+    <!-- Exclude Apps from Blocking: OtherFeaturesScreen.kt:88-110 reuses AppPickerSheet -->
+    <div class="sheet" id="sheetBlkExclude">
+      <div class="grab"></div>
+      <h3>Exclude apps</h3>
+      <div class="s-sub">Excluded apps are never blocked by keyword, porn keyword, website, or image/video-search blocking.</div>
+      <label class="field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="blkExcludeSearch" placeholder="Search apps…" oninput="filterBlkExclude(this.value)"></label>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm btn-secondary" style="flex:1" id="selAllBlkExcludeBtn" onclick="selectAllBlkExclude()">Select All (0)</button><button class="btn sm btn-secondary" style="flex:1" id="deselAllBlkExcludeBtn" onclick="deselectAllBlkExclude()">Deselect All (0)</button></div>
+      <div class="app-picker" id="blkExcludeList"></div>
+      <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="blkExcludeDone()">Done</button>
     </div>
 
     <!-- Exclude Apps: ScheduleScreen.kt:172-196 reuses AppPickerSheet with its own selection -->

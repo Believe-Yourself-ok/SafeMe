@@ -357,6 +357,9 @@
   // through setExcludedApps(), which feeds the Exclude Apps card count.
   const excludeSel = new Set();
   let excludeDraft = new Set();
+  // OtherFeaturesScreen: same AppPickerSheet, blk_* copy and its own set.
+  const blkExcludeSel = new Set();
+  let blkExcludeDraft = new Set();
 
   // ---------- Dynamic app classifier ----------
   // The category is derived on the fly from each installed app's package metadata
@@ -420,13 +423,15 @@
       sheetApps:['appList','appSearch','multi'],
       sheetVpnApps:['vpnAppList','vpnAppSearch','multi'],
       sheetSocialApps:['socialAppList','socialAppSearch','multi'],
-      sheetExclude:['excludeList','excludeSearch','multi']
+      sheetExclude:['excludeList','excludeSearch','multi'],
+      sheetBlkExclude:['blkExcludeList','blkExcludeSearch','multi']
     }[id];
     if(!cfg) return;
     const host=document.getElementById(cfg[0]);
     const search=document.getElementById(cfg[1]); if(search) search.value='';
     const sel = id==='sheetApps' ? appPickSel : id==='sheetVpnApps' ? vpnPickSel
-      : id==='sheetExclude' ? excludeDraft : SOCIAL.wholeBlocked;
+      : id==='sheetExclude' ? excludeDraft
+      : id==='sheetBlkExclude' ? blkExcludeDraft : SOCIAL.wholeBlocked;
     renderAppPicker(host, cfg[2], sel, '');
     updatePickerCounts();
   }
@@ -437,7 +442,9 @@
     document.getElementById(id).classList.add('show');
     // ExcludeAppsCard.onManage: seed the working copy from the committed set.
     if(id==='sheetExclude') excludeDraft = new Set(excludeSel);
-    if(id==='sheetApps'||id==='sheetVpnApps'||id==='sheetSocialApps'||id==='sheetExclude'){ refreshAppPicker(id); }
+    if(id==='sheetBlkExclude') blkExcludeDraft = new Set(blkExcludeSel);
+    if(id==='sheetApps'||id==='sheetVpnApps'||id==='sheetSocialApps'
+       ||id==='sheetExclude'||id==='sheetBlkExclude'){ refreshAppPicker(id); }
     if(id==='sheetTitle'){
       titleEditId=null;
       const tt=document.getElementById('titleSheetTitle'); if(tt) tt.textContent='Add title rule';
@@ -511,6 +518,7 @@
     let set = null;
     if(li.closest('#appList')) set = appPickSel;
     else if(li.closest('#excludeList')) set = excludeDraft;
+    else if(li.closest('#blkExcludeList')) set = blkExcludeDraft;
     else if(li.closest('#vpnAppList')) set = vpnPickSel;
     else if(li.closest('#socialAppList')) set = SOCIAL.wholeBlocked;
     if(set){ if(c.classList.contains('on')) set.add(name); else set.delete(name); }
@@ -1176,6 +1184,9 @@
   function updatePickerCounts(){
     const ex=document.getElementById('selAllExcludeBtn'), exd=document.getElementById('deselAllExcludeBtn');
     if(ex) ex.textContent='Select All ('+excludeDraft.size+')';
+    const bex=document.getElementById('selAllBlkExcludeBtn'), bexd=document.getElementById('deselAllBlkExcludeBtn');
+    if(bex) bex.textContent='Select All ('+blkExcludeDraft.size+')';
+    if(bexd) bexd.textContent='Deselect All ('+blkExcludeDraft.size+')';
     if(exd) exd.textContent='Deselect All ('+excludeDraft.size+')';
     const a=document.getElementById('selAllAppsBtn'), b=document.getElementById('deselAllAppsBtn');
     if(a) a.textContent='Select All ('+appPickSel.size+')';
@@ -1255,6 +1266,46 @@
     excludeDraft.forEach(n=>excludeSel.add(n));
     closeSheets();
     schedExcludeSub();
+  }
+
+  function filterBlkExclude(q){
+    const v=(q||'').trim().toLowerCase();
+    document.querySelectorAll('#blkExcludeList .app-group').forEach(g=>{
+      let any=false;
+      g.querySelectorAll('.li').forEach(r=>{
+        const t=(r.querySelector('.t').textContent+' '+(r.querySelector('.s')||{textContent:''}).textContent).toLowerCase();
+        const hit=!v||t.includes(v);
+        r.style.display=hit?'':'none';
+        if(hit) any=true;
+      });
+      g.style.display=any?'':'none';
+    });
+  }
+  function selectAllBlkExclude(){
+    const q=(document.getElementById('blkExcludeSearch')||{}).value||'';
+    APPS.forEach(a=>blkExcludeDraft.add(a.name));
+    renderAppPicker(document.getElementById('blkExcludeList'),'multi',blkExcludeDraft,q);
+    updatePickerCounts();
+  }
+  function deselectAllBlkExclude(){
+    const q=(document.getElementById('blkExcludeSearch')||{}).value||'';
+    blkExcludeDraft.clear();
+    renderAppPicker(document.getElementById('blkExcludeList'),'multi',blkExcludeDraft,q);
+    updatePickerCounts();
+  }
+  /** OtherFeaturesScreen onDone → setExcludedApps(excludeSelection) → count. */
+  function blkExcludeDone(){
+    blkExcludeSel.clear();
+    blkExcludeDraft.forEach(n=>blkExcludeSel.add(n));
+    closeSheets();
+    blkExcludeSub();
+  }
+  /** ExcludeAppsCard (blocking): count == 0 → blk_exclude_sub, else the plural. */
+  function blkExcludeSub(){
+    const el=document.getElementById('blkExcludeSub'); if(!el) return;
+    const n=blkExcludeSel.size;
+    el.textContent = n===0 ? 'Never blocked by keywords or porn blocking'
+      : n+' app'+(n===1?' excluded':'s excluded');
   }
 
   // ---------- Social Media Blocking (two gates) ----------
