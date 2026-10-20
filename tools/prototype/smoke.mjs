@@ -160,6 +160,73 @@ async function main () {
   })
   check('state renderers run without throwing', renderErr === '', renderErr)
 
+  // ---- social blocking: master off dims rows, extras rows appear -------- #
+  const social = await page.evaluate(async () => {
+    window.nav('socialblocking')
+    const read = () => ({
+      rows: document.querySelectorAll('#launchList .launch-row').length,
+      extras: document.querySelectorAll('#launchList .launch-row.extra').length,
+      dim: [...document.querySelectorAll('#launchList .launch-row')].map(r => getComputedStyle(r).opacity),
+      on: document.querySelectorAll('#launchList .launch-row .sw.on').length,
+      sub: document.getElementById('socialMasterSub').textContent,
+      master: document.getElementById('socialMasterPill').textContent.trim(),
+      footnote: (document.body.textContent.match(/How it works/) || []).length
+    })
+    const before = read()
+    window.togSocialMaster(document.getElementById('socialMaster'))
+    await new Promise(r => setTimeout(r, 60))
+    const off = read()
+    window.togSocialMaster(document.getElementById('socialMaster'))
+    await new Promise(r => setTimeout(r, 60))
+    document.getElementById('socialMaster').classList.add('on')
+    window.togLaunch(document.querySelector('#launchList .launch-row .sw'), 'TikTok')
+    return { before, off, footnote: before.footnote }
+  })
+  check('social: master off dims every row to 0.45 and clears the switches',
+    social.off.dim.every(o => Math.abs(parseFloat(o) - 0.45) < 0.02) && social.off.on === 0
+    && social.off.master === 'Master OFF' && social.off.sub === 'Paused — tap to protect'
+    && social.before.master === 'Master ON' && social.before.sub === 'Whole apps & tabs protected',
+    JSON.stringify(social.off))
+
+  // ---- delete account is a centred dialog, not a sheet ------------------ #
+  const del = await page.evaluate(async () => {
+    window.openDlg('dlgDelete')
+    await new Promise(r => setTimeout(r, 60))
+    const d = document.getElementById('dlgDelete')
+    const shown = getComputedStyle(d).display !== 'none'
+    const title = d.querySelector('.dlg-title').textContent
+    window.closeDlg()
+    await new Promise(r => setTimeout(r, 60))
+    return { shown, title, closed: getComputedStyle(d).display === 'none',
+             sheet: !!document.getElementById('sheetDelete') }
+  })
+  check('delete account opens a centred dialog with production copy',
+    del.shown && del.closed && !del.sheet && del.title === 'Delete account?', JSON.stringify(del))
+
+  // ---- backup progress + error states ---------------------------------- #
+  const backup = await page.evaluate(async () => {
+    const read = () => {
+      const b = document.getElementById('backupStatus')
+      return { text: b.textContent, shown: getComputedStyle(b).display !== 'none',
+               err: b.classList.contains('err'),
+               disabled: document.getElementById('backupExportBtn').disabled }
+    }
+    const out = {}
+    window.setDemo('backup', 'exporting');   await new Promise(r => setTimeout(r, 40)); out.exporting = read()
+    window.setDemo('backup', 'restoring');   await new Promise(r => setTimeout(r, 40)); out.restoring = read()
+    window.setDemo('backup', 'not_json');    await new Promise(r => setTimeout(r, 40)); out.notJson = read()
+    window.setDemo('backup', 'rollback');    await new Promise(r => setTimeout(r, 40)); out.rollback = read()
+    window.setDemo('backup', 'idle');        await new Promise(r => setTimeout(r, 40)); out.idle = read()
+    return out
+  })
+  check('backup: progress disables actions, errors surface in danger style',
+    backup.exporting.text === 'Creating backup…' && backup.exporting.disabled
+    && backup.restoring.text === 'Restoring…' && backup.restoring.disabled
+    && backup.notJson.err && backup.notJson.text === "This file isn't valid JSONC"
+    && backup.rollback.err && backup.rollback.text.startsWith('Restore failed and couldn')
+    && !backup.idle.shown && !backup.idle.disabled,
+    JSON.stringify(backup))
+
   // ---- schedule states: populated / overnight / disabled / empty -------- #
   const sched = await page.evaluate(async () => {
     window.nav('schedule')

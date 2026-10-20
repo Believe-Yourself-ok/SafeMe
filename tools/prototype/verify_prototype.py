@@ -166,8 +166,11 @@ def norm(s: str) -> str:
 
 
 def strings_xml() -> dict[str, str]:
+    """strings.xml with Android's escapes decoded (\' -> '), so comparisons are
+    against what the app actually renders, not against the source spelling."""
     root = ET.parse(STRINGS).getroot()
-    return {e.get("name"): (e.text or "") for e in root.findall("string")}
+    return {e.get("name"): (e.text or "").replace("\\'", "'").replace('\\"', '"')
+            for e in root.findall("string")}
 
 
 def hex6(value: str) -> str:
@@ -503,8 +506,10 @@ def group_g(rep: Report, ctx):
         "missing hero title variants")
     rep.check("G", "Social Media Blocking has the production footnote (A-10)",
               "How it works" in html, "footnote card missing")
-    rep.check("G", "Social launcher renders extras rows (A-10)", "socialExtra" in js or "extras" in js,
-              "no extras mechanism")
+    rep.check("G", "Social launcher renders extras rows (A-10)",
+              "launch-row extra" in js and "class SocialBlocking" not in js
+              and "if(defaults.has(name)) return;" in js,
+              "extras rows are no longer derived from wholeBlocked - DEFAULT_LAUNCH")
     rep.check("G", "Blocking manage-sub is state-driven (A-12)", "mgCardSub" in js and "trusted" in js.lower(),
               "manage subtitle not wired")
     rep.check("G", "toast stack anchored 24 dp (A-03)", px(ctx["rules"].get(".toasts", {}), "bottom") == 24,
@@ -633,6 +638,57 @@ def group_h(rep: Report, ctx):
     proto_order = [x.strip().strip("'") for x in proto_order.group(1).split(",")] if proto_order else []
     rep.check("H", "quick-action default order == QuickActionsPrefs.DEFAULTS",
               kt_order == proto_order, f"kotlin {kt_order} vs prototype {proto_order}")
+
+    # --- social blocking (B-10) ------------------------------------------- #
+    rep.check("H", "launch rows dim to 0.45 when the master switch is off",
+              "row.style.opacity = SOCIAL.enabled ? '1' : '.45'" in js
+              and "alpha(if (enabled) 1f else 0.45f)" in read(UI / "screens/socialblocking/SocialBlockingScreen.kt"),
+              "dim state drifted from SocialBlockingScreen")
+    rep.check("H", "row switches follow checked = enabled && pkg in wholeBlocked",
+              "const on = SOCIAL.enabled && SOCIAL.wholeBlocked.has(name);" in js,
+              "checked rule differs from the composable")
+    rep.check("H", "master subtitle switches on social_master_sub_on / _off",
+              strings["social_master_sub_on"] in js and strings["social_master_sub_off"] in js
+              and 'id="socialMasterSub"' in html,
+              "master subtitle not wired to state")
+    for res in ("social_master_on", "social_master_off", "social_footnote"):
+        probe = strings[res].split("—")[0].strip()
+        rep.check("H", f"social copy {res} present", probe in (js + html),
+                  f"{probe!r} missing")
+    rep.check("H", "presets map to the three production states",
+              all(k in js for k in ("'deep'", "'balanced'", "'relax'")),
+              "preset states missing")
+
+    # --- delete account is a dialog (B-07) -------------------------------- #
+    prof = read(UI / "screens/profile/ProfileScreen.kt")
+    rep.check("H", "delete account uses an AlertDialog, not a sheet",
+              "AlertDialog(" in prof and 'id="dlgDelete"' in html and 'id="sheetDelete"' not in html,
+              "presentation differs from ProfileScreen")
+    for res in ("prof_delete_title", "prof_delete_body", "prof_delete_confirm", "prof_delete_cancel"):
+        rep.check("H", f"delete dialog copy {res}", strings[res] in html,
+                  f"{strings[res]!r} missing")
+
+    # --- backup progress + error states (B-18) ---------------------------- #
+    n_err = len(re.findall(r'<string name="backup_err_', read(STRINGS)))
+    rep.check("H", "all production backup error strings are modelled",
+              f"BACKUP_ERR" in js and len(re.findall(r"^    \w+:", js[js.index("const BACKUP_ERR"):js.index("};", js.index("const BACKUP_ERR"))], re.M)) >= n_err,
+              f"{n_err} backup_err_* strings vs the prototype's error table")
+    rep.check("H", "backup progress copy uses backup_exporting / backup_restoring",
+              tpl("backupExporting") == strings["backup_exporting"]
+              and tpl("backupRestoring") == strings["backup_restoring"],
+              "progress copy drifted")
+    for res in ("backup_err_not_json", "backup_err_rollback"):
+        rep.check("H", f"backup error {res} present", strings[res] in js,
+                  f"{strings[res]!r} missing")
+    rep.check("H", "restore still confirms before running (sheetRestore)",
+              'id="sheetRestore"' in html and "openSheet('sheetRestore')" in html,
+              "restore confirmation removed")
+
+    # --- blocking manage subtitle (A-12) ---------------------------------- #
+    rep.check("H", "blocking manage subtitle uses blk_manage_sub",
+              tpl("blkManage") == strings["blk_manage_sub"]
+              and "fmt(T.blkManage, KW.keywords.blocklist.length" in js,
+              "manage subtitle drifted")
 
     # --- schedule screen states (B-14) ------------------------------------- #
     svm = read(UI / "screens/schedule/ScheduleViewModel.kt")

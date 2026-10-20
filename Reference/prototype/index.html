@@ -39,6 +39,15 @@
         <option value="lockout">Lockout · 5 min</option>
       </select>
     </label>
+    <label>Backup
+      <select id="stBackup" onchange="setDemo('backup',this.value)">
+        <option value="idle">Idle</option>
+        <option value="exporting">Exporting…</option>
+        <option value="restoring">Restoring…</option>
+        <option value="not_json">Error · not JSONC</option>
+        <option value="rollback">Error · rollback</option>
+      </select>
+    </label>
     <label>Lists
       <select id="stLists" onchange="setDemo('lists',this.value)">
         <option value="populated">Populated (demo data)</option>
@@ -319,7 +328,7 @@
         </div>
 
         <div class="group-label" style="color:var(--danger)">Danger zone</div>
-        <button class="btn btn-danger btn-block" onclick="openSheet('sheetDelete')">Delete account</button>
+        <button class="btn btn-danger btn-block" onclick="openDlg('dlgDelete')">Delete account</button>
         <div style="text-align:center;font-size:11.5px;color:var(--ink-3);margin-top:16px;line-height:1.6">SafeMe v0.1.0 · open://protectyourself<br>No ads · no trackers · no analytics</div>
       </section>
 
@@ -363,12 +372,12 @@
         </div>
         <div class="group-label">Customization</div>
         <div class="list">
-          <div class="li"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M4 17l5-4 4 3 3-2 4 3"/></svg></div><div class="tx"><div class="t">Motivation image</div><div class="s" id="bsImgSub">None · SAF persistable URI</div></div><button class="btn sm btn-secondary" onclick="openSheet('sheetBsImg')">Choose</button></div>
+          <div class="li"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M4 17l5-4 4 3 3-2 4 3"/></svg></div><div class="tx"><div class="t">Motivation image</div><div class="s" id="bsImgSub">None • SAF persistable URI</div></div><button class="btn sm btn-secondary" onclick="openSheet('sheetBsImg')">Choose</button></div>
           <div class="li"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><div class="tx"><div class="t">Custom message</div><div class="s" id="bsMsgSub">"Stay safe, Alex. You chose this."</div></div><button class="btn sm btn-secondary" onclick="openSheet('sheetBsMsg')">Edit</button></div>
         </div>
         <div class="group-label">Close-gate policy</div>
         <div class="card">
-          <div style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="ctitle">Dwell countdown</div><div class="csub">Time before Close unlocks · 3–120s</div></div><div style="display:flex;align-items:center;gap:10px"><button class="btn sm btn-secondary" onclick="dwellStep(-1)">−</button><span id="bsDwellVal" style="font-weight:800;min-width:34px;text-align:center">5s</span><button class="btn sm btn-secondary" onclick="dwellStep(1)">+</button></div></div>
+          <div style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="ctitle">Dwell countdown</div><div class="csub">Time before Close unlocks • 3-120s</div></div><div style="display:flex;align-items:center;gap:10px"><button class="btn sm btn-secondary" onclick="dwellStep(-1)">−</button><span id="bsDwellVal" style="font-weight:800;min-width:34px;text-align:center">5s</span><button class="btn sm btn-secondary" onclick="dwellStep(1)">+</button></div></div>
         </div>
         <div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="ctitle">"Why am I seeing this?"</div><div class="csub">Show the explanation toggle</div></div><div class="sw on" data-toggle id="bsWhySw"></div></div>
         <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="saveBlockScreen()">Save changes</button>
@@ -500,7 +509,7 @@
             <div class="ic" style="width:44px;height:44px;border-radius:14px"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
             <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Export backup</div><div style="font-size:12px;color:var(--ink-2);margin-top:2px">Save your settings to a .jsonc file</div></div>
           </div>
-          <button class="btn btn-primary" style="height:46px;font-size:14px;width:100%;margin-top:16px" onclick="toast('Backup exported')">Export</button>
+          <button class="btn btn-primary" id="backupExportBtn" style="height:46px;font-size:14px;width:100%;margin-top:16px" onclick="runBackup('export')">Export</button>
         </div>
 
         <div class="card" style="margin-top:14px">
@@ -508,8 +517,10 @@
             <div class="ic g" style="width:44px;height:44px;border-radius:14px"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5"/></svg></div>
             <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Restore from backup</div><div style="font-size:12px;color:var(--ink-2);margin-top:2px">Pick a .jsonc backup and replace your current settings</div></div>
           </div>
-          <button class="btn btn-secondary" style="height:46px;font-size:14px;width:100%;margin-top:16px" onclick="openSheet('sheetRestore')">Restore</button>
+          <button class="btn btn-secondary" id="backupRestoreBtn" style="height:46px;font-size:14px;width:100%;margin-top:16px" onclick="openSheet('sheetRestore')">Restore</button>
         </div>
+
+        <div class="backup-status" id="backupStatus" style="display:none"></div>
 
         <div class="group-label" style="margin-top:22px">What's included</div>
         <div class="card">
@@ -529,7 +540,7 @@
         <div class="sub"><button class="back" onclick="back()"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>About</h1></div>
         <div class="card" style="text-align:center;padding:28px 16px">
           <div style="font-family:var(--serif);font-size:30px;font-weight:700">Safe<b style="color:var(--brand)">Me</b></div>
-          <div style="font-size:13px;color:var(--ink-2);margin-top:6px">Version 1.0.76 · package protect.yourself</div>
+          <div style="font-size:13px;color:var(--ink-2);margin-top:6px">Version 0.1.0 · package com.safeme.app</div>
           <span class="pill g" style="margin-top:12px">No ads · no trackers · no analytics</span>
         </div>
         <div class="list" style="margin-top:14px">
@@ -604,7 +615,7 @@
             <div style="width:42px;height:42px;border-radius:14px;background:var(--brand-soft);color:var(--brand-dark);display:flex;align-items:center;justify-content:center;flex:none"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
             <div style="flex:1;min-width:0">
               <div style="font-size:14.5px;font-weight:700;color:var(--ink);line-height:1.2">Social Media Blocking</div>
-              <div style="font-size:12px;color:var(--ink-2);margin-top:2px">Whole apps &amp; tabs protected</div>
+              <div style="font-size:12px;color:var(--ink-2);margin-top:2px" id="socialMasterSub">Whole apps &amp; tabs protected</div>
             </div>
             <div class="sw on" id="socialMaster" onclick="togSocialMaster(this)" style="flex:none"></div>
           </div>
@@ -616,9 +627,6 @@
             </div>
           </div>
         </div>
-        <!-- hidden compat -->
-        <div style="display:none"><span id="socialHeroPill"></span><span id="socialMasterSub"></span><span id="socialWholeSub"></span><span id="socialHeroTag"></span><span id="socialHeroTitle"></span><span id="socialHeroSub"></span><span id="socialCountPill"></span></div>
-
         <!-- Quick Focus Mode — exact 3 presets -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding:0 2px">
           <div style="font-size:11.5px;letter-spacing:.9px;text-transform:uppercase;font-weight:700;color:var(--ink)">QUICK FOCUS MODE</div>
@@ -694,7 +702,6 @@
               <div class="sw on" data-launch="Twitch" onclick="togLaunch(this,'Twitch')"></div>
             </div>
           </div>
-          <div id="socialWholeChips" style="display:none"></div>
         </div>
 
         <!-- In-App Tab Block — exact 3 rows -->
@@ -730,11 +737,11 @@
               <div class="sw on" id="socialSnapchat" onclick="togSocialFeature(this,'snapchat')"></div>
             </div>
           </div>
-        </div>
-        <div style="display:none"><span id="socialYoutubePill"></span><span id="socialFacebookPill"></span><span id="socialSnapchatPill"></span></div>
+        </div>        <!-- A-10 social_footnote — production renders this card under the tab section -->
+        <div class="note" style="margin-top:16px;align-items:flex-start"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>How it works — Whole-app blocks on launch. Tab overlays the view. 250ms throttle · 4s cooldown. No root, no VPN.</span></div>
       </section>
 
-      <!-- ================= SERVICE PICKER      <!-- ================= SERVICE PICKER ================= -->
+      <!-- ================= PROFILE ================= -->============= SERVICE PICKER ================= -->
       <section class="screen" id="sc-servicepicker">
         <div class="sub"><button class="back" onclick="back()"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Protect a service</h1><p class="sub-desc">Select the Accessibility Services SafeMe should keep running.</p></div>
         <label class="field" style="margin-top:14px"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input placeholder="Search services…" oninput="svcSearch(this)"></label>
@@ -780,7 +787,7 @@
     </div>
 
     <!-- ============ MODALS ============ -->
-    <div class="scrim" id="scrim" onclick="closeSheets()"></div>
+    <div class="scrim" id="scrim" onclick="closeSheets();closeDlg()"></div>
 
         <div class="sheet" id="sheetKw">
       <div class="grab"></div>
@@ -995,30 +1002,13 @@
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="socialAppsDone()">Done</button>
     </div>
 
-    <div class="sheet" id="sheetDelete">
-      <div class="grab"></div>
-      <h3 style="color:var(--danger)">Delete account?</h3>
-      <div class="s-sub">This removes all local data and disables protection. This can't be undone.</div>
-      <div class="row2"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-danger" onclick="closeSheets();toast('Account deletion requested')">Delete</button></div>
-    </div>
-
     <!-- Restore confirmation -->
     <div class="sheet" id="sheetRestore">
       <div class="grab"></div>
       <h3>Restore this backup?</h3>
       <div class="s-sub">This will replace your current settings. Your data is validated before anything changes.</div>
       <div style="font-size:12px;color:var(--ink-3);margin-top:8px" id="restoreMeta">Created — · app 0.1.0 · schema v1</div>
-      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" onclick="closeSheets();toast('Backup restored')">Restore</button></div>
-    </div>
-
-    <!-- Time delay gate -->
-    <div class="sheet" id="sheetDelay">
-      <div class="grab"></div>
-      <h3>Are you sure?</h3>
-      <div class="s-sub">Your Time Delay is active. This settings change applies in:</div>
-      <div style="text-align:center;font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--brand)" id="delayNum">12</div>
-      <div class="cd-bar"><div class="cd-fill" id="delayFill"></div></div>
-      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="cancelDelay()">Cancel</button><button class="btn btn-primary" onclick="toast('Change applied')">Apply now</button></div>
+      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" onclick="closeSheets();runBackup('restore')">Restore</button></div>
     </div>
 
     <!-- Block overlay -->
@@ -1042,6 +1032,15 @@
       <div style="width:100%">
         <div class="bo-label">Close-gate • dwell countdown</div>
         <button class="bo-close locked" id="boClose" onclick="closeBlockov()">Close</button>
+      </div>
+    </div>
+
+    <!-- Delete account — ProfileScreen.DeleteAccountDialog (M3 AlertDialog, centred) -->
+    <div class="dlg" id="dlgDelete">
+      <div class="dlg-card" role="alertdialog" aria-modal="true">
+        <div class="dlg-title">Delete account?</div>
+        <div class="dlg-body">This removes all local data and disables protection. This can't be undone.</div>
+        <div class="dlg-actions"><button class="dlg-btn" onclick="closeDlg()">Cancel</button><button class="dlg-btn danger" onclick="confirmDelete()">Delete</button></div>
       </div>
     </div>
 

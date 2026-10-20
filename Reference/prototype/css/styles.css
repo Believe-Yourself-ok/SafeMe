@@ -351,6 +351,24 @@
   /* Pattern gate hint — al_pattern_hint, 13sp ink-2, 12dp under the grid */
   .lockov-card .pat-hint{font-size:13px;color:var(--ink-2);margin-top:12px}
 
+
+  /* Backup progress / error line — backup_exporting, backup_err_* */
+  .backup-status{margin-top:14px;padding:12px 14px;border-radius:14px;font-size:12.5px;line-height:18px;
+                 border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+  .backup-status.err{border-color:var(--danger);background:rgba(244,67,54,.07);color:var(--danger)}
+  /* ---------- Centred dialog (M3 AlertDialog) ---------- */
+  .dlg{position:absolute;inset:0;z-index:85;display:none;align-items:center;justify-content:center;
+       padding:24px;background:rgba(31,26,22,.45)}
+  .dlg.show{display:flex}
+  .dlg-card{width:100%;max-width:340px;background:var(--surface);border-radius:28px;padding:24px;
+            box-shadow:var(--shadow-lg)}
+  .dlg-title{font-size:18px;font-weight:700;color:var(--danger)}
+  .dlg-body{font-size:14px;line-height:20px;color:var(--ink-2);margin-top:16px}
+  .dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:24px}
+  .dlg-btn{font-family:inherit;font-size:14px;font-weight:600;color:var(--ink-2);background:none;border:none;
+           padding:10px 12px;border-radius:999px}
+  .dlg-btn.danger{color:var(--danger)}
+
   /* ---------- Block overlay ---------- */
   .blockov{position:absolute;inset:0;background:#171310;z-index:90;color:#fff;display:none;flex-direction:column;
            align-items:center;justify-content:space-between;text-align:center;padding:52px 30px 40px}

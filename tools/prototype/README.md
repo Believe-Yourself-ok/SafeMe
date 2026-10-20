@@ -9,7 +9,7 @@ failure here can never affect the app.
 | `python3 tools/prototype/verify_prototype.py` | Static parity: CSS/HTML integrity, JS wiring, screen-set equality with the Compose routes, design tokens vs `ui/theme/Color.kt`, Appendix-A component geometry, production copy, and closure of the SAD-319 drift register. |
 | `python3 tools/prototype/verify_prototype.py --group C` | Run one group (A integrity · B wiring · C screens · D tokens · E geometry · F copy · G drift · H state machines). |
 | `python3 tools/prototype/verify_prototype.py --dump-css out.json` | Emit the parsed `selector → declarations` map used for the geometry comparisons. |
-| `node tools/prototype/smoke.mjs` | Runtime smoke in Chromium: 24 screens navigate, 4 tabs, 15 sheets, permission pill, dark theme, renderers don't throw, the Home state matrix renders every variant, zero console errors. |
+| `node tools/prototype/smoke.mjs` | Runtime smoke in Chromium (24 checks): 24 screens navigate, 4 tabs, 14 sheets, permission pill, dark theme, renderers don't throw, the Home/schedule/VPN/backup/social state matrices render every variant, the block countdown and App Lock guard run live, zero console errors. |
 | `node tools/prototype/shots.mjs [--sheets] [--screen home]` | Screenshot every screen in both themes (392×852 CSS px = the px→dp contract) into `.prototype-shots/` with a contact sheet. |
 
 Requirements: Python 3.11+ (stdlib only). Node 20+ with Playwright resolvable

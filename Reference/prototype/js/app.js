@@ -64,7 +64,7 @@
     const key = btn.dataset.perm;
     if(btn.classList.contains('granted')){ permAdvance(btn); return; }
     btn.classList.add('granted');
-    btn.textContent = 'Granted \u2713';
+    btn.textContent = 'Granted ✓';
     if(key) localStorage.setItem('safeme_perm_'+key,'1');
     toast('Permission granted \u2713');
     permStatus();
@@ -92,7 +92,7 @@
     if(el) el.textContent = granted + ' of 3 granted \u00b7 finish setup';
     keys.forEach(k=>{
       const btn = document.querySelector('.grant-pill[data-perm="'+k+'"]');
-      if(btn && localStorage.getItem('safeme_perm_'+k)==='1'){ btn.classList.add('granted'); btn.textContent='Granted \u2713'; }
+      if(btn && localStorage.getItem('safeme_perm_'+k)==='1'){ btn.classList.add('granted'); btn.textContent='Granted ✓'; }
     });
   }
 
@@ -142,7 +142,10 @@
     vpnWlMany:      '%1$d apps exempt',
     lockout:        'Too many attempts — try again in %1$s',
     gateSub:        'Enter your %1$s to unlock',
-    closing:        'Closing in %1$ds.'
+    closing:        'Closing in %1$ds.',
+    blkManage:      '%1$s keywords · %2$s websites · %3$s trusted',
+    backupExporting:'Creating backup…',
+    backupRestoring:'Restoring…'
   };
   /** getString()-style substitution: %1$s / %2$d, in any order. */
   function fmt(t, ...args){
@@ -182,6 +185,7 @@
     if(key === 'bio'){ DEMO.home.bioAvailable = value === 'available'; paintLockBio(); }
     if(key === 'vpn') setDemoVpn(value);
     if(key === 'lists') setDemoLists(value);
+    if(key === 'backup') demoBackup(value);
     renderHome();
   }
 
@@ -380,11 +384,9 @@
   }
 
   // ---------- Sheets ----------
-  let delayTimer=null;
   function openSheet(id){
     document.getElementById('scrim').classList.add('show');
     document.getElementById(id).classList.add('show');
-    if(id==='sheetDelay'){ startDelay(); }
     if(id==='sheetApps'||id==='sheetVpnApps'||id==='sheetSocialApps'){ refreshAppPicker(id); }
     if(id==='sheetTitle'){
       titleEditId=null;
@@ -420,10 +422,22 @@
       document.querySelectorAll('#bsMsgChips .chip').forEach((b,i)=>b.classList.toggle('on',i===0));
     }
   }
+  // AlertDialog-style modal (production uses M3 AlertDialog, not a sheet)
+  function openDlg(id){
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeDlg(){
+    document.getElementById('scrim').classList.remove('show');
+    document.querySelectorAll('.dlg').forEach(d=>d.classList.remove('show'));
+  }
+  function confirmDelete(){
+    closeDlg();
+    toast('Account deletion requested');
+  }
   function closeSheets(){
     document.getElementById('scrim').classList.remove('show');
     document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
-    if(delayTimer){ clearInterval(delayTimer); delayTimer=null; }
   }
   function addKeyword(){
     const v = document.getElementById('kwInput').value.trim();
@@ -453,20 +467,54 @@
     if(set===SOCIAL.wholeBlocked) renderSocial();
   }
 
-  // ---------- Time delay gate ----------
-  function testDelay(){
-    openSheet('sheetDelay');
+
+  // ---------- Backup & restore (B-18) ----------
+  // BackupViewModel surfaces backup_exporting / backup_restoring while the work
+  // runs and one of the seven backup_err_* strings when it fails.
+  const BACKUP_ERR = {
+    not_json:  "This file isn't valid JSONC",
+    not_safeme:"This isn't a SafeMe backup file",
+    version:   'This backup was made by a newer version of SafeMe',
+    structure: 'This backup is missing required data',
+    empty:     "This backup doesn't contain any settings",
+    write:     'Restore failed — your settings were left unchanged',
+    rollback:  "Restore failed and couldn't be fully undone — please re-check your settings"
+  };
+  let backupTimer=null;
+  function paintBackup(state, errKey){
+    const box=document.getElementById('backupStatus');
+    const exp=document.getElementById('backupExportBtn'), res=document.getElementById('backupRestoreBtn');
+    if(!box) return;
+    if(!state || state==='idle'){ box.style.display='none'; box.textContent=''; box.classList.remove('err'); }
+    else if(state==='exporting' || state==='restoring'){
+      box.style.display='block'; box.classList.remove('err');
+      box.textContent = state==='exporting' ? T.backupExporting : T.backupRestoring;
+    } else if(state==='error'){
+      box.style.display='block'; box.classList.add('err');
+      box.textContent = BACKUP_ERR[errKey] || BACKUP_ERR.write;
+    }
+    const busy = state==='exporting' || state==='restoring';
+    if(exp) exp.disabled = busy;
+    if(res) res.disabled = busy;
   }
-  function startDelay(){
-    let n=12; const num=document.getElementById('delayNum'); const fill=document.getElementById('delayFill');
-    fill.style.width='100%';
-    clearInterval(delayTimer);
-    delayTimer = setInterval(()=>{
-      n--; if(n<=0){ clearInterval(delayTimer); delayTimer=null; num.textContent='0'; fill.style.width='0%'; toast('Change applied'); closeSheets(); return; }
-      num.textContent=n; fill.style.width=(n/12*100)+'%';
-    }, 1000);
+  function runBackup(kind){
+    paintBackup(kind==='export' ? 'exporting' : 'restoring');
+    if(backupTimer) clearTimeout(backupTimer);
+    backupTimer = setTimeout(()=>{
+      paintBackup('idle');
+      toast(kind==='export' ? 'Backup exported' : 'Backup restored');
+      actAdd('schedule', kind==='export' ? 'Backup exported' : 'Backup restored',
+             '.jsonc · schema v1 · atomic', new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+    }, 1200);
   }
-  function cancelDelay(){ if(delayTimer){clearInterval(delayTimer); delayTimer=null;} closeSheets(); toast('Change cancelled'); }
+  /** Toolbar hook: jump straight to a backup state (idle / busy / an error key). */
+  function demoBackup(state){
+    if(backupTimer){ clearTimeout(backupTimer); backupTimer=null; }
+    if(state==='idle'){ paintBackup('idle'); return; }
+    if(state==='exporting' || state==='restoring'){ paintBackup(state); return; }
+    if(BACKUP_ERR[state]){ paintBackup('error', state); return; }
+    paintBackup('idle');
+  }
 
   // ---------- Block overlay ----------
   let bsDwell=5, bsMsg='Stay safe, Alex. You chose this.', bsImg='';
@@ -475,7 +523,7 @@
     // bs_closing = "Closing in %1$ds." — a full stop, not an ellipsis
     const cnt=document.getElementById('bsPreviewCount'); if(cnt) cnt.textContent=fmt(T.closing, bsDwell);
     const dv=document.getElementById('bsDwellVal'); if(dv) dv.textContent=bsDwell+'s';
-    const is=document.getElementById('bsImgSub'); if(is) is.textContent=bsImg?(bsImg+' · persistable'):'None · SAF persistable URI';
+    const is=document.getElementById('bsImgSub'); if(is) is.textContent=bsImg?(bsImg+' · persistable'):'None • SAF persistable URI';
     const pi=document.getElementById('bsPreviewImg'); if(pi){ if(bsImg){ pi.style.display='block'; pi.className='img-'+bsImg; } else { pi.style.display='none'; pi.className=''; } }
     const ms=document.getElementById('bsMsgSub'); if(ms) ms.textContent='"'+bsMsg+'"';
     const bm=document.getElementById('boMsg'); if(bm) bm.textContent=bsMsg;
@@ -1135,13 +1183,6 @@
     const yt=document.getElementById('socialYoutube'); if(yt) yt.classList.toggle('on', SOCIAL.enabled && SOCIAL.youtube);
     const fb=document.getElementById('socialFacebook'); if(fb) fb.classList.toggle('on', SOCIAL.enabled && SOCIAL.facebook);
     const sc=document.getElementById('socialSnapchat'); if(sc) sc.classList.toggle('on', SOCIAL.enabled && SOCIAL.snapchat);
-    document.querySelectorAll('#sc-socialblocking .list .sw, #sc-socialblocking [id^="social"] .sw').forEach(sw=>{
-      // keep minimal dim already handled, but ensure tabs dim when master off
-    });
-    // hide compat
-    const ws=document.getElementById('socialWholeSub'); if(ws) ws.style.display='none';
-    const chips=document.getElementById('socialWholeChips'); if(chips) chips.style.display='none';
-    const cp=document.getElementById('socialCountPill'); if(cp) cp.style.display='none';
     // dynamic extra apps beyond default 5
     const launchList=document.getElementById('launchList');
     if(launchList){
@@ -1448,7 +1489,8 @@
   }
   function kwMgCard(){
     const s2=document.getElementById('mgCardSub');
-    if(s2) s2.textContent = KW.keywords.blocklist.length+' keywords · '+KW.websites.blocked.length+' websites · '+KW.websites.trusted.length+' trusted';
+    if(s2) s2.textContent = fmt(T.blkManage, KW.keywords.blocklist.length,
+                                KW.websites.blocked.length, KW.websites.trusted.length);
   }
   function kwRowHTML(v){
     const art = kwSelType==='keywords'
