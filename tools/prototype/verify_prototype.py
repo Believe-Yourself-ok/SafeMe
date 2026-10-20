@@ -497,6 +497,49 @@ def group_e(rep: Report, ctx):
               r.get("#sheetSocialApps .app-picker .li .tx .t", {}).get("font-weight") == "500",
               f"font-weight={r.get('#sheetSocialApps .app-picker .li .tx .t', {}).get('font-weight')}")
     eq("#sheetSocialApps .app-picker .li .tx .s", "font-size", 11, "social picker package 11sp")
+    # --- Phase 5(b): sheetTime -> TimePickerSheet --------------------------- #
+    rep.check("E", "time stepper: 18dp above, no inter-column gap (the colon pads itself)",
+              ctx["rules"].get(".stepper", {}).get("margin") == "18px 0 4px"
+              and ctx["rules"].get(".stepper", {}).get("gap") == "0",
+              f".stepper = {ctx['rules'].get('.stepper')}")
+    eq(".stepper button", "width", 40, "step buttons are 40dp")
+    rep.check("E", "step buttons are circles", "%" in ctx["rules"].get(".stepper button", {}).get("border-radius", ""),
+              f"border-radius={ctx['rules'].get('.stepper button', {}).get('border-radius')}")
+    rep.check("E", "step buttons are brandSoft/brandDark 18sp/700",
+              ctx["rules"].get(".stepper button", {}).get("background") == "var(--brand-soft)"
+              and ctx["rules"].get(".stepper button", {}).get("color") == "var(--brand-dark)"
+              and ctx["rules"].get(".stepper button", {}).get("font-size") == "18px"
+              and ctx["rules"].get(".stepper button", {}).get("font-weight") == "700",
+              f"step button = {ctx['rules'].get('.stepper button')}")
+    eq(".stepper .time-val", "font-size", 30, "stepper value 30sp")
+    eq(".stepper .time-val", "min-width", 56, "stepper value column min 56dp")
+    eq(".stepper .col", "gap", 10, "stepper column spacing 10")
+    rep.check("E", "time colon is 24sp/800 ink-3 with 12dp side padding, nudged 14dp",
+              ctx["rules"].get(".time-colon", {}).get("font-size") == "24px"
+              and ctx["rules"].get(".time-colon", {}).get("font-weight") == "800"
+              and ctx["rules"].get(".time-colon", {}).get("color") == "var(--ink-3)"
+              and "12px" in ctx["rules"].get(".time-colon", {}).get("padding", "")
+              and "translateY(14px)" in ctx["rules"].get(".time-colon", {}).get("transform", ""),
+              f"colon = {ctx['rules'].get('.time-colon')}")
+    eq(".ampm-seg", "max-width", 200, "AM/PM segment capped at 200dp")
+    rep.check("E", "AM/PM segment 14 below the stepper",
+              ctx["rules"].get(".ampm-seg", {}).get("margin") == "14px auto 0",
+              f"margin={ctx['rules'].get('.ampm-seg', {}).get('margin')}")
+    rep.check("E", "inline time error is 13sp/600 danger, centred, 12 below",
+              ctx["rules"].get(".time-err", {}).get("font-size") == "13px"
+              and ctx["rules"].get(".time-err", {}).get("font-weight") == "600"
+              and ctx["rules"].get(".time-err", {}).get("color") == "var(--danger)"
+              and ctx["rules"].get(".time-err", {}).get("text-align") == "center"
+              and ctx["rules"].get(".time-err", {}).get("margin-top") == "12px",
+              f".time-err = {ctx['rules'].get('.time-err')}")
+    rep.check("E", "sheet Cancel is a bordered secondary (SecondaryButton)",
+              ctx["rules"].get(".btn-outline", {}).get("background") == "var(--surface)"
+              and "1px" in ctx["rules"].get(".btn-outline", {}).get("border", "")
+              and ctx["rules"].get(".btn-outline", {}).get("color") == "var(--ink-2)"
+              and 'class="btn btn-outline"' in ctx["html"],
+              f".btn-outline = {ctx['rules'].get('.btn-outline')}")
+
+
     # empty branch: production renders a 160dp box INSTEAD of the list, not inside it
     rep.check("E", "social empty state replaces the 320dp list (160dp box only)",
               r.get("#sheetSocialApps .app-picker.is-empty", {}).get("height") == "auto"
@@ -553,6 +596,13 @@ def group_f(rep: Report, ctx):
     rep.check("F", "About shows the real version + package",
               version in ctx["html"] and appid in ctx["html"],
               f"expected {version} / {appid}")
+
+    # Apostrophes are ASCII in production; the prototype had typographic ones.
+    for key in ("sche_toast_time", "kw_toast_empty", "kw_toast_website_empty"):
+        want = strings[key].replace("'", "\\'")
+        rep.check("F", f"{key} uses production's ASCII apostrophe",
+                  f"'{want}'" in ctx["js"],
+                  f"expected {strings[key]!r} in app.js")
 
     # AppPickerSheet renders sche_apps_empty; SocialPickerSheet has its own
     # inline literal. Both must match production character for character.
@@ -883,6 +933,20 @@ def group_g(rep: Report, ctx):
               and "APPS.length+' apps blocked" not in social_sel
               and "setWholeBlocked(allApps.map { it.packageName }.toSet())" in sos,
               "social bulk select still reports the catalog length")
+
+    # TimePickerSheet: the whole-window check gates the commit and the message is
+    # inline; the editor's Save still toasts (ScheduleEditViewModel.save).
+    tdone = body("timeDone")
+    rep.check("H", "time sheet validates before committing, inline (not a toast)",
+              "timeErr('Start and end" in tdone and "toast(" not in tdone
+              and "setTimep(" in tdone and tdone.index("timeErr(") < tdone.index("setTimep(")
+              and "isValidScheduleWindow(state.startMinute, state.endMinute)" in read(
+                  UI / "screens/schedule/ScheduleEditViewModel.kt"),
+              "sheetTime commits before validating or still toasts")
+    rep.check("H", "time steppers wrap like the Kotlin modulo maths",
+              "(timeH+d+24)%24" in js and "(timeM+d+60)%60" in js
+              and "(hour - 1 + 24) % 24" in read(UI / "screens/schedule/ScheduleSheets.kt"),
+              "steppers clamp instead of wrapping")
 
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",

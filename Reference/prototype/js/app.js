@@ -529,7 +529,7 @@
   }
   function addKeyword(){
     const v = document.getElementById('kwInput').value.trim();
-    if(!v){ toast('Keyword can\u2019t be empty'); return; }
+    if(!v){ toast('Keyword can\'t be empty'); return; }
     const cat = document.querySelector('#kwCat .chip.on').textContent.trim();
     if(kwSource==='screen'){ kwSource='manage'; if(kwSave(v,cat)) closeSheets(); return; }
     toast('Keyword saved');
@@ -537,7 +537,7 @@
   function addSite(){
     const si = document.getElementById('siteInput');
     let v = (si.value||'').trim().replace(/^https?:\/\//i,'').replace(/\/+$/,'').toLowerCase();
-    if(!v){ toast('Website can\u2019t be empty'); return; }
+    if(!v){ toast('Website can\'t be empty'); return; }
     if(/\s/.test(v) || v.indexOf('.')===-1){ toast('Enter a valid domain (e.g. example.com)'); return; }
     const cat = document.querySelector('#siteCat .chip.on').textContent.trim();
     if(kwSource==='screen'){ kwSource='manage'; if(kwSave(v,cat)) closeSheets(); return; }
@@ -912,7 +912,7 @@
     if(!days.length){ toast('Pick at least one day'); return; }
     const st=document.getElementById('timeStart'), en=document.getElementById('timeEnd');
     const start=(st&&st.dataset.h24)||'21:00', end=(en&&en.dataset.h24)||'23:00';
-    if(start===end){ toast('Start and end can\u2019t be the same'); return; }
+    if(start===end){ toast('Start and end can\'t be the same'); return; }
     const mode=(document.querySelector('#sc-scheduleedit .seg button.on')||{textContent:'Both'}).textContent;
     const apps=(parseInt((document.getElementById('schedAppCount')||{}).textContent||'0',10)||0);
     const enEl=document.getElementById('schedEnabled');
@@ -994,6 +994,7 @@
     const el=document.getElementById(t==='start'?'timeStart':'timeEnd');
     const m=((el&&el.dataset.h24)||(el?el.textContent:'21:00')).split(':');
     timeH=+m[0]; timeM=+(m[1]||'0');
+    timeErr('');   // a fresh open never shows a stale validation message
     renderTime();
     document.getElementById('scrim').classList.add('show');
     document.getElementById('sheetTime').classList.add('show');
@@ -1003,23 +1004,31 @@
     document.getElementById('timeM').textContent=String(timeM).padStart(2,'0');
     document.querySelectorAll('#sheetTime .seg button').forEach(b=>b.classList.toggle('on',b.textContent.trim()===(timeH<12?'AM':'PM')));
   }
+  // TimePickerSheet: TimePickerSheet.kt 145-215 — the steppers wrap (the
+  // Kotlin uses (h-1+24)%24 / (m-1+60)%60), any edit clears the inline error,
+  // and Done validates the whole window before committing.
+  function timeSuffix(){ return timeTarget==='start'?'Start':'End'; }
+  function timeErr(msg){ const el=document.getElementById('timeErr'); if(el) el.textContent=msg||''; }
   function timeStep(u,d){
-    if(u==='h'){ timeH=Math.min(23,Math.max(0,timeH+d)); }
-    else { timeM=Math.min(59,Math.max(0,timeM+d)); }
+    if(u==='h'){ timeH=(timeH+d+24)%24; }
+    else { timeM=(timeM+d+60)%60; }
+    timeErr('');
     renderTime();
   }
   function togAmpm(btn){
     if(btn.textContent.trim()==='AM') timeH=timeH%12;
     else timeH=(timeH%12)+12;
+    timeErr('');
     renderTime();
   }
   function timeDone(){
     const v=String(timeH).padStart(2,'0')+':'+String(timeM).padStart(2,'0');
-    const el=document.getElementById(timeTarget==='start'?'timeStart':'timeEnd');
-    setTimep(el,v);
-    const a=(document.getElementById('timeStart').dataset.h24)||'21:00', b=(document.getElementById('timeEnd').dataset.h24)||'23:00';
+    const a=timeTarget==='start'?v:((document.getElementById('timeStart').dataset.h24)||'21:00');
+    const b=timeTarget==='end'?v:((document.getElementById('timeEnd').dataset.h24)||'23:00');
+    // isValidScheduleWindow(start, end) == start != end
+    if(a===b){ timeErr('Start and end can\'t be the same'); return; }
+    setTimep(document.getElementById(timeTarget==='start'?'timeStart':'timeEnd'), v);
     schedOvernightCap();
-    if(a===b){ toast('Start and end can\u2019t be the same'); return; }
     closeSheets();
   }
   function delSchedule(){

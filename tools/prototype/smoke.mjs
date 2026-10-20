@@ -597,6 +597,40 @@ async function main () {
     && headerStates.empty.startsWith('No quick actions yet'),
     JSON.stringify(headerStates))
 
+  // ---- time window sheet: inline validation + wrapping steppers ----------- #
+  const timeSheet = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms))
+    window.nav('schedule'); await wait(60)
+    window.openSheet('sheetTime')
+    window.timeTarget = 'start'
+    document.getElementById('timeH').textContent = '21'
+    document.getElementById('timeM').textContent = '00'
+    window.renderTime(); await wait(40)
+    // step down past 0 -> wraps to 23 (production modulo), never clamps
+    for (let i = 0; i < 22; i++) window.timeStep('h', -1)
+    const wrapped = document.getElementById('timeH').textContent
+    // make start == end (23:00 vs the 23:00 default end) and press Done
+    document.getElementById('toasts').innerHTML = ''
+    const sheet = document.getElementById('sheetTime')
+    ;[...sheet.querySelectorAll('.btn-primary')].pop().click()
+    await wait(60)
+    const errShown = document.getElementById('timeErr').textContent
+    const stillOpen = sheet.classList.contains('show')
+    const toasts = document.getElementById('toasts').children.length
+    // any stepper edit clears the message
+    window.timeStep('m', 1)
+    await wait(40)
+    const errCleared = document.getElementById('timeErr').textContent
+    ;[...sheet.querySelectorAll('.btn-outline')].pop().click()
+    await wait(60)
+    return { wrapped, errShown, stillOpen, toasts, errCleared }
+  })
+  check('time sheet: inline error blocks Done, wraps 0->23, edit clears it',
+    timeSheet.wrapped === '11' && timeSheet.errShown === "Start and end can't be the same"
+    && timeSheet.stillOpen === true && timeSheet.toasts === 0
+    && timeSheet.errCleared === '',
+    JSON.stringify(timeSheet))
+
   // ---- app-picker sheets: AppPickerSheet vs SocialPickerSheet ------------- #
   const pickers = await page.evaluate(async () => {
     const cs = (el, prop) => getComputedStyle(el)[prop]

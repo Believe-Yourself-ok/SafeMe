@@ -940,12 +940,14 @@
         <h3>Time window</h3>
         <div class="s-sub">Choose when this schedule is active.</div>
         <div class="stepper">
-          <div class="col"><small>Hours</small><button onclick="timeStep('h',-1)">−</button><div class="time-val" id="timeH">9</div><button onclick="timeStep('h',1)">+</button></div>
-          <div style="font-size:24px;font-weight:800;color:var(--ink-3)">:</div>
-          <div class="col"><small>Minutes</small><button onclick="timeStep('m',-1)">−</button><div class="time-val" id="timeM">00</div><button onclick="timeStep('m',1)">+</button></div>
+          <div class="col"><small id="timeHLbl">Hours</small><button onclick="timeStep('h',-1)">−</button><div class="time-val" id="timeH">9</div><button onclick="timeStep('h',1)">+</button></div>
+          <div class="time-colon">:</div>
+          <div class="col"><small id="timeMLbl">Minutes</small><button onclick="timeStep('m',-1)">−</button><div class="time-val" id="timeM">00</div><button onclick="timeStep('m',1)">+</button></div>
         </div>
         <div class="seg ampm-seg"><button onclick="togAmpm(this)">AM</button><button class="on" onclick="togAmpm(this)">PM</button></div>
-        <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" onclick="timeDone()">Done</button></div>
+        <!-- TimePickerSheet shows the invalid window inline and refuses to close -->
+        <div class="time-err" id="timeErr"></div>
+        <div class="row2" style="margin-top:18px"><button class="btn btn-outline" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" onclick="timeDone()">Done</button></div>
       </div>
       <div class="sheet" id="sheetApps">
       <div class="grab"></div>
