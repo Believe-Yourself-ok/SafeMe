@@ -25,7 +25,15 @@
   function title(s){ return s.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()); }
 
   function show(name, push){
-    document.querySelectorAll('.screen').forEach(el=>el.classList.remove('show'));
+    document.querySelectorAll('.screen').forEach(el=>{
+      // never fade the screen we are navigating to (re-entering a tab must not
+      // clear it — production's launchSingleTop behaves the same way)
+      if(el.classList.contains('show') && el.id !== 'sc-'+name){
+        el.classList.add('leaving');               // exit = 200ms fade, no slide
+        setTimeout(()=>el.classList.remove('leaving'), 220);
+      }
+      el.classList.remove('show');
+    });
     document.getElementById('sc-'+name).classList.add('show');
     document.getElementById('sc-'+name).scrollTop = 0;
     const cfg = SCREENS[name]||{};

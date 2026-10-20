@@ -122,11 +122,22 @@ def parse_css(css: str) -> dict[str, dict[str, str]]:
     return out
 
 
+VAR_CACHE: dict[str, str] = {}
+
+
+def resolve_vars(value: str, variables: dict[str, str]) -> str:
+    """Expand var(--x) one level deep so geometry checks can read token-based values."""
+    def sub(match: re.Match) -> str:
+        return variables.get(f"--{match.group(1)}", match.group(0))
+    return re.sub(r"var\(--([\w-]+)\)", sub, value)
+
+
 def px(decls: dict[str, str], prop: str) -> float | None:
     raw = decls.get(prop)
     if raw is None:
         return None
-    m = re.match(r"(-?[\d.]+)px", raw.strip())
+    raw = resolve_vars(raw, VAR_CACHE).strip()
+    m = re.match(r"(-?[\d.]+)px", raw)
     return float(m.group(1)) if m else None
 
 
@@ -471,6 +482,7 @@ def main() -> int:
     html, css, js = read(INDEX), read(CSS), read(JS)
     ctx = {"html": html, "css": css, "js": js, "rules": parse_css(css),
            "sections": sections(html)}
+    VAR_CACHE.update(ctx["rules"].get(":root", {}))
     if args.dump_css:
         import json
         Path(args.dump_css).write_text(json.dumps(ctx["rules"], indent=1, sort_keys=True))
