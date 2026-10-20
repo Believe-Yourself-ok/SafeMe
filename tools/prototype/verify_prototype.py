@@ -497,6 +497,38 @@ def group_e(rep: Report, ctx):
               r.get("#sheetSocialApps .app-picker .li .tx .t", {}).get("font-weight") == "500",
               f"font-weight={r.get('#sheetSocialApps .app-picker .li .tx .t', {}).get('font-weight')}")
     eq("#sheetSocialApps .app-picker .li .tx .s", "font-size", 11, "social picker package 11sp")
+    # --- Phase 5(d): sheetKw / sheetSite -> KeywordSheet / WebsiteSheet ---- #
+    rep.check("E", "category picker label is 12sp/600 ink-3",
+              ctx["rules"].get(".cat-label", {}).get("font-size") == "12px"
+              and ctx["rules"].get(".cat-label", {}).get("font-weight") == "600"
+              and ctx["rules"].get(".cat-label", {}).get("color") == "var(--ink-3)",
+              f".cat-label = {ctx['rules'].get('.cat-label')}")
+    rep.check("E", "category pill grid: 3 equal columns, 8dp gap, 10 below the label",
+              ctx["rules"].get(".cat-grid", {}).get("gap") == "8px"
+              and px(ctx["rules"].get(".cat-grid", {}), "margin-top") == 10
+              and "repeat(3,1fr)" in ctx["rules"].get(".cat-grid", {}).get("grid-template-columns", ""),
+              f".cat-grid = {ctx['rules'].get('.cat-grid')}")
+    rep.check("E", "category pills are 36dp, 12sp/600, centred",
+              px(ctx["rules"].get(".cat-grid .chip", {}), "height") == 36
+              and ctx["rules"].get(".cat-grid .chip", {}).get("font-size") == "12px"
+              and ctx["rules"].get(".cat-grid .chip", {}).get("font-weight") == "600"
+              and "center" in ctx["rules"].get(".cat-grid .chip", {}).get("justify-content", ""),
+              f"pill = {ctx['rules'].get('.cat-grid .chip')}")
+    rep.check("E", "sheet field is the 50dp SheetField, 16 below the picker",
+              px(ctx["rules"].get(".field.f50", {}), "height") == 50
+              and px(ctx["rules"].get(".sheet-form", {}), "margin-top") == 16,
+              f"field = {ctx['rules'].get('.field.f50')} / {ctx['rules'].get('.sheet-form')}")
+    rep.check("E", "category block starts 16 below the title",
+              px(ctx["rules"].get(".cat-block", {}), "margin-top") == 16,
+              f"margin={ctx['rules'].get('.cat-block', {}).get('margin-top')}")
+    rep.check("E", "sheet actions: 20 above, 48dp pills at 15sp, Save bold",
+              px(ctx["rules"].get(".sheet-actions", {}), "margin-top") == 20
+              and px(ctx["rules"].get(".sheet-actions .btn", {}), "height") == 48
+              and ctx["rules"].get(".sheet-actions .btn", {}).get("font-size") == "15px"
+              and ctx["rules"].get(".sheet-actions .btn-primary", {}).get("font-weight") == "700",
+              f"actions = {ctx['rules'].get('.sheet-actions')}")
+
+
     # --- Phase 5(c): sheetBsImg / sheetBsMsg ------------------------------- #
     eq(".img-grid", "margin-top", 14, "image grid 14 below the subtitle")
     eq(".img-grid", "gap", 10, "image grid gap 10")
@@ -629,6 +661,23 @@ def group_f(rep: Report, ctx):
     # AppPickerSheet renders sche_apps_empty; SocialPickerSheet has its own
     # inline literal. Both must match production character for character.
     social_kt = read(UI / "screens/socialblocking/SocialBlockingScreen.kt")
+    # KeywordSheet/WebsiteSheet have NO subtitle line in production and their
+    # field placeholder is kw_sheet_field ("Value"), not "keyword…".
+    rep.check("F", "keyword/site sheets ship no invented subtitle",
+              "Validated against duplicates" not in ctx["html"],
+              "the prototype still shows 'Validated against duplicates & format.'")
+    rep.check("F", "keyword/site field placeholder is kw_sheet_field",
+              ctx["html"].count('placeholder="Value"') == 2
+              and "placeholder=\"keyword…\"" not in ctx["html"]
+              and "placeholder=\"example.com\"" not in ctx["html"]
+              and strings["kw_sheet_field"] == "Value",
+              "placeholder differs from kw_sheet_field")
+    rep.check("F", "keyword/site save pill is kw_sheet_save ('Save')",
+              'id="kwSaveBtn"' in ctx["html"] and 'id="siteSaveBtn"' in ctx["html"]
+              and "setText(isKw?'kwSaveBtn':'siteSaveBtn', 'Save')" in ctx["js"]
+              and strings["kw_sheet_save"] == "Save",
+              "the save pill still reads Add/Add Title")
+
     # BlockScreen.kt:108-120 — image row sub uses "•", message row wraps the
     # value in curly quotes. Both had the wrong punctuation.
     rep.check("F", "motivation-image row sub uses bs_img_sub_set's bullet",
@@ -994,6 +1043,31 @@ def group_g(rep: Report, ctx):
               "c.textContent===v" in js and "isSelected = text == chip" in read(
                   UI / "screens/blockscreen/BlockSheets.kt"),
               "chips keep an independent selected flag")
+
+    # KeywordSheet/WebsiteSheet state rules from KeywordManagerScreen.
+    rep.check("H", "category picker hidden for whitelist/trusted entries",
+              "kwSelTab==='whitelist'" in js and "kwSelTab==='trusted'" in js
+              and "block.style.display = noPicker" in js
+              and "if (!config.whitelist)" in read(UI / "screens/keywords/KeywordManagerScreen.kt")
+              and "if (!config.trusted)" in read(UI / "screens/keywords/KeywordManagerScreen.kt"),
+              "the picker is always visible")
+    rep.check("H", "keyword sheet switches add/edit titles from the editing state",
+              "'Edit keyword'" in js and "'Edit website'" in js
+              and "siteEditing" in js
+              and "R.string.kw_sheet_edit_keyword" in read(UI / "screens/keywords/KeywordManagerScreen.kt"),
+              "the website sheet never entered edit mode")
+    rep.check("H", "keyword values are lower-cased like saveKeyword()",
+              ".trim().toLowerCase()" in body("addKeyword")
+              and "input.trim().lowercase()" in read(UI / "screens/keywords/KeywordManagerScreen.kt"),
+              "keywords keep their casing")
+    rep.check("H", "keyword toasts match kw_toast_* and deletion is silent",
+              "'Keyword updated':'Website updated'" in js
+              and "toast('Keyword added to whitelist')" in js
+              and "toast('Website added to trusted')" in js
+              and "toast('Deleted')" not in js
+              and "toast('Updated')" not in js
+              and "kw_toast_website_updated" in strings_xml(),
+              "keyword toasts still diverge from production")
 
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",

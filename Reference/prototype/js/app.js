@@ -484,17 +484,26 @@
       const inp=document.getElementById('titleInput'); if(inp) inp.value='';
       document.querySelectorAll('#sheetTitle #titleMode button').forEach((b,i)=>b.classList.toggle('on',i===0));
     }
-    if(id==='sheetKw'){
-      const kt=document.getElementById('kwSheetTitle'); if(kt) kt.textContent='Add keyword';
-      const kb=document.getElementById('kwSaveBtn'); if(kb) kb.textContent='Add';
-      const ki=document.getElementById('kwInput'); if(ki) ki.value='';
-      document.querySelectorAll('#kwCat .chip').forEach((b,i)=>b.classList.toggle('on',i===0));
-    }
-    if(id==='sheetSite'){
-      const st=document.getElementById('siteSheetTitle'); if(st) st.textContent='Add website';
-      const sb=document.getElementById('siteSaveBtn'); if(sb) sb.textContent='Add';
-      const si=document.getElementById('siteInput'); if(si) si.value='';
-      document.querySelectorAll('#siteCat .chip').forEach((b,i)=>b.classList.toggle('on',i===0));
+    if(id==='sheetKw' || id==='sheetSite'){
+      // KeywordSheet / WebsiteSheet: kw_sheet_add_keyword vs kw_sheet_edit_keyword
+      // (and the website pair); the save pill is kw_sheet_save ("Save").
+      const isKw = id==='sheetKw';
+      const editing = isKw ? kwEditing : siteEditing;
+      const setText = (elId, t) => { const el=document.getElementById(elId); if(el) el.textContent=t; };
+      setText(isKw?'kwSheetTitle':'siteSheetTitle',
+              editing ? (isKw?'Edit keyword':'Edit website')
+                      : (isKw?'Add keyword':'Add website'));
+      setText(isKw?'kwSaveBtn':'siteSaveBtn', 'Save');
+      const inp=document.getElementById(isKw?'kwInput':'siteInput');
+      if(inp) inp.value = editing || '';
+      // config.whitelist (keywords) / config.trusted (websites) hides the picker
+      const noPicker = isKw ? kwSelTab==='whitelist' : kwSelTab==='trusted';
+      const block=document.getElementById(isKw?'kwCatBlock':'siteCatBlock');
+      if(block) block.style.display = noPicker ? 'none' : '';
+      // categoryOf(): an edit re-selects the stored category, an add starts at Custom
+      const cat = editing ? (KWCAT[editing]||'Custom') : 'Custom';
+      document.querySelectorAll((isKw?'#kwCat':'#siteCat')+' .chip')
+        .forEach(b=>b.classList.toggle('on', b.textContent.trim()===cat));
     }
     if(id==='sheetDnsCustom'){
       const v4=document.getElementById('dnsIpv4'), v6=document.getElementById('dnsIpv6');
@@ -528,7 +537,8 @@
     document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
   }
   function addKeyword(){
-    const v = document.getElementById('kwInput').value.trim();
+    // saveKeyword(): input.trim().lowercase()
+    const v = document.getElementById('kwInput').value.trim().toLowerCase();
     if(!v){ toast('Keyword can\'t be empty'); return; }
     const cat = document.querySelector('#kwCat .chip.on').textContent.trim();
     if(kwSource==='screen'){ kwSource='manage'; if(kwSave(v,cat)) closeSheets(); return; }
@@ -1635,7 +1645,7 @@
 
   // ---------- Keyword Manager (production layout) ----------
   const KW = { keywords:{blocklist:[], whitelist:[]}, websites:{blocked:[], trusted:[]} };
-  let kwSelType='keywords', kwSelTab='blocklist', kwSource='manage', kwEditing=null;
+  let kwSelType='keywords', kwSelTab='blocklist', kwSource='manage', kwEditing=null, siteEditing=null;
   const KWCAT = {};
   /* Block screen's Manage card: production navigates (keywords?type=..&tab=..),
      it does not open a sheet. */
@@ -1737,32 +1747,42 @@
       + '<button class="act" onclick="kwEdit(this)"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>'
       + '<button class="act" style="color:var(--danger)" onclick="kwRemove(this)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button></div>';
   }
-  function kwAdd(){ kwEditing=null; kwSource='screen'; openSheet(kwSelType==='keywords'?'sheetKw':'sheetSite'); }
+  function kwAdd(){
+    kwEditing=null; siteEditing=null; kwSource='screen';
+    openSheet(kwSelType==='keywords'?'sheetKw':'sheetSite');
+  }
   function kwEdit(btn){
     const row=btn.closest('.kw-row'); if(!row) return;
-    kwEditing=row.dataset.val; kwSource='screen';
+    const v=row.dataset.val;
+    kwEditing = kwSelType==='keywords' ? v : null;
+    siteEditing = kwSelType==='keywords' ? null : v;
+    kwSource='screen';
     openSheet(kwSelType==='keywords'?'sheetKw':'sheetSite');
-    const inp=document.getElementById(kwSelType==='keywords'?'kwInput':'siteInput');
-    if(inp) inp.value=kwEditing;
   }
   function kwRemove(btn){
     const row=btn.closest('.kw-row'); if(!row) return;
     const v=row.dataset.val;
     KW[kwSelType][kwSelTab] = KW[kwSelType][kwSelTab].filter(x=>x!==v);
     delete KWCAT[v];
-    kwRender(); toast('Deleted');
+    kwRender();   // production's removeKeyword/removeWebsite are silent on success
   }
+  // Toast copy mirrors KeywordManagerScreen.saveKeyword/saveWebsite.
   function kwSave(v, cat){
     const list = KW[kwSelType][kwSelTab];
-    if(kwEditing){
-      const i = list.indexOf(kwEditing);
-      if(i>=0){ list[i]=v; delete KWCAT[kwEditing]; }
+    const isKw = kwSelType==='keywords';
+    const editing = isKw ? kwEditing : siteEditing;
+    if(editing){
+      const i = list.indexOf(editing);
+      if(i>=0){ list[i]=v; delete KWCAT[editing]; }
       if(cat) KWCAT[v]=cat;
-      kwEditing=null; kwRender(); toast('Updated'); return true;
+      if(isKw) kwEditing=null; else siteEditing=null;
+      kwRender(); toast(isKw?'Keyword updated':'Website updated'); return true;
     }
     if(list.indexOf(v)>=0){ toast('Already on the list'); return false; }
     list.push(v); if(cat) KWCAT[v]=cat; kwRender();
-    toast((kwSelType==='keywords'?'Keyword':'Website')+' added to '+kwSelTab);
+    if(kwSelTab==='whitelist')    toast('Keyword added to whitelist');
+    else if(kwSelTab==='trusted') toast('Website added to trusted');
+    else toast((isKw?'Keyword added to ':'Website added to ')+cat);
     return true;
   }
 

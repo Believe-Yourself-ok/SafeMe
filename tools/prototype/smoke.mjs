@@ -597,6 +597,54 @@ async function main () {
     && headerStates.empty.startsWith('No quick actions yet'),
     JSON.stringify(headerStates))
 
+  // ---- keyword / website sheets: picker order, whitelist, toasts ---------- #
+  const kwSheets = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms))
+    window.nav('keywords'); window.kwType('keywords')
+    window.kwAdd(); await wait(80)
+    const sheet = document.getElementById('sheetKw')
+    const titleAdd = document.getElementById('kwSheetTitle').textContent
+    const saveLabel = document.getElementById('kwSaveBtn').textContent
+    const placeholder = document.getElementById('kwInput').placeholder
+    const pickerVisible = document.getElementById('kwCatBlock').style.display !== 'none'
+    // picker sits above the field, field above the actions (production order)
+    const box = el => el.getBoundingClientRect().top
+    const orderOk = box(document.getElementById('kwCatBlock')) < box(document.getElementById('kwInput'))
+      && box(document.getElementById('kwInput')) < box(document.querySelector('#sheetKw .sheet-actions'))
+    document.getElementById('toasts').innerHTML = ''
+    document.getElementById('kwInput').value = '  NEWWORD  '
+    document.querySelector('#kwCat .chip:nth-child(3)').click()
+    ;[...sheet.querySelectorAll('.btn-primary')].pop().click()
+    await wait(80)
+    const addedToast = [...document.querySelectorAll('#toasts .toast')].map(t => t.textContent)
+    // whitelist mode hides the category picker
+    window.kwType('keywords')
+    document.querySelector('[data-seg="kwtab"] button[data-val="whitelist"]')?.click()
+    await wait(40)
+    window.kwAdd(); await wait(80)
+    const whitelistHidden = document.getElementById('kwCatBlock').style.display === 'none'
+    window.closeSheets(); await wait(60)
+    // website edit mode shows the Edit title and seeds the stored value
+    document.querySelector('[data-seg="kwtab"] button[data-val="blocked"]')?.click()
+    window.kwType('websites')
+    await wait(40)
+    const editBtn = document.querySelector('#sc-keywords .kw-row .act')
+    if (editBtn) editBtn.click()
+    await wait(80)
+    const siteTitle = document.getElementById('siteSheetTitle').textContent
+    const seeded = document.getElementById('siteInput').value
+    window.closeSheets()
+    return { titleAdd, saveLabel, placeholder, pickerVisible, orderOk, addedToast,
+             whitelistHidden, siteTitle, seeded }
+  })
+  check('keyword sheets: Value field, Save pill, picker above field, whitelist hides picker',
+    kwSheets.titleAdd === 'Add keyword' && kwSheets.saveLabel === 'Save'
+    && kwSheets.placeholder === 'Value' && kwSheets.pickerVisible && kwSheets.orderOk
+    && kwSheets.addedToast.includes('Keyword added to Gambling')
+    && kwSheets.whitelistHidden === true
+    && kwSheets.siteTitle === 'Edit website' && kwSheets.seeded.length > 0,
+    JSON.stringify(kwSheets))
+
   // ---- block-screen sheets: image tiles + message chips ------------------- #
   const blockSheets = await page.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms))

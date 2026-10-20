@@ -780,20 +780,24 @@
         <div class="sheet" id="sheetKw">
       <div class="grab"></div>
       <h3 id="kwSheetTitle">Add keyword</h3>
-      <div class="s-sub">Validated against duplicates &amp; format.</div>
-      <label class="field"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg><input id="kwInput" placeholder="keyword…"></label>
-      <div class="group-label" style="margin-top:14px">Category</div>
-      <div class="chips" id="kwCat"><button class="chip on" onclick="pickCat(this)">Custom</button><button class="chip" onclick="pickCat(this)">Adult</button><button class="chip" onclick="pickCat(this)">Gambling</button><button class="chip" onclick="pickCat(this)">Social media</button><button class="chip" onclick="pickCat(this)">Shopping</button><button class="chip" onclick="pickCat(this)">Distraction</button></div>
-      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" id="kwSaveBtn" onclick="addKeyword()">Add</button></div>
+      <!-- KeywordSheet: the CategoryPicker sits above the field and is hidden for whitelist entries -->
+      <div class="cat-block" id="kwCatBlock">
+        <div class="cat-label">Category</div>
+        <div class="cat-grid" id="kwCat"><button class="chip on" onclick="pickCat(this)">Custom</button><button class="chip" onclick="pickCat(this)">Adult</button><button class="chip" onclick="pickCat(this)">Gambling</button><button class="chip" onclick="pickCat(this)">Social media</button><button class="chip" onclick="pickCat(this)">Shopping</button><button class="chip" onclick="pickCat(this)">Distraction</button></div>
+      </div>
+      <label class="field f50 sheet-form"><input id="kwInput" placeholder="Value"></label>
+      <div class="row2 sheet-actions"><button class="btn btn-outline" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" id="kwSaveBtn" onclick="addKeyword()">Save</button></div>
     </div>
     <div class="sheet" id="sheetSite">
       <div class="grab"></div>
       <h3 id="siteSheetTitle">Add website</h3>
-      <div class="s-sub">Validated against duplicates &amp; format.</div>
-      <label class="field"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a14 14 0 000 18M12 3a14 14 0 010 18M3 12h18"/></svg><input id="siteInput" placeholder="example.com"></label>
-      <div class="group-label" style="margin-top:14px">Category</div>
-      <div class="chips" id="siteCat"><button class="chip on" onclick="pickCat(this)">Custom</button><button class="chip" onclick="pickCat(this)">Adult</button><button class="chip" onclick="pickCat(this)">Gambling</button><button class="chip" onclick="pickCat(this)">Social media</button><button class="chip" onclick="pickCat(this)">Shopping</button><button class="chip" onclick="pickCat(this)">Distraction</button></div>
-      <div class="row2" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" id="siteSaveBtn" onclick="addSite()">Add</button></div>
+      <!-- WebsiteSheet: same order; the picker is hidden for trusted domains -->
+      <div class="cat-block" id="siteCatBlock">
+        <div class="cat-label">Category</div>
+        <div class="cat-grid" id="siteCat"><button class="chip on" onclick="pickCat(this)">Custom</button><button class="chip" onclick="pickCat(this)">Adult</button><button class="chip" onclick="pickCat(this)">Gambling</button><button class="chip" onclick="pickCat(this)">Social media</button><button class="chip" onclick="pickCat(this)">Shopping</button><button class="chip" onclick="pickCat(this)">Distraction</button></div>
+      </div>
+      <label class="field f50 sheet-form"><input id="siteInput" placeholder="Value"></label>
+      <div class="row2 sheet-actions"><button class="btn btn-outline" onclick="closeSheets()">Cancel</button><button class="btn btn-primary" id="siteSaveBtn" onclick="addSite()">Save</button></div>
     </div>
 
     <div class="sheet" id="sheetTitle">
