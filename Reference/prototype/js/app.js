@@ -1442,32 +1442,15 @@
     if(sched) sched.textContent = String(document.querySelectorAll('#schedList .sched-card .sw.on').length);
   }
 
+  // HomeScreen.kt:129 renders the banner only when the service is known to be off
+  // and the check has settled. The banner therefore has exactly one presentation —
+  // the disabled one — and renderHome() owns whether it is on screen.
   let a11yOn=false;
   function openA11y(){
     toast('Opening: Accessibility → SafeMe…');
     setTimeout(()=>{ a11yOn=true; DEMO.home.a11y='on';
       const sel=document.getElementById('stA11y'); if(sel) sel.value='on';
-      a11yStatus(); renderHome(); toast('Accessibility service enabled'); }, 1600);
-  }
-  function a11yStatus(){
-    const b=document.getElementById('a11yBanner');
-    const on=a11yOn;
-    if(b && document.getElementById('sc-home')){ b.setAttribute('data-a11y', on?'on':'off'); }
-    if(b){
-      b.style.transition='max-height .3s ease, opacity .3s ease, padding .3s ease, margin .3s ease, border-width .3s ease';
-      b.style.overflow='hidden';
-      if(on){
-        b.style.maxHeight='0'; b.style.opacity='0'; b.style.paddingTop='0'; b.style.paddingBottom='0'; b.style.borderWidth='0'; b.style.marginTop='0'; b.style.pointerEvents='none';
-        b.style.background='rgba(34,181,115,.07)'; b.style.borderColor='var(--success)';
-      } else {
-        b.style.maxHeight='90px'; b.style.opacity='1'; b.style.paddingTop=''; b.style.paddingBottom=''; b.style.borderWidth=''; b.style.marginTop='12px'; b.style.pointerEvents='';
-        b.style.background='rgba(244,67,54,.07)'; b.style.borderColor='var(--danger)';
-      }
-    }
-    const ic=document.getElementById('a11yIc'); if(ic) ic.className='ic '+(on?'g':'r');
-    const p=document.getElementById('a11yPill'); if(p){ p.className='pill '+(on?'g':'r'); p.innerHTML='<span class="pdot"></span>'+(on?'Enabled':'Disabled'); }
-    const tt=document.getElementById('a11yTitle'); if(tt) tt.textContent=on?'Accessibility service is on':'Accessibility service is off';
-    const s=document.getElementById('a11ySub'); if(s) s.textContent=on?'Core blocking engine active':"SafeMe can't detect blocked content until you enable it";
+      renderHome(); toast('Accessibility service enabled'); }, 1600);
   }
 
   // ---------- Toast ----------

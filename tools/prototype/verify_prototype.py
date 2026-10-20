@@ -38,6 +38,7 @@ CSS = PROTO / "css" / "styles.css"
 JS = PROTO / "js" / "app.js"
 STRINGS = ROOT / "app/src/main/res/values/strings.xml"
 UI = ROOT / "app/src/main/java/com/safeme/app/ui"
+DATA = ROOT / "app/src/main/java/com/safeme/app/data"
 GRADLE = ROOT / "app/build.gradle.kts"
 
 
@@ -548,6 +549,28 @@ def group_g(rep: Report, ctx):
               and "safeme_perm_" in js,
               "permission subtitle is still a static string")
 
+    # --- B-02/B-03: home is the screen with the most state ------------------- #
+    qa = read(DATA / "QuickActionsPrefs.kt")
+    ids = re.findall(r'\w+\("([a-z]+)"\)', qa.split("enum class QuickActionType")[1].split("companion object")[0])
+    pool = re.findall(r"\{id:'([a-z]+)'", js)
+    rep.check("G", "quick-action pool carries every QuickActionType id (B-03)",
+              ids and all(i in pool for i in ids) and len(pool) == len(set(pool)),
+              f"Kotlin ids {ids} vs prototype pool {pool}")
+    defaults = re.findall(r'QuickActionType\.(\w+)', qa.split("DEFAULT_QUICK_ACTIONS")[1].split(")")[0])
+    proto_defaults = re.search(r"let qaOn=\[([^\]]*)\]", js)
+    rep.check("G", "quick-action default order == DEFAULT_QUICK_ACTIONS (B-03)",
+              bool(proto_defaults) and all(
+                  d.lower() in proto_defaults.group(1) for d in defaults),
+              f"Kotlin defaults {defaults} vs qaOn={proto_defaults.group(1) if proto_defaults else None}")
+
+    # One owner for the banner: two writers (a render pass and an animator) used to
+    # fight over it, and the animator carried an enabled state production cannot show.
+    rep.check("G", "accessibility banner has a single owner (B-02)",
+              "banner.style.display = d.a11y === 'off' ? 'flex' : 'none'" in js
+              and "function a11yStatus" not in js
+              and "service is on" not in js and "Core blocking engine active" not in js,
+              "a second writer, or invented enabled-state copy, is back")
+
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")
@@ -633,7 +656,9 @@ def group_h(rep: Report, ctx):
               "a state is unreachable from the toolbar")
     for res in ("home_a11y_title", "home_a11y_sub"):
         text = strings[res].replace("\\'", "'")     # XML escapes the apostrophe
-        rep.check("H", f"banner copy {res} present", text in js,
+        # The banner has one presentation, so its copy lives in the markup; JS only
+        # decides whether the banner is on screen.
+        rep.check("H", f"banner copy {res} present", text in js or text in html,
                   f"{text!r} missing from the banner renderer")
 
     # --- master switch ----------------------------------------------------- #
