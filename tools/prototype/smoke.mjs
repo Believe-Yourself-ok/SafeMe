@@ -160,6 +160,74 @@ async function main () {
   })
   check('state renderers run without throwing', renderErr === '', renderErr)
 
+  // ---- home state machine: every variant renders like the ViewModel ------ #
+  const heroStates = await page.evaluate(async () => {
+    window.nav('home')
+    const read = () => ({
+      title: document.getElementById('homeHeroTitle').textContent,
+      sub: document.getElementById('homeHeroSub').textContent,
+      pill: document.getElementById('homePill').textContent.trim(),
+      pillCls: document.getElementById('homePill').className,
+      offset: parseFloat(document.getElementById('homeHeroRing').getAttribute('stroke-dashoffset')),
+      master: document.getElementById('homeMaster').classList.contains('on')
+    })
+    const out = {}
+    for (const v of ['full', 'partial', 'paused']) {
+      document.getElementById('stHero').value = v
+      window.setDemo('hero', v)
+      await new Promise(r => setTimeout(r, 30))
+      out[v] = read()
+    }
+    window.setDemo('hero', 'partial')
+    return out
+  })
+  check('hero: full   -> "Fully protected" + green pill + full ring + switch on',
+    heroStates.full.title === 'Fully protected' && heroStates.full.pill === 'Protected'
+    && heroStates.full.pillCls.includes(' g') && heroStates.full.offset === 0
+    && heroStates.full.master, JSON.stringify(heroStates.full))
+  check('hero: partial -> "Partially protected" + amber "Attention" pill',
+    heroStates.partial.title === 'Partially protected' && heroStates.partial.pill === 'Attention'
+    && heroStates.partial.pillCls.includes(' o'), JSON.stringify(heroStates.partial))
+  check('hero: paused -> "Protection paused", ring empty, master switch off',
+    heroStates.paused.title === 'Protection paused' && heroStates.paused.pill === 'Paused'
+    && heroStates.paused.offset === 163.4 && !heroStates.paused.master,
+    JSON.stringify(heroStates.paused))
+
+  // ---- accessibility banner only shows when the state is known-off ------- #
+  const a11yStates = await page.evaluate(async () => {
+    const out = {}
+    for (const v of ['off', 'checking', 'on']) {
+      document.getElementById('stA11y').value = v
+      window.setDemo('a11y', v)
+      await new Promise(r => setTimeout(r, 30))
+      out[v] = getComputedStyle(document.getElementById('a11yBanner')).display
+    }
+    window.setDemo('a11y', 'off')
+    return out
+  })
+  check('a11y banner shows only when known-off (hidden for checking/on)',
+    a11yStates.off !== 'none' && a11yStates.checking === 'none' && a11yStates.on === 'none',
+    JSON.stringify(a11yStates))
+
+  // ---- header greeting override + quick-action empty state --------------- #
+  const headerStates = await page.evaluate(async () => {
+    document.getElementById('stGreet').value = 'morning'
+    window.setDemo('greeting', 'morning')
+    await new Promise(r => setTimeout(r, 30))
+    const morning = document.getElementById('homeGreeting').textContent
+    const dateOk = /^[A-Z][a-z]+, \d{1,2}:\d{2} (AM|PM)$/.test(document.getElementById('homeDate').textContent)
+    for (let i = 0; i < 4; i++) window.qaRemove(0)
+    const empty = document.querySelector('#sc-home .grid2').textContent.trim()
+    window.qaReset()
+    document.getElementById('stGreet').value = 'live'
+    window.setDemo('greeting', 'live')
+    return { morning, dateOk, empty }
+  })
+  check('header: greeting prefix + live date line, quick actions fall back to empty copy',
+    headerStates.morning === 'Good morning, Alex' && headerStates.dateOk
+    && headerStates.empty.startsWith('No quick actions yet'),
+    JSON.stringify(headerStates))
+
   // ---- toast docks above the bottom nav on a tab root --------------------
   const toastGap = await page.evaluate(async () => {
     window.nav('home')

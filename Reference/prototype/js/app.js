@@ -106,7 +106,9 @@
   // ---------- Generic toggle ----------
   document.addEventListener('click', e=>{
     const t = e.target.closest('.sw[data-toggle]');
-    if(t){ t.classList.toggle('on'); toast(t.classList.contains('on')?'On':'Off'); if(t.closest('#schedList')) schedCount(); if(t.closest('#titleList')) titleCount(); if(t.id==='vpnToggle') vpnStatus(); }
+    if(t){ t.classList.toggle('on');
+      if(t.id==='homeMaster'){ DEMO.home.paused=!t.classList.contains('on'); renderHome(); }
+      toast(t.classList.contains('on')?'On':'Off'); if(t.closest('#schedList')) schedCount(); if(t.closest('#titleList')) titleCount(); if(t.id==='vpnToggle') vpnStatus(); }
   });
 
   // ---------- In-screen tabs ----------
@@ -1037,14 +1039,113 @@
   vpnStatus();
 
   // ---------- Accessibility status ----------
+  // ---------- DEMO state (SAD-319 Phase 3) ----------
+  // One object drives every prototype state so each production variant is
+  // reachable from the toolbar instead of being hardcoded in markup.
+  const DEMO = {
+    home: {
+      layers: 8, total: 10, attention: 2,
+      paused: false,
+      a11y: 'off',                  // 'off' | 'checking' | 'on'
+      greeting: 'live',             // 'live' -> derived from the clock, like HomeViewModel
+      blockedToday: 0,
+      schedules: 0
+    }
+  };
+  const DEMO_STR = {
+    protected: 'Protected', paused: 'Paused', attention: 'Attention',
+    full: 'Fully protected', partial: 'Partially protected', pausedTitle: 'Protection paused',
+    resume: 'Turn on master protection to resume',
+    morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening',
+    userName: 'Alex'
+  };
+  /** Mirrors HomeViewModel.currentGreeting(): 5..11 morning, 12..16 afternoon, else evening. */
+  function clockGreeting(){
+    const h=new Date().getHours();
+    return h>=5&&h<=11 ? 'morning' : (h>=12&&h<=16 ? 'afternoon' : 'evening');
+  }
+  /** Mirrors HomeViewModel.currentDateLine(): SimpleDateFormat("EEEE, h:mm a"). */
+  function clockDateLine(){
+    const d=new Date();
+    const day=d.toLocaleDateString('en-US',{weekday:'long'});
+    let h=d.getHours()%12; if(h===0) h=12;
+    const mm=String(d.getMinutes()).padStart(2,'0');
+    return day+', '+h+':'+mm+' '+(d.getHours()<12?'AM':'PM');
+  }
+  function setDemo(key, value){
+    const d = DEMO.home;
+    if(key === 'hero'){
+      if(value === 'full'){ d.paused = false; d.attention = 0; d.layers = d.total; }
+      if(value === 'partial'){ d.paused = false; d.layers = 8; d.attention = 2; }
+      if(value === 'paused'){ d.paused = true; }
+    }
+    if(key === 'a11y'){ d.a11y = value; /* keep the simulated service flag in step */ a11yOn = value === 'on'; }
+    if(key === 'greeting') d.greeting = value;
+    renderHome();
+  }
+
+  /** Home: title / subtitle / ring / pill / banner, exactly as HomeViewModel composes them. */
+  function renderHome(){
+    const d = DEMO.home;
+    const paused = d.paused;
+    const clean = d.attention === 0;
+    const title = paused ? DEMO_STR.pausedTitle : (clean ? DEMO_STR.full : DEMO_STR.partial);
+    const sub = paused ? DEMO_STR.resume
+      : (clean ? 'All ' + d.total + ' layers active'
+               : d.layers + ' of ' + d.total + ' layers active · ' + d.attention + ' need attention');
+
+    const t = document.getElementById('homeHeroTitle'); if(t) t.textContent = title;
+    const s = document.getElementById('homeHeroSub');   if(s) s.textContent = sub;
+
+    const ring = document.getElementById('homeHeroRing');
+    if(ring){
+      // HomeViewModel: heroProgress = if (paused) 0f else layers.progress
+      const progress = paused ? 0 : (d.total ? d.layers / d.total : 0);
+      ring.setAttribute('stroke-dashoffset', String(Math.round(163.4 * (1 - progress) * 10) / 10));
+    }
+
+    // pill: paused → amber "Paused"; clean → green "Protected"; else amber "Attention"
+    const pill = document.getElementById('homePill');
+    if(pill){
+      const green = !paused && clean;
+      pill.className = 'pill ' + (green ? 'g' : 'o');
+      const label = paused ? DEMO_STR.paused : (green ? DEMO_STR.protected : DEMO_STR.attention);
+      pill.innerHTML = '<span class="pdot"></span>' + label;
+    }
+
+    const g = document.getElementById('homeGreeting');
+    if(g){
+      const which = d.greeting === 'live' ? clockGreeting() : d.greeting;
+      g.textContent = DEMO_STR[which] + ', ' + DEMO_STR.userName;
+    }
+    const dl = document.getElementById('homeDate');
+    if(dl) dl.textContent = clockDateLine();
+
+    // MasterProtectionCard(enabled = state.masterProtection) — paused == switch off
+    const master = document.getElementById('homeMaster');
+    if(master) master.classList.toggle('on', !paused);
+
+    // banner renders only when accessibility is known-off (HomeScreen.kt:129)
+    const banner = document.getElementById('a11yBanner');
+    if(banner) banner.style.display = d.a11y === 'off' ? 'flex' : 'none';
+
+    const blocked = document.getElementById('homeBlocked');
+    if(blocked) blocked.textContent = String(d.blockedToday);
+    const sched = document.getElementById('homeSchedules');
+    if(sched) sched.textContent = String(d.schedules);
+  }
+
   let a11yOn=false;
   function openA11y(){
     toast('Opening: Accessibility → SafeMe…');
-    setTimeout(()=>{ a11yOn=true; a11yStatus(); toast('Accessibility service enabled'); }, 1600);
+    setTimeout(()=>{ a11yOn=true; DEMO.home.a11y='on';
+      const sel=document.getElementById('stA11y'); if(sel) sel.value='on';
+      a11yStatus(); renderHome(); toast('Accessibility service enabled'); }, 1600);
   }
   function a11yStatus(){
     const b=document.getElementById('a11yBanner');
     const on=a11yOn;
+    if(b && document.getElementById('sc-home')){ b.setAttribute('data-a11y', on?'on':'off'); }
     if(b){
       b.style.transition='max-height .3s ease, opacity .3s ease, padding .3s ease, margin .3s ease, border-width .3s ease';
       b.style.overflow='hidden';
@@ -1289,6 +1390,10 @@
     permStatus();
     kwType('keywords');
     qaRender();
+    renderHome();
+    setInterval(()=>{
+      if(DEMO.home.greeting==='live') renderHome();
+    }, 60000);
     feedRender();
     histRender();
     renderSocial();

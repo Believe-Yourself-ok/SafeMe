@@ -17,6 +17,7 @@ Groups
     E  component geometry      (Appendix-A matrix, prototype vs Compose literals)
     F  copy                    (production strings present, placeholders intact)
     G  drift-register closure  (the 42 rows of the plan: added/fixed/deleted)
+    H  state machines          (every prototype state variant vs its ViewModel)
 
 Exit code 0 only when every selected assertion passes.
 """
@@ -483,8 +484,131 @@ def group_g(rep: Report, ctx):
               "feed-empty still centred")
 
 
+def group_h(rep: Report, ctx):
+    """State machines — every prototype state variant must resolve like the ViewModel."""
+    js = ctx["js"]
+    strings = strings_xml()
+    vm = read(UI / "screens/home/HomeViewModel.kt")
+    hs = read(UI / "screens/home/HomeScreen.kt")
+    html = ctx["html"]
+    demo = re.search(r"const DEMO = \{(.*?)\n  \};", js, re.S)
+    rep.check("H", "One DEMO state object owns every home variant",
+              bool(demo) and "renderHome()" in js,
+              "DEMO/renderHome missing — states would be hardcoded again")
+
+    # --- hero title -------------------------------------------------------- #
+    # HomeViewModel: paused -> home_hero_paused; no attention -> home_hero_title; else partial
+    for key, res in (("full", "home_hero_title"),
+                     ("partial", "home_hero_partial"),
+                     ("pausedTitle", "home_hero_paused")):
+        want = strings[res]
+        got = re.search(rf"{key}:\s*'([^']*)'", js)
+        rep.check("H", f"hero title '{key}' == {res}",
+                  bool(got) and got.group(1) == want,
+                  f"DEMO_STR.{key}={got.group(1) if got else None!r} vs {want!r}")
+
+    # --- hero subtitle ----------------------------------------------------- #
+    all_active = strings["home_hero_all_active"]          # "All %1$d layers active"
+    layers_active = strings["home_hero_layers_active"]    # "%1$d of %2$d layers active"
+    attention = strings["home_hero_attention"]            # "%1$d need attention"
+    rep.check("H", "hero subtitle: all-active branch == home_hero_all_active",
+              "'All ' + d.total + ' layers active'" in js
+              and all_active.replace("%1$d", "N") == "All N layers active",
+              f"prototype text vs {all_active!r}")
+    rep.check("H", "hero subtitle: partial branch == home_hero_layers_active + ' · ' + home_hero_attention",
+              "d.layers + ' of ' + d.total + ' layers active · ' + d.attention + ' need attention'" in js
+              and layers_active == "%1$d of %2$d layers active"
+              and attention == "%1$d need attention",
+              f"{layers_active!r} / {attention!r} vs prototype concat")
+    rep.check("H", "hero subtitle: paused branch == home_hero_resume",
+              f"'{strings['home_hero_resume']}'" in js,
+              f"missing {strings['home_hero_resume']!r}")
+    rep.check("H", "subtitle separator is ' · ' (U+00B7)",
+              "' layers active · ' + d.attention" in js.replace("\\n", " "),
+              "separator drifted from the Compose concat")
+
+    # --- pill -------------------------------------------------------------- #
+    for key, res in (("protected", "home_protected"),
+                     ("paused", "home_paused"),
+                     ("attention", "home_attention")):
+        got = re.search(rf"{key}:\s*'([^']*)'", js)
+        rep.check("H", f"pill label '{key}' == {res}",
+                  bool(got) and got.group(1) == strings[res],
+                  f"{got.group(1) if got else None!r} vs {strings[res]!r}")
+    rep.check("H", "pillGreen == !paused && attention empty (HomeViewModel:177)",
+              "const green = !paused && clean;" in js
+              and "val pillGreen = !paused && layers.attention.isEmpty()" in vm,
+              "pill colour rule differs from the ViewModel")
+    rep.check("H", "amber pill uses .pill.o (warning pair, not .r)",
+              "pill.className = 'pill ' + (green ? 'g' : 'o')" in js,
+              "paused/attention pill must use the warning palette")
+
+    # --- hero ring --------------------------------------------------------- #
+    rep.check("H", "heroProgress is 0 while paused (HomeViewModel:193)",
+              "const progress = paused ? 0 : (d.total ? d.layers / d.total : 0);" in js,
+              "ring keeps drawing layer progress while paused")
+    ring = re.search(r'id="homeHeroRing"[^>]*stroke-dasharray="([\d.]+)"', html)
+    r = re.search(r'id="homeHeroRing"[^>]*r="(\d+)"', html)
+    rep.check("H", "ring dasharray == circumference of r=26 (2πr)",
+              bool(ring) and bool(r) and abs(float(ring.group(1)) - 2 * 3.14159 * int(r.group(1))) < 0.1,
+              f"dasharray={ring.group(1) if ring else None}")
+
+    # --- accessibility banner ---------------------------------------------- #
+    gate = re.search(r"if \((!state\.a11yEnabled[^)]*)\)", hs)
+    rep.check("H", "banner gate copied from HomeScreen.kt:122",
+              bool(gate) and "a11yStateKnown" in gate.group(1) and "a11yChecking" in gate.group(1)
+              and "banner.style.display = d.a11y === 'off' ? 'flex' : 'none'" in js,
+              "prototype shows the banner in states production hides it")
+    rep.check("H", "banner has the three production states (off / checking / on)",
+              all(f'value="{v}"' in html for v in ("off", "checking", "on")),
+              "a state is unreachable from the toolbar")
+    for res in ("home_a11y_title", "home_a11y_sub"):
+        text = strings[res].replace("\\'", "'")     # XML escapes the apostrophe
+        rep.check("H", f"banner copy {res} present", text in js,
+                  f"{text!r} missing from the banner renderer")
+
+    # --- master switch ----------------------------------------------------- #
+    rep.check("H", "master switch mirrors paused (single source of truth)",
+              "master.classList.toggle('on', !paused)" in js
+              and "DEMO.home.paused=!t.classList.contains('on')" in js,
+              "switch state is duplicated instead of derived")
+    rep.check("H", "master toggle toast uses home_toast_on/off",
+              f"'{strings['home_toast_on']}'" in js and f"'{strings['home_toast_off']}'" in js,
+              "toast copy drifted")
+
+    # --- header greeting / date -------------------------------------------- #
+    m = re.search(r"in (\d+)\.\.(\d+) -> R\.string\.home_greeting_morning.*?"
+                  r"in (\d+)\.\.(\d+) -> R\.string\.home_greeting_afternoon", vm, re.S)
+    bounds = tuple(int(x) for x in m.groups()) if m else None
+    rep.check("H", "greeting hour bounds copied from HomeViewModel.currentGreeting()",
+              bounds == (5, 11, 12, 16)
+              and f"h>={bounds[0]}&&h<={bounds[1]}" in js
+              and f"h>={bounds[2]}&&h<={bounds[3]}" in js,
+              f"bounds {bounds} vs prototype")
+    rep.check("H", "date line uses the production pattern EEEE, h:mm a",
+              '"EEEE, h:mm a"' in vm and "toLocaleDateString('en-US',{weekday:'long'})" in js
+              and "' '+(d.getHours()<12?'AM':'PM')" in js,
+              "date line format differs")
+    rep.check("H", "greeting string is '<greeting>, <user>' (home_header_greeting)",
+              strings["home_header_greeting"] == "%1$s, %2$s"
+              and "DEMO_STR[which] + ', ' + DEMO_STR.userName" in js,
+              "greeting composition differs")
+
+    # --- quick actions ----------------------------------------------------- #
+    defaults = re.search(r"listOf\(([^)]*QuickActionType[^)]*)\)",
+                         read(ROOT / "app/src/main/java/com/safeme/app/data/QuickActionsPrefs.kt"))
+    kt_order = [x.split(".")[-1].strip().lower() for x in defaults.group(1).split(",")] if defaults else []
+    proto_order = re.search(r"let qaOn=\[([^\]]*)\]", js)
+    proto_order = [x.strip().strip("'") for x in proto_order.group(1).split(",")] if proto_order else []
+    rep.check("H", "quick-action default order == QuickActionsPrefs.DEFAULTS",
+              kt_order == proto_order, f"kotlin {kt_order} vs prototype {proto_order}")
+    rep.check("H", "empty quick actions use home_quick_actions_empty",
+              strings["home_quick_actions_empty"] in js,
+              f"{strings['home_quick_actions_empty']!r} missing")
+
+
 GROUPS = {"A": group_a, "B": group_b, "C": group_c, "D": group_d,
-          "E": group_e, "F": group_f, "G": group_g}
+          "E": group_e, "F": group_f, "G": group_g, "H": group_h}
 
 
 def main() -> int:
@@ -495,7 +619,8 @@ def main() -> int:
                     help="write the parsed selector→declaration map as JSON and exit")
     args = ap.parse_args()
     if args.list:
-        print("groups: A integrity · B wiring · C screens · D tokens · E geometry · F copy · G drift")
+        print("groups: A integrity · B wiring · C screens · D tokens · E geometry · "
+              "F copy · G drift · H state machines")
         return 0
 
     html, css, js = read(INDEX), read(CSS), read(JS)
