@@ -533,6 +533,21 @@ def group_g(rep: Report, ctx):
               "manage subtitle not wired")
     rep.check("G", "toast stack anchored 24 dp (A-03)", px(ctx["rules"].get(".toasts", {}), "bottom") == 24,
               "toast bottom is not 24px")
+    version, appid = kotlin_versions()
+    rep.check("G", "version/package come from one constant that matches the build (B-09)",
+              f"const APP_VERSION = '{version}'" in js and f"const APP_PKG = '{appid}'" in js
+              and all(f"getElementById('{i}')" in js
+                      for i in ("profAboutSub", "profFooter", "aboutVersion")),
+              f"expected APP_VERSION={version!r} APP_PKG={appid!r} driving three nodes")
+    rep.check("G", "version nodes are rendered, not typed in twice (B-09)",
+              all(f'id="{i}"' in html for i in ("profAboutSub", "profFooter", "aboutVersion"))
+              and "renderAppMeta()" in js,
+              "one of the version nodes is not hooked to renderAppMeta")
+    rep.check("G", "profile permission count is live (B-08)",
+              'id="permCardSub"' in html and "permCardSub" in js
+              and "safeme_perm_" in js,
+              "permission subtitle is still a static string")
+
     rep.check("G", "feed empty state left-aligned (A-04)",
               ctx["rules"].get(".feed-empty", {}).get("text-align", "left") == "left",
               "feed-empty still centred")

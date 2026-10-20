@@ -44,6 +44,9 @@
     document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.nav===name));
     document.querySelectorAll('#ptbGroups a').forEach(a=>a.classList.toggle('on', a.dataset.pt===name));
     document.getElementById('statusbar').style.visibility = 'visible';
+    // ProfileScreen.OnResumeEffect: permission state is re-read every time the
+    // screen is shown, so a grant made elsewhere shows up without a reload.
+    if(name === 'profile') permStatus();
     if(push) stack.push(name);
   }
 
@@ -150,12 +153,29 @@
     gateSub:        'Enter your %1$s to unlock',
     closing:        'Closing in %1$ds.',
     blkManage:      '%1$s keywords · %2$s websites · %3$s trusted',
+    profAboutSub:   'v%1$s · version info',
+    aboutVersion:   'Version %1$s · package %2$s',
+    footer1:        'SafeMe v%1$s · open://protectyourself',
     backupExporting:'Creating backup…',
     backupRestoring:'Restoring…'
   };
   /** getString()-style substitution: %1$s / %2$d, in any order. */
   function fmt(t, ...args){
     return t.replace(/%([1-9])\$[sd]/g, (m,i)=>String(args[Number(i)-1]));
+  }
+
+  // BuildConfig.versionName / applicationId — the values ProfileScreen reads from
+  // packageManager and injects with getString(R.string.prof_about_sub, versionName).
+  const APP_VERSION = '0.1.0';
+  const APP_PKG = 'com.safeme.app';
+  /** ProfileScreen.SupportList() + Footer(): both take appVersion from the package. */
+  function renderAppMeta(){
+    const a=document.getElementById('profAboutSub');
+    if(a) a.textContent = fmt(T.profAboutSub, APP_VERSION);
+    const f=document.getElementById('profFooter');
+    if(f) f.innerHTML = fmt(T.footer1, APP_VERSION) + '<br>No ads · no trackers · no analytics';
+    const v=document.getElementById('aboutVersion');
+    if(v) v.textContent = fmt(T.aboutVersion, APP_VERSION, APP_PKG);
   }
 
   const DEMO_STR = {
@@ -1722,6 +1742,7 @@
     feedRender();
     histRender();
     renderSocial();
+    renderAppMeta();
     setInterval(()=>{
       if(DEMO.home.greeting==='live') renderHome();
     }, 60000);

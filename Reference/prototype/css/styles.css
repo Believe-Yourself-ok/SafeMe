@@ -90,7 +90,7 @@
      beside the chip instead of being pushed onto its own row. */
   .nav-on .sub h1{flex:1 1 0;min-width:0;text-align:left;margin-top:0;font-size:20px}
   .sub .sub-desc{font-size:12px;color:var(--ink-2);line-height:20px;margin-top:6px;flex-basis:100%;text-align:left}
-  .sub .act{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+  .sub .act{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);background:var(--brand-soft)}
   .sub .act svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
   /* ---------- Hero ---------- */
@@ -234,6 +234,10 @@
   .qa .ic.r{background:#F9E7E5;color:var(--danger)}
   .qa .ic.d{background:#3A2C1F;color:#E8B78F}
   .qa .badge.soon{position:absolute;top:14px;right:14px}
+  /* ProfileScreen.SubHeader has no back button, so no 16 dp spacer above the title */
+  #sc-profile .sub h1{margin-top:0}
+  /* ProfileScreen.QaCard uses a 40 dp / radius-13 IconBox (HomeScreen tiles use 38 / 12) */
+  #sc-profile .qa .ic{width:40px;height:40px;border-radius:13px}
 
   /* ---------- Shield status hero ---------- */
   .shield{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;padding:14px;

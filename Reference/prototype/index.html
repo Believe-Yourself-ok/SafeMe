@@ -323,13 +323,13 @@
           <span class="chev" style="color:var(--ink-3)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
         </div>
         <div class="list">
-          <button class="li" onclick="nav('about')"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></div><div class="tx"><div class="t">About</div><div class="s">v0.1.0 · version info</div></div><span class="chev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></button>
+          <button class="li" onclick="nav('about')"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></div><div class="tx"><div class="t">About</div><div class="s" id="profAboutSub">v0.1.0 · version info</div></div><span class="chev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></button>
           <button class="li" onclick="toast('Contact: support@safeme.app')"><div class="ic o"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 6l8 7 8-7"/></svg></div><div class="tx"><div class="t">Contact Support</div><div class="s">We reply within a day</div></div><span class="chev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></button>
         </div>
 
         <div class="group-label" style="color:var(--danger)">Danger zone</div>
         <button class="btn btn-danger btn-block" onclick="openDlg('dlgDelete')">Delete account</button>
-        <div style="text-align:center;font-size:11.5px;color:var(--ink-3);margin-top:16px;line-height:1.6">SafeMe v0.1.0 · open://protectyourself<br>No ads · no trackers · no analytics</div>
+        <div id="profFooter" style="text-align:center;font-size:11.5px;color:var(--ink-3);margin-top:16px;line-height:1.6">SafeMe v0.1.0 · open://protectyourself<br>No ads · no trackers · no analytics</div>
       </section>
 
       <!-- ================= SUB SCREENS ================= -->
@@ -537,7 +537,7 @@
         <div class="sub"><button class="back" onclick="back()"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>About</h1></div>
         <div class="card" style="text-align:center;padding:28px 16px">
           <div style="font-family:var(--serif);font-size:30px;font-weight:700">Safe<b style="color:var(--brand)">Me</b></div>
-          <div style="font-size:13px;color:var(--ink-2);margin-top:6px">Version 0.1.0 · package com.safeme.app</div>
+          <div id="aboutVersion" style="font-size:13px;color:var(--ink-2);margin-top:6px">Version 0.1.0 · package com.safeme.app</div>
           <span class="pill g" style="margin-top:12px">No ads · no trackers · no analytics</span>
         </div>
         <div class="list" style="margin-top:14px">
