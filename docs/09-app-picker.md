@@ -89,7 +89,7 @@ Android.
 
 | Screen | What it picks | Store |
 |---|---|---|
-| `ScheduleEditScreen` | `appPackages` per schedule (empty ⇒ blocks all) | `schedule_prefs` |
+| `FocusEditScreen` | `appPackages` per schedule (empty ⇒ blocks all) | `schedule_prefs` |
 | `DnsVpnScreen` whitelist | `whitelist` set (bypasses DNS filtering) | `vpn_prefs` |
 
 Both load apps off the main thread (slow PackageManager work) and reuse the

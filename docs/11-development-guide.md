@@ -56,7 +56,7 @@ the pure logic:
 |---|---|
 | Backup | `BackupCodecTest` (codec round-trips, all validation branches, strict parsing), `BackupManagerTest` (restore pipeline with in-memory stores, rollback) |
 | Blocking/data | `JsoncTest`, `ActivityLogTest`, `QuickActionsPrefsTest`, `ScheduleWarningTest`, `AppCatalogTest` |
-| Protect | `ScheduleEvaluatorTest`, `A11yProtectionUtilsTest` (component parsing, add-only rewrite), `AppLockManagerTest` (PBKDF2, lockout schedule), `ProtectedSystemPagesTest`, `ProtectionLayersTest` |
+| Protect | `FocusEvaluatorTest`, `A11yProtectionUtilsTest` (component parsing, add-only rewrite), `AppLockManagerTest` (PBKDF2, lockout schedule), `ProtectedSystemPagesTest`, `ProtectionLayersTest` |
 | VPN | `TunnelRestartPolicyTest`, `VpnValidationTest` |
 
 Notes:
@@ -64,7 +64,7 @@ Notes:
 - The Android `org.json` stub throws "not mocked", so the project adds the
   **real** `org.json` artifact as a `testImplementation` dependency — JSON
   codecs are unit-testable on the JVM.
-- Pure decision objects (`ScheduleEvaluator`, `TunnelRestartPolicy`,
+- Pure decision objects (`FocusEvaluator`, `TunnelRestartPolicy`,
   `AppLockManager.lockoutDeadlineFor`, `AppCatalog.categorize`,
   `A11yProtectionUtils.parseFlatComponent/canonicalAppendOnly`,
   `ProtectedSystemPages.*`, `BackupCodec`) are deliberately Android-free so
@@ -86,7 +86,7 @@ Notes:
   `.catch { emit(emptyPreferences()) }`.
 - **Fail-open:** detection code degrades to "not blocked"; every external
   write is wrapped so failure is a graceful no-op.
-- **Idempotency:** coordinators (`ScheduleEngine`, guard `ensureWatching`,
+- **Idempotency:** coordinators (`FocusEngine`, guard `ensureWatching`,
   VPN apply) must stay safe to call repeatedly from any thread.
 - **Backup parity:** any new persisted domain should be added to
   `BackupSection` + `BackupSnapshot` + `backupStores()` + the codec's
@@ -114,7 +114,7 @@ not the obvious "what".
    spacing, and component shapes.
 2. Add/verify the `data/` store: keys, `Flow` reader, mutators, resilient
    parsing, `writeXxxPrefs` if it belongs in backups.
-3. Wire the coordinator (e.g. `ScheduleEngine`, VPN apply) if the feature
+3. Wire the coordinator (e.g. `FocusEngine`, VPN apply) if the feature
    needs enforcement.
 4. Build the screen + ViewModel, register the route in `MainScreen.kt`.
 5. Add unit tests for any pure logic; run `testDebugUnitTest`.

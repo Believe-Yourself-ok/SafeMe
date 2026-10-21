@@ -114,7 +114,7 @@ On a match, the service launches `BlockGateActivity` with
 ## 6. Relationship to other features
 
 - **Schedules**: the service also enforces launch blocking via
-  `ScheduleEngine.isLaunchBlocked` and a "block everything" exemption list
+  `FocusEngine.isLaunchBlocked` and a "block everything" exemption list
   (`SCHEDULE_SYSTEM_EXEMPT` — launcher, Settings, package installer,
   permission controllers, phone/telecom, DocumentsUI, media) so the user is
   never locked out. See [06](06-schedule-blocking.md).

@@ -25,7 +25,7 @@ App Picker can enumerate launcher activities on Android 11+.
 ### `SCHEDULE_EXACT_ALARM` (user-granted, Play-declared)
 
 Schedule boundaries (blocking starts/stops at parent-set times) need
-precisely-timed alarms: without the grant, `ScheduleAlarmReceiver` degrades
+precisely-timed alarms: without the grant, `FocusAlarmReceiver` degrades
 to inexact `set()` and boundaries can land minutes late. The manifest
 declares `SCHEDULE_EXACT_ALARM` — NOT the Play-restricted `USE_EXACT_ALARM`,
 which is reserved for clock/calendar apps. On Android 14+ the grant is

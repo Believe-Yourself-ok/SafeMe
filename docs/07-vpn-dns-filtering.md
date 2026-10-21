@@ -66,7 +66,7 @@ unreachable, resolution fails rather than leaking unfiltered.
 ### PER-APP-BLOCK (schedule-driven)
 
 Active when `scheduledBlockAll || scheduledBlockApps.isNotEmpty()` (managed
-by `ScheduleEngine` via `applyScheduledBlocks`):
+by `FocusEngine` via `applyFocusBlocks`):
 
 - Routes are added (`0.0.0.0/0`, `::/0`) and only the targeted apps'
   traffic enters the TUN; since nothing is ever forwarded from the TUN, that
@@ -113,7 +113,7 @@ stopped:
 
 ## 5. Schedule integration
 
-`SafeMeVpnService.applyScheduledBlocks(packages, blockAll, context)`:
+`SafeMeVpnService.applyFocusBlocks(packages, blockAll, context)`:
 
 - Updates the volatile `scheduledBlockApps` / `scheduledBlockAll`.
 - Tunnel running → restart it in the mode matching the new set.

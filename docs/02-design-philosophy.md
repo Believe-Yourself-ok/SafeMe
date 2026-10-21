@@ -39,7 +39,7 @@ would actually change, so the write cannot loop with its own ContentObserver.
 
 ### 1.4 Idempotent coordinators
 
-`ScheduleEngine.apply`, the guard's `ensureWatching`, and the VPN's
+`FocusEngine.apply`, the guard's `ensureWatching`, and the VPN's
 apply/restart paths are all safe to call repeatedly and from any thread.
 Coordinators restart the VPN only when the active set actually changes, so a
 no-op re-evaluation never tears down a healthy tunnel.
@@ -56,7 +56,7 @@ UI is implemented to match the **design prototype** (the reference HTML
 prototype) pixel-for-pixel — colors, typography, spacing, component shapes.
 The "Protect Yourself" project is a *reference for architecture*, not a code
 base to copy. When the two disagree, the prototype wins for UI; the reference
-informs enforcement machinery (e.g. `ScheduleEngine` mirrors the reference
+informs enforcement machinery (e.g. `FocusEngine` mirrors the reference
 singleton's idempotent semantics).
 
 ## 2. Safety rules (hard constraints)

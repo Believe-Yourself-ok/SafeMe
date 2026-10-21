@@ -33,7 +33,7 @@ services and UI read the same flows.
                │ flows (collectAsState)          │ suspend calls
 ┌──────────────▼─────────────────────────────────▼───────────────┐
 │                        data/ (DataStore)                        │
-│ BlockingPrefs · BlockScreenPrefs · SchedulePrefs · VpnPrefs     │
+│ BlockingPrefs · BlockScreenPrefs · FocusPrefs · VpnPrefs     │
 │ QuickActionsPrefs · AppLockPrefs · OnboardingPrefs · A11y-      │
 │ ProtectionPrefs · PreventUninstallPrefs · ActivityLog ·         │
 │ BackupCodec · AppCatalog                                        │
@@ -41,7 +41,7 @@ services and UI read the same flows.
         │ flows            │ calls                │ calls
 ┌───────▼───────┐   ┌──────▼──────────┐   ┌────────▼───────────────┐
 │ protect/      │   │ service/        │   │ vpn/                   │
-│ ScheduleEngine│   │ SafeMeAccessi-  │   │ DnsPreset · VpnConfig  │
+│ FocusEngine│   │ SafeMeAccessi-  │   │ DnsPreset · VpnConfig  │
 │ A11yProtection│   │ bilityService   │   │ TunnelRestartPolicy    │
 │ Guard/Utils   │   │ SafeMeVpnService│   │ VpnStatusStore         │
 │ AppLockManager│   │ VpnBootReceiver │   │                        │
@@ -98,13 +98,13 @@ Other `data/` files:
 
 ### `protect/` — enforcement and anti-tamper
 
-- `ScheduleEngine` — the **only** component that turns schedule rules into
+- `FocusEngine` — the **only** component that turns schedule rules into
   enforcement. Idempotent; pushes launch blocks to the a11y service and
   internet blocks to the VPN, re-arms the boundary alarm, and logs
   transitions. See [06 — Schedule blocking](06-schedule-blocking.md).
-- `ScheduleEvaluator` — pure, Android-free decision core (day/window
+- `FocusEvaluator` — pure, Android-free decision core (day/window
   evaluation, `nextBoundary`). Unit-tested.
-- `ScheduleAlarmReceiver` — boot/update re-arm + exact boundary alarm
+- `FocusAlarmReceiver` — boot/update re-arm + exact boundary alarm
   (inexact fallback on API 31+ without the exact-alarm permission; a
   Schedule-screen banner offers the grant).
 - `A11yProtectionGuard` / `A11yProtectionUtils` / `A11yProtectionStateHolder` —
@@ -136,7 +136,7 @@ Other `data/` files:
 ### `ui/` — Compose
 
 - `screens/main/MainScreen.kt` — `NavHost` with 4 bottom-tab destinations
-  (`home`, `block`, `schedule`, `profile`) and ~20 secondary routes.
+  (`home`, `block`, `focus`, `profile`) and ~20 secondary routes.
 - `screens/permissions/OnboardingNavHost.kt` — first-run flow
   (`welcome` → notifications → battery → accessibility → `main`), with a
   skip-if-permissions-already-granted fast path.
@@ -164,8 +164,8 @@ SafeMeApp.onCreate (process start)
 │  ├─ collect themePref → ThemePrefHolder.pref                  // live theme changes
 │  ├─ collect a11yProtectionPrefs → StateHolder + guard start/stop
 │  ├─ collect appLockPrefs → AppLockStateHolder + gate re-eval
-│  ├─ collect schedulePrefs → ScheduleEngine.apply(...)         // re-applies + re-arms alarm
-│  └─ 60 s safety ticker → ScheduleEngine.reevaluate (only while a schedule is enabled)
+│  ├─ collect focusPrefs → FocusEngine.apply(...)         // re-applies + re-arms alarm
+│  └─ 60 s safety ticker → FocusEngine.reevaluate (only while a schedule is enabled)
 
 MainActivity.onCreate
 ├─ window background set from ThemePrefHolder.pref (before first frame)
@@ -196,8 +196,8 @@ AccessibilityEvent (TYPE_WINDOW_STATE_CHANGED)
 
 ```
 DataStore change / boundary alarm / 60 s ticker
-  → ScheduleEngine.apply / reevaluate
-  → ScheduleEvaluator.evaluate (union of active rules)
+  → FocusEngine.apply / reevaluate
+  → FocusEvaluator.evaluate (union of active rules)
   → a11y service (launch set) · VPN (internet set) · next boundary alarm
 ```
 
@@ -220,7 +220,7 @@ AppLockStateHolder (cached from DataStore) → AppLockGateHost overlay
 | `SafeMeVpnService` | `BIND_VPN_SERVICE`, specialUse FGS | DNS filter + schedule internet blocks |
 | `VpnBootReceiver` | boot + package-replaced | restart VPN if enabled |
 | `A11yBootReceiver` | boot + package-replaced | restore a11y protection |
-| `ScheduleAlarmReceiver` | custom action + boot + replaced | boundary re-apply |
+| `FocusAlarmReceiver` | custom action + boot + replaced | boundary re-apply |
 | `DeviceAdminUtils$SafeMeDeviceAdminReceiver` | `BIND_DEVICE_ADMIN` | anti-uninstall |
 
 ## 7. State holders (process-wide caches)
@@ -235,7 +235,7 @@ DataStore collectors started in `SafeMeApp` and read synchronously:
 - `service.SafeMeAccessibilityService.cachedState` / `cachedPuEnabled` —
   blocking + PU state for event matching.
 - `vpn.VpnStatusStore` — live tunnel state.
-- `ScheduleEngine` fields — the active launch/internet block sets.
+- `FocusEngine` fields — the active launch/internet block sets.
 
 These are intentionally `@Volatile` singletons; a stale read is always safer
 than a blocking one on a hot path.
