@@ -1,5 +1,5 @@
 // ---------- Screen registry ----------
-  const NAV = {home:'Home',block:'Block',schedule:'Schedule',profile:'Profile'};
+  const NAV = {home:'Home',block:'Block',schedule:'FocusMe',profile:'Profile'};
   const SCREENS = {
     welcome:{group:'Onboarding'}, permissions:{group:'Onboarding'}, permbattery:{group:'Onboarding'}, perma11y:{group:'Onboarding'},
     home:{group:'Main',nav:true}, block:{group:'Main',nav:true}, schedule:{group:'Main',nav:true}, profile:{group:'Main',nav:true},
@@ -530,7 +530,7 @@
   function setTimep(el,h24){ el.dataset.h24=h24; el.innerHTML=fmt12h(h24); }
   function saveSchedule(){
     const name=document.getElementById('schedName');
-    if(!name||!name.value.trim()){ toast('Give your schedule a name'); return; }
+    if(!name||!name.value.trim()){ toast('Give your focus session a name'); return; }
     const days=[...document.querySelectorAll('#sc-scheduleedit .day')].map((d,i)=>d.classList.contains('on')?i:-1).filter(i=>i>=0);
     if(!days.length){ toast('Pick at least one day'); return; }
     const st=document.getElementById('timeStart'), en=document.getElementById('timeEnd');
@@ -545,7 +545,7 @@
     const html=schedCardHTML(o);
     if(schedEditId){ schedEditId.outerHTML=html; schedEditId=null; }
     else { document.getElementById('schedList').insertAdjacentHTML('beforeend',html); }
-    schedCount(); nav('schedule'); toast('Schedule saved — alarms set');
+    schedCount(); nav('schedule'); toast('Focus session saved — alarms set');
   }
   function schedCardHTML(o){
     return '<div class="sched-card" data-name="'+o.name+'" data-days="'+o.days+'" data-daysraw="'+o.daysraw+'" data-start="'+o.start+'" data-end="'+o.end+'" data-mode="'+o.mode+'" data-modetxt="'+o.modetxt+'" data-apps="'+o.apps+'" data-enabled="'+(o.enabled===false?'0':'1')+'">'+
@@ -574,20 +574,20 @@
     if(!btn){
       schedEditId=null;
       if(del) del.style.display='none';
-      if(title) title.textContent='New Schedule';
-      if(save) save.textContent='Create schedule';
+      if(title) title.textContent='New focus session';
+      if(save) save.textContent='Create focus session';
       if(name) name.value='';
       days.forEach((d,i)=>d.classList.toggle('on',i<3));
       setTimep(ts,'21:00'); setTimep(te,'23:00');
       seg.forEach(b=>b.classList.toggle('on',b.textContent==='Both'));
       if(apc) apc.textContent='No apps selected';
-      if(aps) aps.textContent='No apps — schedule blocks everything';
+      if(aps) aps.textContent='No apps — this session blocks everything';
       const en0=document.getElementById('schedEnabled'); if(en0) en0.classList.add('on');
       nav('scheduleedit'); return;
     }
     const c=btn.closest('.sched-card'); schedEditId=c;
     if(del) del.style.display='block';
-    if(title) title.textContent='Edit Schedule';
+    if(title) title.textContent='Edit focus session';
     if(save) save.textContent='Save changes';
     if(name) name.value=c.dataset.name;
     const raw=(c.dataset.daysraw||'').split(',');
@@ -596,7 +596,7 @@
     seg.forEach(b=>b.classList.toggle('on',b.textContent===c.dataset.mode));
     const n=Number(c.dataset.apps||0);
     if(apc) apc.textContent=n?(n+' apps selected'):'No apps selected';
-    if(aps) aps.textContent=n?'Tap Choose to change apps':'No apps — schedule blocks everything';
+    if(aps) aps.textContent=n?'Tap Choose to change apps':'No apps — this session blocks everything';
     const en=document.getElementById('schedEnabled'); if(en) en.classList.toggle('on', c.dataset.enabled!=='0');
     nav('scheduleedit');
   }
@@ -642,17 +642,17 @@
   function delSchedule(){
     if(!schedEditId) return;
     schedEditId.remove(); schedEditId=null;
-    schedCount(); nav('schedule'); toast('Schedule deleted');
+    schedCount(); nav('schedule'); toast('Focus session deleted');
   }
   function schedCount(){
     const all=document.querySelectorAll('#schedList .sched-card');
     const on=[...all].filter(c=>c.querySelector('.sw').classList.contains('on')).length;
-    const c=document.getElementById('schedHeroCount'); if(c) c.textContent=on+' active schedule'+(on===1?'':'s');
+    const c=document.getElementById('schedHeroCount'); if(c) c.textContent=on+' active focus session'+(on===1?'':'s');
     const p=document.getElementById('schedHeroPill'); if(p){ p.className='pill '+(on?'g':'r'); p.innerHTML='<span class="pdot"></span>'+(on?'On':'Off'); }
     const sub=document.getElementById('schedHeroSub');
     if(sub){
       const first=on?[...all].find(c=>c.querySelector('.sw').classList.contains('on')):null;
-      sub.textContent=first?('Next boundary · '+(first.dataset.name||'Schedule')+' at '+(first.dataset.start||'--:--')):(on===0&&all.length?'All schedules paused':'No schedules yet — create one');
+      sub.textContent=first?('Next boundary · '+(first.dataset.name||'Focus session')+' at '+(first.dataset.start||'--:--')):(on===0&&all.length?'All focus sessions paused':'No focus sessions yet — create one');
     }
     const emp=document.getElementById('schedEmpty'); if(emp) emp.style.display=all.length?'none':'block';
     const hs=document.getElementById('homeSchedules'); if(hs) hs.textContent=String(on);
@@ -750,7 +750,7 @@
     if(editor && editor.classList.contains('show')){
       const apc=document.getElementById('schedAppCount'), aps=document.getElementById('schedAppSub');
       if(apc) apc.textContent=names.length+' app'+(names.length===1?'':'s')+' selected';
-      if(aps) aps.textContent=names.length?(names.slice(0,4).join(', ')+(names.length>4?'…':'')):'No apps — schedule blocks everything';
+      if(aps) aps.textContent=names.length?(names.slice(0,4).join(', ')+(names.length>4?'…':'')):'No apps — this session blocks everything';
     }
     closeSheets(); toast(names.length+' app'+(names.length===1?'':'s')+' selected');
   }
@@ -1192,7 +1192,7 @@
     if(empty) empty.style.display = ACTIVITY.length?'none':'block';
   }
 
-  // ---------- Schedule banners / Accessibility protection ----------
+  // ---------- FocusMe banners / Accessibility protection ----------
   function dismissBanner(btn){ const b=btn.closest('.banner'); if(b) b.style.display='none'; }
   function apToggleAdb(btn){
     const box=document.getElementById('apAdb'); if(!box) return;
@@ -1212,7 +1212,7 @@
   // ---------- Quick actions ----------
   const QA_POOL=[
     {id:'keyword', t:'Add keyword',  s:'Block more sites'},
-    {id:'schedule',t:'New schedule', s:'Recurring window'},
+    {id:'schedule',t:'New focus session', s:'Recurring window'},
     {id:'backup',  t:'Backup',       s:'Export to JSON'},
     {id:'applock', t:'App lock',     s:'Protect apps'},
     {id:'websites',t:'Websites',     s:'Block sites'},
