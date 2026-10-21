@@ -19,10 +19,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,6 +59,18 @@ class ScheduleEditViewModel(
     private val _done = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val done: SharedFlow<Unit> = _done.asSharedFlow()
 
+    /**
+     * COD-81: working copy at load time / last successful save; null until the
+     * initial load completes (nothing user-authored exists before that).
+     */
+    private val baseline = MutableStateFlow<ScheduleEditUiState?>(null)
+
+    /** COD-81: true while the working copy holds changes that were never saved. */
+    val hasUnsavedChanges: StateFlow<Boolean> =
+        combine(baseline, _uiState) { base, current ->
+            base != null && isScheduleEditDirty(base, current)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     init {
         viewModelScope.launch {
             val app = getApplication<Application>()
@@ -73,6 +88,8 @@ class ScheduleEditViewModel(
                     selectedApps = existing?.appPackages?.toSet() ?: emptySet(),
                 )
             }
+            // COD-81: the just-loaded working copy is the clean baseline.
+            baseline.value = _uiState.value
         }
         viewModelScope.launch {
             val excluded = getApplication<Application>().schedulePrefs().first().excludedApps
@@ -166,6 +183,8 @@ class ScheduleEditViewModel(
                 app.addSchedule(schedule)
             }
             _toasts.tryEmit(app.getString(R.string.sche_toast_saved))
+            // COD-81: saved → clean; the done-driven exit must not warn.
+            baseline.value = _uiState.value
             _done.tryEmit(Unit)
         }
         return true
@@ -215,3 +234,21 @@ internal fun isValidScheduleWindow(startMinute: Int, endMinute: Int): Boolean =
  */
 internal fun resolveEditedEnabled(editId: String?, storedEnabled: Boolean?): Boolean =
     if (editId == null) true else storedEnabled ?: true
+
+/**
+ * COD-81: true when the editor's working copy differs from the last
+ * loaded/saved baseline. Transient fields (loading/editId/app catalog) are
+ * never compared. `name` is compared trimmed because the save path stores
+ * `name.trim()`, so whitespace-only drift is not an actual change.
+ */
+internal fun isScheduleEditDirty(
+    baseline: ScheduleEditUiState,
+    current: ScheduleEditUiState,
+): Boolean =
+    baseline.name.trim() != current.name.trim() ||
+        baseline.days != current.days ||
+        baseline.startMinute != current.startMinute ||
+        baseline.endMinute != current.endMinute ||
+        baseline.mode != current.mode ||
+        baseline.enabled != current.enabled ||
+        baseline.selectedApps != current.selectedApps
