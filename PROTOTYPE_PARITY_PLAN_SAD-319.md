@@ -36,16 +36,20 @@ whose gate was green at the time (`verify` + `smoke` + 0 console errors).
 | 6 — icons, slot by slot | done | `98c1a41` |
 | 7 — demo data & copy policy | done | `320e034` |
 | 8 — verification & sign-off | done (gate + checklist written) | `575e7ba` |
-| 9 — docs & knowledge graph | docs done, graph pending | see below |
+| 9 — docs & knowledge graph | done — graph refreshed from `1db06e0` | see below |
 
 Residual items, deliberately not guessed at:
 
 - **Device pass** (§Appendix D, `tools/prototype/SIGNOFF.md`) — must be run by
   the owner; Compose cannot run in this environment.
-- **`graphify-out/`** still carries `Built from commit: 36826a61`. Refreshing it
-  needs the `graphify` CLI (`graphify update .`), which is not installed here;
-  hand-editing `graph.json` would be invention, so it stays for whoever has the
-  tool.
+- **`graphify-out/`** was rebuilt with the `graphify` CLI (`graphifyy` 0.9.93):
+  `graphify update .` (AST only, no LLM) then `graphify cluster-only .` so the
+  `.graphify_analysis.json` sidecar matches the new clustering. The graph is
+  stamped `Built from commit: 1db06e0`, i.e. the parent commit — a graph cannot
+  contain its own commit, so one commit of lag is expected, not staleness.
+  `.graphify_ast.json` / `.graphify_detect.json` are legacy sidecars from the
+  pre-CLI build; the CLI reads the latter only for `benchmark`, so they are left
+  untouched rather than hand-rewritten.
 - **CI** — no prototype job, per the decision recorded in D-4.
 
 ## 2. Authority model — how each disagreement is settled

@@ -1,1094 +1,1142 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750065,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0720522,
     "ast_hash": "f31ce46f8e75a788c994c556e6f23cf3",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/BlockGateActivity.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750132,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.072059,
     "ast_hash": "31bf9fcda4f5ac0b7603a385dca50316",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/MainActivity.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750167,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0720615,
     "ast_hash": "49354c610566e5ebdc85a145723a9baa",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/BlockingPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750272,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072071,
     "ast_hash": "d3b3ccb38064e8289908c06a2d3a196a",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/BundledAdult.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750282,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720723,
     "ast_hash": "eb569368c0e1935b7edd10e21e7c44c8",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/BundledKeywords.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750303,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720747,
     "ast_hash": "071fa5cd70d2d14405736911ad8f4595",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/OnboardingPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750334,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072078,
     "ast_hash": "fbc9ea27c20c5b1923de56d379b34cf8",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/VpnPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.575039,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720835,
     "ast_hash": "f19b57c7a14b9f65911f81be1e5cdcb5",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/service/SafeMeAccessibilityService.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750566,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721102,
     "ast_hash": "44019c0e4cb082ab895ae5adbf773744",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/service/SafeMeVpnService.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750585,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721118,
     "ast_hash": "4bf11d0873f2a42c151ce17357417a07",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/service/VpnBootReceiver.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750592,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721128,
     "ast_hash": "8664b73db8eff6108d5f8493bbd6b3a3",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/components/BottomNavBar.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750601,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072114,
     "ast_hash": "bd69923265735f1d6224ef79ecad3c67",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/components/BottomNavIcons.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750613,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072115,
     "ast_hash": "d2d18a1a0d5a19505f4ebdcb68b0fefb",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/components/Effects.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750623,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072116,
     "ast_hash": "9257f1e87ca961003cb6b6f35ca05841",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/components/ToastHost.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750651,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721192,
     "ast_hash": "79f141593e2d4a55d577403847cd2112",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blocking/BlockingIcons.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.575081,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721354,
     "ast_hash": "11dfd621e969c4d4995e5f918b0d0442",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blocking/BlockingScreen.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750823,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721364,
     "ast_hash": "f2dbd2d188c7c99ca9ccc5273b69a746",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blocking/BlockingViewModel.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.575083,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.072137,
     "ast_hash": "a3a404a146fa190a659ca248d66e91cd",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blockscreen/BlockOverlay.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750852,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.072139,
     "ast_hash": "47f02ec65c23eaf094177cda00b1da64",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blockscreen/BlockScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750859,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.07214,
     "ast_hash": "e11aef5e9e1ce70e535116e9e668a318",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blockscreen/BlockScreenIcons.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750868,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721407,
     "ast_hash": "1b37449b49f355b5fc70b2a4eabbe8a1",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blockscreen/BlockScreenViewModel.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750878,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721416,
     "ast_hash": "fd2064b73cf47933560a73f852e72873",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blockscreen/BlockSheets.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.575089,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721424,
     "ast_hash": "a53907e4fa298a4ee3e92c6fc1671d65",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/home/HomeIcons.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.575091,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.072144,
     "ast_hash": "e99f2b55c79f5c4bca5f23240401a635",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/home/HomeScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750916,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721452,
     "ast_hash": "1f5bfba3654736671e853f45d58d2aeb",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/home/HomeViewModel.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750928,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.072146,
     "ast_hash": "71415cd272fd80f8cd18146ff74d1c0c",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/keywords/KeywordIcons.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750947,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721476,
     "ast_hash": "1fc772ffcb0669aad04237d2a55e3c94",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/keywords/KeywordManagerScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.575096,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721488,
     "ast_hash": "b57232f03795abd9b8afdc548b4748eb",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/keywords/KeywordManagerViewModel.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750968,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.07215,
     "ast_hash": "ed025377f7ad9364bd087f82d50fed18",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/main/MainScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750976,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.072151,
     "ast_hash": "de5b5cfb7be64f76fd630c950c92946b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/permissions/OnboardingNavHost.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750997,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721533,
     "ast_hash": "a69bd45ba028e54c6665f25215f7837b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/permissions/OnboardingViewModel.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5751007,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721543,
     "ast_hash": "00393123c6d1763d6e6f479f77fc8e67",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/permissions/PermissionIcons.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5751016,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721552,
     "ast_hash": "6530114f4c741ee3047ef414e5bd68a0",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/permissions/PermissionScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5751026,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721562,
     "ast_hash": "1966edd2ed07018c4291509ea4ed4770",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/profile/ProfileIcons.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5751054,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721593,
     "ast_hash": "608e86ae2136559084e16ce2a813cc3d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/profile/ProfileScreen.kt": {
-    "mtime": 1789031002.2939353,
-    "seen": 1789031327.5751064,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721602,
     "ast_hash": "0bccbd8072f77d68d3feb3226a9a6b92",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/profile/ProfileViewModel.kt": {
-    "mtime": 1789031002.2939353,
-    "seen": 1789031327.5751076,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721612,
     "ast_hash": "018ad65728b76c7e312eff6d23ffbf2f",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/schedule/ScheduleIcons.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751104,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721645,
     "ast_hash": "ca82b5fa92208ad1b9e62a283f7c480e",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/schedule/ScheduleScreen.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751114,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721655,
     "ast_hash": "bc75a6d8495ee8b0e3e94924b9ac3cb6",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/schedule/ScheduleViewModel.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751133,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721672,
     "ast_hash": "a724fa98b41163aca268b35d25feaef7",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/vpn/DnsVpnIcons.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751188,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.072173,
     "ast_hash": "405f974ab55db6a3e83ae2a76cdb6173",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/vpn/DnsVpnScreen.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.57512,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.072174,
     "ast_hash": "3369a75994d2d25ad1251d53d4523d91",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/vpn/DnsVpnSheets.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.575121,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721748,
     "ast_hash": "821d6343ee2de26e02b5cc8c257031b0",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/vpn/DnsVpnViewModel.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751219,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.072176,
     "ast_hash": "61a8e7e66891525e9b5dbcd886302556",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/welcome/WelcomeScreen.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751226,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.072177,
     "ast_hash": "9958d23a9e2c36c8086cbb5dd12df2c7",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/theme/Color.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751238,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721781,
     "ast_hash": "567949945a9c468b31d7eff12a0ff59e",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/theme/Theme.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751247,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721793,
     "ast_hash": "c4d23e451571bd5b644318a50d6b1887",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/theme/Type.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751257,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721803,
     "ast_hash": "d2b01b9239923b6a97c4ee3140fcdd79",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/util/AccessibilityUtils.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.575127,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721812,
     "ast_hash": "879191e43e273a5e7ff52825f910f0d7",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/vpn/VpnConfig.kt": {
-    "mtime": 1789031002.3059354,
-    "seen": 1789031327.575131,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721853,
     "ast_hash": "9a25077a869e2e856f08949adea988c5",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/vpn/VpnStatusStore.kt": {
-    "mtime": 1789031002.3059354,
-    "seen": 1789031327.575132,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.072186,
     "ast_hash": "74f4df93be18d2f099dcbc3b746caa19",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/vpn/VpnValidationTest.kt": {
-    "mtime": 1789031002.3139353,
-    "seen": 1789031327.575162,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722144,
     "ast_hash": "13b36c8870e4a04245e8f4d0371c43cc",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
-    "mtime": 1789031002.3539355,
-    "seen": 1789031327.575163,
+    "mtime": 1792542809.9251184,
+    "seen": 1792544981.072215,
     "ast_hash": "0b69aabcf43c248b7b2e0176cf248f51",
     "semantic_hash": ""
   },
   "gradlew": {
-    "mtime": 1789031002.3619354,
-    "seen": 1789031327.5751638,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.072216,
     "ast_hash": "a43be8432bac3ffd05b3769aa42fe996",
     "semantic_hash": ""
   },
   "settings.gradle.kts": {
-    "mtime": 1789031002.5179353,
-    "seen": 1789031327.575165,
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.0722167,
     "ast_hash": "06dfee4d78397c0b28fa579efb58b183",
     "semantic_hash": ""
   },
   "Reference/prototype/js/app.js": {
-    "mtime": 1789031002.2739353,
-    "seen": 1789031327.575,
-    "ast_hash": "4291171b0ff8bef43b5462716e0f0af6",
+    "mtime": 1792543156.4531183,
+    "seen": 1792544981.0720465,
+    "ast_hash": "41f446702d9a81d4187281f10777c4a9",
     "semantic_hash": ""
   },
   "app/src/androidTest/java/com/safeme/app/BlockGateActivityTest.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750096,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0720549,
     "ast_hash": "cfa2d9982cbf84a76738c57e997e2e25",
     "semantic_hash": ""
   },
   "app/src/androidTest/java/com/safeme/app/ui/screens/antitamper/AccessibilityProtectionCopyTest.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750115,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.072057,
     "ast_hash": "0bc55d4e890f19a7f27f93ce05192b2d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/BlockOverlayController.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.575015,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.07206,
     "ast_hash": "fc32912eefa0ef1f2827b1930038f132",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/SafeMeApp.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750182,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0720627,
     "ast_hash": "b4873a83ff12bb41a834390a43c5592f",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/A11yProtectionPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750194,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0720637,
     "ast_hash": "fefb2b3ccbd9a8717399d891381bc88e",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/ActivityLog.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750206,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0720649,
     "ast_hash": "1bae2cc288fff98c970f327795fd8104",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/AppCatalog.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750217,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0720658,
     "ast_hash": "af24f1b5f52a672ed40323a0e9f983e2",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/AppLockPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750232,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720668,
     "ast_hash": "5532cf684d7233436686160ff1f50981",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/BackupCodec.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750241,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720677,
     "ast_hash": "d7a526b78bda589dcebfc4dd5cbed5cf",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/BackupManager.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.575025,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720692,
     "ast_hash": "186b584b56ff0115865b2267693276e6",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/BlockScreenPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750263,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720701,
     "ast_hash": "420d2756a12fb03b6060e6eb8dc85b31",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/Jsonc.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750322,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072077,
     "ast_hash": "4a0438357d0ddf1033eb4ad82c69e0b3",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/PreventUninstallPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750344,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720792,
     "ast_hash": "96007bb9285fe11078d2df149349586d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/QuickActionsPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750353,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.07208,
     "ast_hash": "f0b2ed78501c61d2f2da8440c73b2720",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/SchedulePrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750365,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720809,
     "ast_hash": "a0c4087bb87564b5357742bfe5da13cd",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/A11yBootReceiver.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750396,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720842,
     "ast_hash": "681528560af5323bd7d0cc951f885be2",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/A11yProtectionGuard.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750408,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720856,
     "ast_hash": "c502b2d5747b88a2abe5b7fd05dc8c26",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/A11yProtectionUtils.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750418,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720866,
     "ast_hash": "52676445dd946dc31de1ed39783bd6da",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/AppLockBiometrics.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750427,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720875,
     "ast_hash": "529d8d1d5f2a7a45d5835c398d056f25",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/AppLockManager.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750437,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720882,
     "ast_hash": "7508d154c8f9a623f72065bcb9e592f1",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/DeviceAdminUtils.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750456,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720909,
     "ast_hash": "0be18b8caa5c6d8ee5c06823ca7d4131",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/PreventUninstallBlockers.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750477,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720928,
     "ast_hash": "b1c41bb5f109bd8ddde53e024e5aa693",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/ProtectedSystemScreens.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750499,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721018,
     "ast_hash": "9c97539b809330885b884bad9ef0e1cc",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/ProtectionLayers.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.575051,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721035,
     "ast_hash": "8df085fd3faa7780300dcf67a6b4810d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/ScheduleAlarmReceiver.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750518,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721045,
     "ast_hash": "11dc90f57c7bb2374fa19f5775d6f944",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/ScheduleEngine.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750527,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721054,
     "ast_hash": "aeebd7e350052d881d47294254548762",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/ScheduleEvaluator.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.575054,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721066,
     "ast_hash": "f82792fcaeca854c01a6b58f1aa85e8b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/service/SafeMeProtectionService.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750575,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721111,
     "ast_hash": "5a07912fa8c862a2ce72cb2210113b65",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/components/GroupedAppPicker.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750632,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072117,
     "ast_hash": "adad55688d57d680763a98268a24f93c",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/components/SafeMeTextField.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750644,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.072118,
     "ast_hash": "fbce6088ef2df5be4e6ce6a75ab2b74c",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/antitamper/AccessibilityProtectionScreen.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.575066,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721207,
     "ast_hash": "ba8c48489a2084dea1a4ef31f79db2f1",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/antitamper/AccessibilityProtectionViewModel.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.575067,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721214,
     "ast_hash": "fac2812faedfd64676ee22acd9bab66f",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/antitamper/AntiTamperIcons.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750682,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721223,
     "ast_hash": "0392112a75a79d6c6032ce1f673e9f1a",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/antitamper/AntiTamperScreen.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.575069,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721238,
     "ast_hash": "1828b083c03e31dcf74c6dfbfd1bfe0d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/antitamper/AntiTamperViewModel.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.57507,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721245,
     "ast_hash": "82132d052858e2c3742f1dd472bd11bd",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/antitamper/ServicePickerScreen.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750706,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721257,
     "ast_hash": "f2a26de7f4a57458b7d7f96b1ba7e083",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/antitamper/ServicePickerViewModel.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750718,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721264,
     "ast_hash": "c1931df88699b1e23edd79125119be26",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/applock/AppLockGateController.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750725,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721276,
     "ast_hash": "a56f56083cf00044db2c561fed7ac713",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/applock/AppLockIcons.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750735,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721283,
     "ast_hash": "a7240f01efb82067295adba8a22579b5",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/applock/AppLockInputs.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750747,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721292,
     "ast_hash": "3caf3151b94f7dc519116c226efb9665",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/applock/AppLockScreen.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750754,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.07213,
     "ast_hash": "72e000ff1f08fb73e3eeaf28ad23fe8b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/applock/AppLockSheets.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750763,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.072131,
     "ast_hash": "b6f5fa00b6ffa9a700306f553d66876a",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/applock/AppLockUnlockOverlay.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.575077,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721319,
     "ast_hash": "95337298ac2f31f833b3922bdabab951",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/applock/AppLockViewModel.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750782,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721326,
     "ast_hash": "f1621537dd3e1b89eff842da9cb73a2a",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/backup/BackupIcons.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750792,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721335,
     "ast_hash": "2c0adb1d858a562b36d8856fd0346455",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/backup/BackupScreen.kt": {
-    "mtime": 1789031002.2859354,
-    "seen": 1789031327.5750802,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721345,
     "ast_hash": "12d67e6a8fb21412086d1ee471f50e4b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/history/HistoryScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.57509,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721433,
     "ast_hash": "149f6d79ee8789a8c4c148e02a16d1b1",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/home/QuickActionsEditScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750937,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721467,
     "ast_hash": "1c271cd75e72ac714437633e0d596134",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/permissions/PermissionSteps.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5751035,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721574,
     "ast_hash": "00b71e987a60885cec7835a84c53e16c",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/profile/AboutScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5751045,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721586,
     "ast_hash": "418c273e1565b892ac8446a9b9593781",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/schedule/ScheduleEditScreen.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751083,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721626,
     "ast_hash": "310ec3526fe771e7288502c46beab356",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/schedule/ScheduleEditViewModel.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751095,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721636,
     "ast_hash": "1cf411e4b5b07d0d406c635d4e1233f2",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/schedule/ScheduleSheets.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751123,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721664,
     "ast_hash": "dffc56d72d46a88dfc5df571ac0de0c6",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/titleblock/TitleBlockScreen.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.575117,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721712,
     "ast_hash": "1e5f075dbac1b3fb6b47fcf9c3d9eac4",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/titleblock/TitleBlockViewModel.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.575118,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721724,
     "ast_hash": "7b6b91f546d4a87355a2a784b7d5ba3c",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/vpn/TunnelRestartPolicy.kt": {
-    "mtime": 1789031002.3059354,
-    "seen": 1789031327.5751302,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721843,
     "ast_hash": "47912c0c4e6459144097106c08432a4f",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/BlockOverlayControllerTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.575133,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.072187,
     "ast_hash": "de40390521b5bc9e38f3784dc5cb7d3b",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/ActivityLogTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751352,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721889,
     "ast_hash": "b67fc41b825575f3ad92b0f86e6e2c1b",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/AppCatalogTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751362,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721898,
     "ast_hash": "b7cf3448594443648fde4fc3afd3229b",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/BackupCodecTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751374,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721908,
     "ast_hash": "96370e075e16b87a9fe5a4edd4f7e75c",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/BackupManagerTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751383,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721915,
     "ast_hash": "2db43b3fb660437f69cde4cdbfda654a",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/JsoncTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751412,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721946,
     "ast_hash": "32f85b805ce35f920a435327646d38bb",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/QuickActionsPrefsTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751421,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721953,
     "ast_hash": "289313b49a021801951875555f36ba94",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/ScheduleWarningTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.575143,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721962,
     "ast_hash": "39b6b835a49dba9c6b9fa3c6fd11dba3",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/A11yProtectionUtilsTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751452,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721982,
     "ast_hash": "1f1f0b48dcdb47a6b9b1f0bc4d8444bc",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/AppLockManagerTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751462,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.072199,
     "ast_hash": "2b2fda1475e5a15082e4e54efe7c7540",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/ProtectedSystemPagesTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751503,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722027,
     "ast_hash": "96690577216b1a52497d8a2c8554e07f",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/ProtectionLayersTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751514,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722036,
     "ast_hash": "06db2dad35d7a850e55e8afb343fcb60",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/ScheduleEvaluatorTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751524,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722046,
     "ast_hash": "b39e068c2d6fe1e6233fb89e80a57014",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/UninstallBlockersTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.575153,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722053,
     "ast_hash": "dd5c00518c32f699b04c46ab67c8ee78",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/service/SafeMeAccessibilityServiceScheduleTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.575157,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722091,
     "ast_hash": "11d86f5f77ba90a1ef5e1ffd182e9164",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/vpn/TunnelRestartPolicyTest.kt": {
-    "mtime": 1789031002.3139353,
-    "seen": 1789031327.5751607,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722132,
     "ast_hash": "0df25a3bf5f2d67faf70e202d2a4e919",
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1789031002.1499352,
-    "seen": 1789031327.5751708,
+    "mtime": 1792542809.8451183,
+    "seen": 1792544981.0722265,
     "ast_hash": "0f5726de5fdb7392054ee5daa1371909",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789031002.1899354,
-    "seen": 1789031327.5751722,
-    "ast_hash": "4f2259a080ac199b3bfade9d199e1642",
+    "mtime": 1792543392.9971185,
+    "seen": 1792544981.0722284,
+    "ast_hash": "047395c1840e6459bb17096a5e2d86b6",
     "semantic_hash": ""
   },
   "Reference/prototype/index.html": {
-    "mtime": 1789031002.2739353,
-    "seen": 1789031327.5751731,
-    "ast_hash": "9c2ab4f692fee91ad46afc3ee59ed967",
+    "mtime": 1792543273.4171183,
+    "seen": 1792544981.0722291,
+    "ast_hash": "1637a6c38df200b41dda6f4f4ef5aa50",
     "semantic_hash": ""
   },
   "Teck Stack ,Name & Details.md": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5751762,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.072232,
     "ast_hash": "43737390addc44b1e410a6d4c8dcd9f6",
     "semantic_hash": ""
   },
   "artifacts/release-signing.md": {
-    "mtime": 1789031002.3539355,
-    "seen": 1789031327.5751772,
+    "mtime": 1792542809.9251184,
+    "seen": 1792544981.0722327,
     "ast_hash": "117d67a8d6a1cb13b1817499a8fe78b5",
     "semantic_hash": ""
   },
   "bundled-dataset.md": {
-    "mtime": 1789031002.3539355,
-    "seen": 1789031327.5751781,
+    "mtime": 1792542809.9251184,
+    "seen": 1792544981.0722337,
     "ast_hash": "1964b4d96728bdc16bf7edc607a8b391",
     "semantic_hash": ""
   },
   "docs/01-architecture.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751796,
+    "mtime": 1792542809.9251184,
+    "seen": 1792544981.0722344,
     "ast_hash": "dd74c7f6216fd656af7b8f0ddb6086d5",
     "semantic_hash": ""
   },
   "docs/02-design-philosophy.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751803,
+    "mtime": 1792542809.9251184,
+    "seen": 1792544981.0722356,
     "ast_hash": "031d840da8446eff28fd4dd6c853b8fd",
     "semantic_hash": ""
   },
   "docs/03-ui-design-system.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751815,
-    "ast_hash": "86df55b748533e16f4f25c176dff1518",
+    "mtime": 1792543409.8531184,
+    "seen": 1792544981.0722363,
+    "ast_hash": "6a448cb398869ac960668f182d078dcc",
     "semantic_hash": ""
   },
   "docs/04-security-architecture.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751824,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.0722375,
     "ast_hash": "ca50c398beaf698de62389cec6bc7d0a",
     "semantic_hash": ""
   },
   "docs/05-blocking-engine.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751834,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.0722384,
     "ast_hash": "e7699830cb10c78b15697e696fa0faae",
     "semantic_hash": ""
   },
   "docs/06-schedule-blocking.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751843,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.0722394,
     "ast_hash": "6481f193bd580d2e60c75260416e327e",
     "semantic_hash": ""
   },
   "docs/07-vpn-dns-filtering.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751853,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.07224,
     "ast_hash": "8fb4cefbb77a87eb1e2692627cf62a00",
     "semantic_hash": ""
   },
   "docs/08-backup-restore.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751865,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.072241,
     "ast_hash": "5f9c9ed79ce75e94dea2ecb99cf5790d",
     "semantic_hash": ""
   },
   "docs/09-app-picker.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751872,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.072242,
     "ast_hash": "9792fc69e4696ad3e33bf11b5541261d",
     "semantic_hash": ""
   },
   "docs/10-performance.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751884,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.0722427,
     "ast_hash": "1b5c2a606e9a73bf45672374dc19a07d",
     "semantic_hash": ""
   },
   "docs/11-development-guide.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751896,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.0722437,
     "ast_hash": "891e1c0930fe2f995c9bec4dfdefe108",
     "semantic_hash": ""
   },
   "docs/12-permission-protection-plan.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751908,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.0722444,
     "ast_hash": "a48ec0f797bb1fe2946ba45499ab3363",
     "semantic_hash": ""
   },
   "docs/prevent-uninstall-comparison-nopox-1.0.53.md": {
-    "mtime": 1789031002.3579354,
-    "seen": 1789031327.5751917,
+    "mtime": 1792542809.9291184,
+    "seen": 1792544981.0722456,
     "ast_hash": "86e3f385123c87238cd526adf4595755",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/ui/screens/home/HomeA11yStateTest.kt": {
-    "mtime": 1789031002.3139353,
-    "seen": 1789031327.575158,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722106,
     "ast_hash": "b5c9825b54baf62505f34e6aeeb32cf3",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/vpn/PrivateDnsFilter.kt": {
-    "mtime": 1789031002.3059354,
-    "seen": 1789031327.575129,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721836,
     "ast_hash": "c1e61299aae057093b30a93d44547cf1",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/permissions/ManagePermissionsFlow.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.5750985,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721524,
     "ast_hash": "9a2aa562a6f7e9f45f17c725e22b4e9f",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/ContentEnginePrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750313,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072076,
     "ast_hash": "95da3fec7c541a776aad005402f62e30",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/ImageVideoSearchGate.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.575047,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720918,
     "ast_hash": "6d43d864e6cd29c9b5d2af4206592b7f",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/ImageVideoSearchGateTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751483,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.072201,
     "ast_hash": "c07d602419f2885274395e442dd690f2",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/blocking/OtherFeaturesScreen.kt": {
-    "mtime": 1789031002.2899354,
-    "seen": 1789031327.575084,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721383,
     "ast_hash": "60742db386c69a7c55380b1ffd21034a",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/PrivateDnsBlockers.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.575049,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721,
     "ast_hash": "494e608805e0908377be25e3d82e3d5a",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/PrivateDnsBlockersTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751493,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722017,
     "ast_hash": "e656c46befe500fb138fd87d756f53ee",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/VpnBlockers.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750556,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.072109,
     "ast_hash": "001784ca02e0f9135db661bb14f4b5d2",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/VpnBlockersTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.575154,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.072206,
     "ast_hash": "af2b3e1a2658a56a8e86b7a487f11eed",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/BundledKeywordCatalog.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750291,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720735,
     "ast_hash": "2f69d3c78a7ab0eb477a42eb09e109fc",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/BrowserUrlGate.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750446,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.07209,
     "ast_hash": "9306a0a7ba9fba247a5aa3abbd747110",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/ExcludeAppsE2ETest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751343,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.072188,
     "ast_hash": "e70f226737c7f00b975d0ea6e3cfc652",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/BundledKeywordCatalogTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751402,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721936,
     "ast_hash": "df4a00ed634931400598d9adfa358e56",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/WhitelistSeedTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751443,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721974,
     "ast_hash": "5cba66a98274c3f3ccb9976ff85a7cc3",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/protect/BrowserUrlGateTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751472,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722003,
     "ast_hash": "6807e3f5edb1652fad05b35e1179b2e0",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/service/SafeMeAccessibilityServiceAppContentRecheckTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.5751553,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722075,
     "ast_hash": "1ee939c339a1e8c4a355951c57f7ed9c",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/service/SafeMeAccessibilityServiceOwnUiGuardTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.575156,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722084,
     "ast_hash": "f7d1edea6ecea875275a3df665dfd2fd",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/util/ExactAlarmUtils.kt": {
-    "mtime": 1789031002.3059354,
-    "seen": 1789031327.575128,
+    "mtime": 1792542809.8971183,
+    "seen": 1792544981.0721824,
     "ast_hash": "9a20fe1c10a11407391a5b2b694614b7",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/data/BlockedCounterTest.kt": {
-    "mtime": 1789031002.3099353,
-    "seen": 1789031327.575139,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0721924,
     "ast_hash": "677969e2aafcfac934936da93112a554",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/ui/screens/schedule/ScheduleEditEnabledTest.kt": {
-    "mtime": 1789031002.3139353,
-    "seen": 1789031327.575159,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722115,
     "ast_hash": "e959f0c3d75fbc073eeb25363c7276b2",
     "semantic_hash": ""
   },
   "app/src/test/java/com/safeme/app/ui/screens/schedule/ScheduleEditValidationTest.kt": {
-    "mtime": 1789031002.3139353,
-    "seen": 1789031327.5751598,
+    "mtime": 1792542809.9011183,
+    "seen": 1792544981.0722125,
     "ast_hash": "2cdae27e99564866e2e4a6b4e8c662bc",
     "semantic_hash": ""
   },
   "tools/sandbox/bootstrap.sh": {
-    "mtime": 1789031002.5179353,
-    "seen": 1789031327.5751672,
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.0722234,
     "ast_hash": "c76c411b0e505a67701b85ffc863e479",
     "semantic_hash": ""
   },
   "tools/sandbox/env.sh": {
-    "mtime": 1789031061.8499353,
-    "seen": 1789031327.5751686,
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.0722249,
     "ast_hash": "8fed4cf45a899f7d869632bf9f941f3b",
     "semantic_hash": ""
   },
   "tools/sandbox/verify.sh": {
-    "mtime": 1789031002.5219355,
-    "seen": 1789031327.5751698,
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.0722256,
     "ast_hash": "63c72bcbf673a72e8d332b71cf9b3e1d",
     "semantic_hash": ""
   },
   "tools/sandbox/README.md": {
-    "mtime": 1789031002.5179353,
-    "seen": 1789031327.575193,
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.0722494,
     "ast_hash": "f3fb550ec237a7d5b8a75f4e14170910",
     "semantic_hash": ""
   },
   "tools/ci/check_bundled_counts.py": {
-    "mtime": 1789031002.5179353,
-    "seen": 1789031327.575166,
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.072218,
     "ast_hash": "bdc330c040d6b79e866a2aecbcc4fd99",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/data/SocialBlockingPrefs.kt": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5750377,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0720823,
     "ast_hash": "9f706f5620971dbbcb55a551f81b97f6",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/protect/SocialBlockingGate.kt": {
-    "mtime": 1789031002.2819355,
-    "seen": 1789031327.5750546,
+    "mtime": 1792542809.8891184,
+    "seen": 1792544981.0721078,
     "ast_hash": "37ccf782e95bf5691bd8e9ffc6a3be0e",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/socialblocking/SocialBlockingIcons.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751143,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721684,
     "ast_hash": "812665d4982b8882d653f44331f27e16",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/socialblocking/SocialBlockingScreen.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751152,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721693,
     "ast_hash": "7ae77a928abdd3cd7ceef87db6b13654",
     "semantic_hash": ""
   },
   "app/src/main/java/com/safeme/app/ui/screens/socialblocking/SocialBlockingViewModel.kt": {
-    "mtime": 1789031002.3019354,
-    "seen": 1789031327.5751164,
+    "mtime": 1792542809.8931184,
+    "seen": 1792544981.0721703,
     "ast_hash": "01302b3d2926062cb7082a08ca8b9bef",
     "semantic_hash": ""
   },
   "SOCIAL_MEDIA_BLOCKING_EXECUTION_PLAN.md": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.575174,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.07223,
     "ast_hash": "ba4436900f669f00b993df6669175ccd",
     "semantic_hash": ""
   },
   "SOCIAL_MEDIA_BLOCKING_FINAL_PLAN.md": {
-    "mtime": 1789031002.2779353,
-    "seen": 1789031327.5751753,
+    "mtime": 1792542809.8851185,
+    "seen": 1792544981.0722308,
     "ast_hash": "29ad4d97cfe82b428d77805cc7a55853",
+    "semantic_hash": ""
+  },
+  "tools/prototype/icon_parity.py": {
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.0722194,
+    "ast_hash": "fa3de76f9dbae10d685a100acc08f2f2",
+    "semantic_hash": ""
+  },
+  "tools/prototype/shots.mjs": {
+    "mtime": 1792542809.9371183,
+    "seen": 1792544981.0722206,
+    "ast_hash": "18890180b7d8f15e7c829b425759cde6",
+    "semantic_hash": ""
+  },
+  "tools/prototype/smoke.mjs": {
+    "mtime": 1792543066.3171184,
+    "seen": 1792544981.0722218,
+    "ast_hash": "8e8378f7fca9954fa4f3132317317599",
+    "semantic_hash": ""
+  },
+  "tools/prototype/verify_prototype.py": {
+    "mtime": 1792543415.5651183,
+    "seen": 1792544981.0722225,
+    "ast_hash": "27cfb183e1ddcb20e940c2abfd7d152f",
+    "semantic_hash": ""
+  },
+  "PROTOTYPE_PARITY_PLAN_SAD-319.md": {
+    "mtime": 1792545051.4363246,
+    "seen": 1792545078.519014,
+    "ast_hash": "d28c98777b8d718869f526f4d774526f",
+    "semantic_hash": ""
+  },
+  "tools/prototype/DEVIATIONS.md": {
+    "mtime": 1792543134.1651185,
+    "seen": 1792544981.0722466,
+    "ast_hash": "068e8eb01fdaa47acd227fd567df4da4",
+    "semantic_hash": ""
+  },
+  "tools/prototype/README.md": {
+    "mtime": 1792543346.2851183,
+    "seen": 1792544981.0722473,
+    "ast_hash": "b42de0ca32dc10bd3af1da2d995da949",
+    "semantic_hash": ""
+  },
+  "tools/prototype/SIGNOFF.md": {
+    "mtime": 1792543346.2851183,
+    "seen": 1792544981.0722482,
+    "ast_hash": "a48736ddc8b3ad1e0668496771d0f031",
     "semantic_hash": ""
   }
 }
