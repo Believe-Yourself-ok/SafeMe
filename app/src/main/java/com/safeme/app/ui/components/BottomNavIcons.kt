@@ -78,22 +78,18 @@ internal val NavFocusIcon: ImageVector by lazy {
             strokeLineCap = StrokeCap.Round,
             strokeLineJoin = StrokeJoin.Round
         ) {
-            moveTo(7f, 5f)
-            lineTo(17f, 5f)
-            arcToRelative(3f, 3f, 0f, false, true, 3f, 3f)
-            lineTo(20f, 18f)
-            arcToRelative(3f, 3f, 0f, false, true, -3f, 3f)
-            lineTo(7f, 21f)
-            arcToRelative(3f, 3f, 0f, false, true, -3f, -3f)
-            lineTo(4f, 8f)
-            arcToRelative(3f, 3f, 0f, false, true, 3f, -3f)
+            // COD-80: focus/target glyph instead of the calendar — two
+            // concentric rings (r = 8 and r = 3 around 12,12), same 2 dp
+            // round-cap stroke as its nav neighbours. Each ring is drawn as
+            // two half arcs so the geometry is exact (no hairline gap).
+            moveTo(12f, 4f)
+            arcToRelative(8f, 8f, 0f, false, true, 0f, 16f)
+            arcToRelative(8f, 8f, 0f, false, true, 0f, -16f)
             close()
-            moveTo(4f, 10f)
-            lineTo(20f, 10f)
-            moveTo(9f, 3f)
-            lineTo(9f, 7f)
-            moveTo(15f, 3f)
-            lineTo(15f, 7f)
+            moveTo(12f, 9f)
+            arcToRelative(3f, 3f, 0f, false, true, 0f, 6f)
+            arcToRelative(3f, 3f, 0f, false, true, 0f, -6f)
+            close()
         }
     }.build()
 }
