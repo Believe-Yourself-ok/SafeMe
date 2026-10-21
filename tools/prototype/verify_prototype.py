@@ -2163,6 +2163,19 @@ def group_l(rep: Report, ctx):
             return
     rep.check("L", "documented deviations appear in the sign-off", True)
 
+    # The design-system doc has to carry the contract, not just link to it.
+    design = read(ROOT / "docs" / "03-ui-design-system.md")
+    rep.check("L", "docs/03 documents the parity contract",
+              all(k in design for k in ("Prototype parity", "392 px", "px = sp",
+                                        "tools/prototype/verify_prototype.py",
+                                        "tools/prototype/SIGNOFF.md",
+                                        "Harness chrome")),
+              "docs/03 lost the prototype-parity section")
+    readme = read(ROOT / "README.md")
+    rep.check("L", "README lists the prototype and its harness",
+              "Reference/prototype/" in readme and "tools/prototype/" in readme,
+              "README repository layout does not mention tools/prototype")
+
 
 GROUPS = {"A": group_a, "B": group_b, "C": group_c, "D": group_d,
           "E": group_e, "F": group_f, "G": group_g, "H": group_h, "I": group_i,

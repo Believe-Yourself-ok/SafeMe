@@ -20,6 +20,34 @@
 
 ---
 
+## 1a. Delivery status
+
+Phase-by-phase, on `feat/sad-319-prototype-parity`. Every row is a pushed commit
+whose gate was green at the time (`verify` + `smoke` + 0 console errors).
+
+| Phase | State | Commit |
+|---|---|---|
+| 0 — audit harness | done | `a850d86` … |
+| 1 — foundations | done | `72848d4`, `f045324` |
+| 2 — chrome & navigation | done | `cbfc19e` |
+| 3 — state machines | done | `f96df4b`, `c328d2a` |
+| 4 — screen reconciliation | done | `fdcc448` |
+| 5 — sheets & dialogs (a–h) | done | `62e5dde` … `71489be` |
+| 6 — icons, slot by slot | done | `98c1a41` |
+| 7 — demo data & copy policy | done | `320e034` |
+| 8 — verification & sign-off | done (gate + checklist written) | `575e7ba` |
+| 9 — docs & knowledge graph | docs done, graph pending | see below |
+
+Residual items, deliberately not guessed at:
+
+- **Device pass** (§Appendix D, `tools/prototype/SIGNOFF.md`) — must be run by
+  the owner; Compose cannot run in this environment.
+- **`graphify-out/`** still carries `Built from commit: 36826a61`. Refreshing it
+  needs the `graphify` CLI (`graphify update .`), which is not installed here;
+  hand-editing `graph.json` would be invention, so it stays for whoever has the
+  tool.
+- **CI** — no prototype job, per the decision recorded in D-4.
+
 ## 2. Authority model — how each disagreement is settled
 
 Because Kotlin is frozen and is the reference, every pixel in the prototype is *derived*, never invented. Precedence, highest first:

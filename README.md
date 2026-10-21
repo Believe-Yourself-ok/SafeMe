@@ -124,6 +124,8 @@ SafeMe/
 │       │   │   └── vpn/                  # DNS presets, tunnel restart policy, status store
 │       │   └── res/
 │       └── test/java/com/safeme/app/     # JVM unit tests (pure logic)
+├── Reference/prototype/                  # The HTML/CSS/JS design prototype (not a Gradle source set)
+├── tools/prototype/                      # Prototype↔production parity harness (`verify`, `smoke`, `shots`, sign-off)
 └── docs/                                 # Detailed technical documentation (start here)
 ```
 

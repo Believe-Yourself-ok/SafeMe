@@ -132,7 +132,63 @@ Other routes are pushed sub-screens with horizontal slide transitions
    type-colored dots.
 6. Accessibility shortcut row.
 
-## 5. Writing a new screen
+## 5. Prototype parity
+
+`Reference/prototype/` is the design artefact this UI was built from, and it is
+kept in lock-step with the Kotlin: **production is authoritative**. Colours,
+strings, routes, icon geometry and component measurements are all read *from*
+`app/src/main/java/...` and `app/src/main/res/values/strings.xml`, and the
+prototype is the thing under test.
+
+### Authority model
+
+| Disagreement | Settled by |
+|---|---|
+| A colour, radius, size or spacing | the Kotlin that draws it (`Color.kt`, the composable) |
+| A string | `strings.xml`, including placeholders and plural pairs |
+| A screen or sheet existing at all | the Compose route / call site |
+| A glyph | the `ImageVector` in `*Icons.kt` |
+| Design intent the app has not implemented yet | the prototype, recorded as a drift-register row |
+
+Where production is *defective* (a clipped icon, a literal `(s)` plural), the
+prototype keeps the sane form and the deviation is registered in
+`tools/prototype/DEVIATIONS.md` rather than silently copied. Production is never
+edited to match the prototype.
+
+### The px → dp contract
+
+`.phone` is **392 px** wide, with the bezel as an inset shadow, so
+**1 CSS px = 1 dp** and **px = sp**. That is why a screenshot can be compared
+with a device screenshot at 1×, and why `shots.mjs` captures at 392×852 CSS px.
+
+**Harness chrome** — the toolbar (`.ptb`), the stage backdrop, the phone frame,
+the notch and the simulated status bar — has no production counterpart and is
+excluded from every comparison by declaration, not by omission.
+
+### Driving states
+
+Every state a screen can be in is reachable from the toolbar's **State** panel
+(hero, accessibility, exact alarm, App Lock gate, backup, lists, DNS/VPN,
+biometrics, greeting) — never by editing markup. The rule for a new screen:
+
+1. put the state in the `DEMO` object in `js/app.js`, not in the markup;
+2. add the toolbar control in the same commit;
+3. add a `smoke` assertion that the rendered copy matches `strings.xml`, and a
+   verifier group-H assertion that pins any formatted string;
+4. if the screen owns a list, make it empty-able from the same panel.
+
+Demo rows live in one JS array per list and are never baked into markup; the
+**Lists → Empty (first launch)** state clears them and recomputes the derived
+counts, so the shipped zero state is reviewable too.
+
+### What guards it
+
+`python3 tools/prototype/verify_prototype.py` (static parity, 12 groups) and
+`node tools/prototype/smoke.mjs` (runtime, Chromium) must both be green; neither
+is part of the Gradle build, so a failure there can never affect the app. The
+device checklist lives in `tools/prototype/SIGNOFF.md`.
+
+## 6. Writing a new screen
 
 1. Copy the design tokens: `LocalAppColors.current`, no literals.
 2. Match the prototype's spacing (16 dp card padding, 14 dp gaps, 20 dp card
