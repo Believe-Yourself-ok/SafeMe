@@ -58,6 +58,7 @@ import com.safeme.app.ui.components.SafeMeTextField
 import com.safeme.app.ui.components.ToastHost
 import com.safeme.app.ui.screens.blocking.BlkGlobeIcon
 import com.safeme.app.ui.screens.blocking.BlkSquarePlusIcon
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 
@@ -337,6 +338,10 @@ fun KeywordManagerScreen(
             null -> Unit
         }
     }
+
+    // COD-79: prompts before a blocklist entry — or the whole blocklist, via
+    // "Reset" — can be deleted.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

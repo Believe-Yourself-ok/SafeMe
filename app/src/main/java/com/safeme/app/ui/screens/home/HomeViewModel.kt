@@ -2,7 +2,6 @@ package com.safeme.app.ui.screens.home
 
 import android.app.Application
 import android.net.VpnService
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.A11yProtectionPrefsState
@@ -10,7 +9,6 @@ import com.safeme.app.data.ActivityEntry
 import com.safeme.app.data.AppLockPrefsState
 import com.safeme.app.data.BlockingPrefsState
 import com.safeme.app.data.DnsVpnSettings
-import com.safeme.app.data.LockType
 import com.safeme.app.data.PreventUninstallPrefsState
 import com.safeme.app.data.QuickActionType
 import com.safeme.app.data.SchedulePrefsState
@@ -25,7 +23,9 @@ import com.safeme.app.data.quickActionPrefs
 import com.safeme.app.data.schedulePrefs
 import com.safeme.app.data.setBlockingEnabled
 import com.safeme.app.protect.DeviceAdminUtils
+import com.safeme.app.protect.ProtectedAction
 import com.safeme.app.protect.ProtectionLayersEvaluator
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import com.safeme.app.ui.util.isAccessibilityEnabled
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -64,7 +64,18 @@ data class HomeUiState(
     val feed: List<ActivityEntry> = emptyList(),
 )
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
+/**
+ * Home dashboard.
+ *
+ * Extends [ProtectedViewModel] for COD-79 so [toggleMasterProtection] can gate
+ * its OFF direction. Note this screen deliberately does **not** fold
+ * `disableGate()` into the five-flow `combine` in [init]: the shield ring needs
+ * `entryLockActive`, which the App Lock snapshot it already caches provides, and
+ * restructuring that `combine` (plus its nested two-flow schedule combine) to add
+ * a sixth input would risk the hero/progress calculation for no benefit. The
+ * base class keeps its own small collector for the guard instead.
+ */
+class HomeViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val app = application
     private val initialA11yEnabled = isAccessibilityEnabled(app)
@@ -149,7 +160,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             masterBlocking = blocking.blockingEnabled,
             accessibilityEnabled = a11y.enabled,
             vpnEnabled = lastVpn.enabled && vpnConsentGranted,
-            appLockEnabled = lastAppLock.lockType != LockType.OFF,
+            // COD-79: layer 4 now means "the entry gate is genuinely armed",
+            // not merely "a credential happens to be stored". With card 1 off
+            // the app opens without a password, so counting that as an active
+            // protection layer would overstate the shield ring. Reads the
+            // snapshot this ViewModel already keeps, so the five-flow `combine`
+            // above is untouched and evaluate()'s signature does not change —
+            // ProtectionLayersTest's total stays valid.
+            appLockEnabled = lastAppLock.entryLockActive,
             a11yProtectionEnabled = lastA11yProt.protectionEnabled,
             preventUninstallEnabled = lastPu.preventUninstallEnabled,
             hasEnabledSchedule = lastSchedules.schedules.any { it.enabled },
@@ -199,13 +217,35 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Master blocking switch.
+     *
+     * Split by direction for COD-79: turning protection ON runs straight
+     * through and is never gated, turning it OFF is a
+     * [ProtectedAction.MASTER_BLOCKING] disable and may need the credential.
+     */
     fun toggleMasterProtection() {
-        val enabled = !_uiState.value.masterProtection
+        if (_uiState.value.masterProtection) {
+            guardDisable(ProtectedAction.MASTER_BLOCKING) { applyMasterProtection(false) }
+        } else {
+            applyMasterProtection(true)
+        }
+    }
+
+    /**
+     * The actual write, plus the optimistic UI flip and toast.
+     *
+     * Those two moved *inside* the guarded path deliberately. They used to run
+     * before the write, which was harmless while nothing could intervene — but
+     * with a verification prompt in between, flipping first would leave the
+     * switch looking off after the user cancels, and the toast would announce a
+     * change that never happened.
+     */
+    private fun applyMasterProtection(enabled: Boolean) {
         _uiState.update { it.copy(masterProtection = enabled) }
-        val text = app.getString(
-            if (enabled) R.string.home_toast_on else R.string.home_toast_off
+        _toasts.tryEmit(
+            app.getString(if (enabled) R.string.home_toast_on else R.string.home_toast_off),
         )
-        _toasts.tryEmit(text)
         viewModelScope.launch {
             runCatching { app.setBlockingEnabled(enabled) }
         }

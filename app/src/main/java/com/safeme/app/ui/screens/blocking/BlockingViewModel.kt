@@ -1,7 +1,6 @@
 package com.safeme.app.ui.screens.blocking
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.BundledKeywords
@@ -13,6 +12,8 @@ import com.safeme.app.data.setBlockingEnabled
 import com.safeme.app.data.AppCatalog
 import com.safeme.app.data.InstalledApp
 import com.safeme.app.data.setBlockingExcludedApps
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -37,7 +38,7 @@ data class BlockingUiState(
     val appsLoaded: Boolean = false,
 )
 
-class BlockingViewModel(application: Application) : AndroidViewModel(application) {
+class BlockingViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val _uiState = MutableStateFlow(BlockingUiState())
     val uiState: StateFlow<BlockingUiState> = _uiState.asStateFlow()
@@ -85,13 +86,23 @@ class BlockingViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** Master blocking switch — COD-79 gated in the OFF direction only. */
     fun toggleBlocking() {
-        val next = !_uiState.value.blocking
+        if (_uiState.value.blocking) {
+            guardDisable(ProtectedAction.MASTER_BLOCKING) { applyBlocking(false) }
+        } else {
+            applyBlocking(true)
+        }
+    }
+
+    /**
+     * The write, with the optimistic flip and toast moved inside the guarded
+     * path: with a prompt in between, flipping first would leave the switch
+     * looking off after a cancel and announce a change that never happened.
+     */
+    private fun applyBlocking(next: Boolean) {
         _uiState.update { it.copy(blocking = next) }
-        val message = app.getString(
-            if (next) R.string.blk_toast_on else R.string.blk_toast_off
-        )
-        _toasts.tryEmit(message)
+        _toasts.tryEmit(app.getString(if (next) R.string.blk_toast_on else R.string.blk_toast_off))
         viewModelScope.launch {
             try {
                 app.setBlockingEnabled(next)
@@ -102,13 +113,18 @@ class BlockingViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** Image & video search blocking — gated in the OFF direction only. */
     fun toggleImageVideoSearch() {
-        val next = !_uiState.value.blockImageVideoSearch
+        if (_uiState.value.blockImageVideoSearch) {
+            guardDisable(ProtectedAction.IMAGE_VIDEO_SEARCH) { applyImageVideoSearch(false) }
+        } else {
+            applyImageVideoSearch(true)
+        }
+    }
+
+    private fun applyImageVideoSearch(next: Boolean) {
         _uiState.update { it.copy(blockImageVideoSearch = next) }
-        val message = app.getString(
-            if (next) R.string.blk_toast_on else R.string.blk_toast_off
-        )
-        _toasts.tryEmit(message)
+        _toasts.tryEmit(app.getString(if (next) R.string.blk_toast_on else R.string.blk_toast_off))
         viewModelScope.launch {
             try {
                 app.setBlockImageVideoSearch(next)

@@ -1,7 +1,6 @@
 package com.safeme.app.ui.screens.keywords
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.BlockedCategory
@@ -20,6 +19,8 @@ import com.safeme.app.data.resetUserBlockingPrefs
 import com.safeme.app.data.setBlockingEnabled
 import com.safeme.app.data.updateBlockedKeyword
 import com.safeme.app.data.updateBlockedWebsite
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -36,7 +37,7 @@ data class KeywordManagerUiState(
     val blockingEnabled: Boolean = true,
 )
 
-class KeywordManagerViewModel(application: Application) : AndroidViewModel(application) {
+class KeywordManagerViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val app = getApplication<Application>()
 
@@ -100,12 +101,15 @@ class KeywordManagerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    /** Deleting from the blocklist weakens blocking, so COD-79 gates it. */
     fun removeKeyword(value: String) {
-        viewModelScope.launch {
-            try {
-                app.removeBlockedKeyword(value)
-            } catch (t: Throwable) {
-                _toasts.tryEmit(failure())
+        guardDisable(ProtectedAction.KEYWORD_DELETE) {
+            viewModelScope.launch {
+                try {
+                    app.removeBlockedKeyword(value)
+                } catch (t: Throwable) {
+                    _toasts.tryEmit(failure())
+                }
             }
         }
     }
@@ -121,6 +125,12 @@ class KeywordManagerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    /**
+     * Deleting from the *allow*-list is deliberately NOT gated: removing an
+     * allowed keyword leaves fewer exceptions, so blocking gets stronger.
+     * COD-79's guard covers actions that weaken a protection, and this is the
+     * opposite. Same reasoning as [removeTrusted] below.
+     */
     fun removeWhitelist(value: String) {
         viewModelScope.launch {
             try {
@@ -153,12 +163,15 @@ class KeywordManagerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    /** Deleting from the blocked-site list weakens blocking, so COD-79 gates it. */
     fun removeWebsite(domain: String) {
-        viewModelScope.launch {
-            try {
-                app.removeBlockedWebsite(domain)
-            } catch (t: Throwable) {
-                _toasts.tryEmit(failure())
+        guardDisable(ProtectedAction.WEBSITE_DELETE) {
+            viewModelScope.launch {
+                try {
+                    app.removeBlockedWebsite(domain)
+                } catch (t: Throwable) {
+                    _toasts.tryEmit(failure())
+                }
             }
         }
     }
@@ -174,6 +187,7 @@ class KeywordManagerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    /** Not gated — see [removeWhitelist]: un-trusting a site strengthens blocking. */
     fun removeTrusted(domain: String) {
         viewModelScope.launch {
             try {
@@ -184,12 +198,19 @@ class KeywordManagerViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    /**
+     * Wipes every user blocklist keyword, website and title rule back to the
+     * bundled defaults. The largest single weakening in the app, so COD-79
+     * gates it — more destructive than any of the per-item deletes above.
+     */
     fun resetCustom() {
-        viewModelScope.launch {
-            try {
-                app.resetUserBlockingPrefs()
-            } catch (t: Throwable) {
-                _toasts.tryEmit(failure())
+        guardDisable(ProtectedAction.BLOCKLIST_RESET) {
+            viewModelScope.launch {
+                try {
+                    app.resetUserBlockingPrefs()
+                } catch (t: Throwable) {
+                    _toasts.tryEmit(failure())
+                }
             }
         }
     }

@@ -59,6 +59,7 @@ import com.safeme.app.data.ActivityEntry
 import com.safeme.app.data.QuickActionType
 import com.safeme.app.data.formatActivityTime
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.history.dotColor
 import com.safeme.app.ui.theme.LocalAppColors
 import com.safeme.app.ui.theme.SerifFamily
@@ -163,6 +164,9 @@ fun HomeScreen(
                 .padding(bottom = 24.dp)
         )
     }
+
+    // COD-79: prompts before the master blocking switch can be turned off.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

@@ -692,6 +692,7 @@
     <string name="al_verify_purpose_title_rule_delete">delete this title rule</string>
     <string name="al_verify_purpose_keyword_delete">delete this keyword</string>
     <string name="al_verify_purpose_website_delete">delete this website</string>
+    <string name="al_verify_purpose_blocklist_reset">reset your whole blocklist</string>
     <string name="al_verify_purpose_quick_action">remove this quick action</string>
     <string name="al_verify_purpose_block_why">hide the block explanation</string>
     <string name="al_verify_purpose_disable_protection">stop asking for a password before these changes</string>

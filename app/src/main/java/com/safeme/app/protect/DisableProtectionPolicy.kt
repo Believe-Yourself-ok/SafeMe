@@ -118,6 +118,14 @@ enum class ProtectedAction(
     WEBSITE_DELETE("website_delete"),
 
     /**
+     * "Reset" on the Keyword Manager: wipes every user blocklist keyword,
+     * website and title rule back to the bundled defaults in one tap. Gated
+     * because it is the largest single weakening in the app — strictly more
+     * destructive than the per-item deletes above it.
+     */
+    BLOCKLIST_RESET("blocklist_reset"),
+
+    /**
      * Removing a quick action from the Home grid. Security-relevant, not
      * cosmetic: `QuickActionType.APPLOCK` is a route back into the lock
      * settings, so removing it would hide the guard's own configuration.

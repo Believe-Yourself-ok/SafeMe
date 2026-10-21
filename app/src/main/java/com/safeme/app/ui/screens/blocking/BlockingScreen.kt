@@ -53,6 +53,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.theme.LocalAppColors
 
 @Composable
@@ -128,6 +129,9 @@ MoreGrid(
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp)
         )
     }
+
+    // COD-79: prompts before the blocking switch can be turned off.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

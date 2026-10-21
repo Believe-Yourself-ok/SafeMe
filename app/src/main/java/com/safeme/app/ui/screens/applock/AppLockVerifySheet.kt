@@ -342,6 +342,7 @@ internal fun ProtectedAction.purposeRes(): Int = when (this) {
     ProtectedAction.TITLE_RULE_DELETE -> R.string.al_verify_purpose_title_rule_delete
     ProtectedAction.KEYWORD_DELETE -> R.string.al_verify_purpose_keyword_delete
     ProtectedAction.WEBSITE_DELETE -> R.string.al_verify_purpose_website_delete
+    ProtectedAction.BLOCKLIST_RESET -> R.string.al_verify_purpose_blocklist_reset
     ProtectedAction.QUICK_ACTION_REMOVE -> R.string.al_verify_purpose_quick_action
     ProtectedAction.BLOCK_SCREEN_WHY -> R.string.al_verify_purpose_block_why
     ProtectedAction.DISABLE_PROTECTION_ITSELF -> R.string.al_verify_purpose_disable_protection

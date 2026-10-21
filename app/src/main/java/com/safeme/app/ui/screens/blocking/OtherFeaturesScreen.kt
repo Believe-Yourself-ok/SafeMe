@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.schedule.AppPickerSheet
 import com.safeme.app.ui.theme.LocalAppColors
 
@@ -109,6 +110,11 @@ fun OtherFeaturesScreen(
             )
         }
     }
+
+    // COD-79: this screen hosts its own BlockingViewModel instance (separate
+    // from BlockingScreen's), so it needs its own prompt host for the
+    // image & video search switch.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable
