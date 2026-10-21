@@ -927,6 +927,96 @@ async function main () {
     && rowGlyphs.remove.startsWith(PROD_KW_TRASH),
     JSON.stringify(rowGlyphs))
 
+  // ---- demo data policy (SAD-319 P7) ------------------------------------
+  // The Empty state must be a real fresh install: every demo row gone and every
+  // count recomputed rather than left at its populated value.
+  const fresh = await page.evaluate(async () => {
+    window.setDemo('lists', 'empty')
+    await new Promise(r => setTimeout(r, 120))
+    const t = id => (document.getElementById(id) || {}).textContent
+    return {
+      schedules: document.querySelectorAll('#schedList .sched-card').length,
+      keywords: document.querySelectorAll('#kwList .kw-row').length,
+      titles: document.querySelectorAll('#titleList .kw-row').length,
+      services: document.querySelectorAll('#svcList .svc-row').length,
+      feed: document.querySelectorAll('#homeFeed .f').length,
+      history: document.querySelectorAll('#histList .kw-row').length,
+      manageSub: t('mgCardSub').trim(),
+      // 0 user keywords + the 133 bundled ones, layersActive is fixed at 3
+      blkKeywords: t('blkKeywords').trim(),
+      blkLayers: t('blkLayers').trim(),
+      homeBlocked: t('homeBlocked').trim(),
+      homeSchedules: t('homeSchedules').trim(),
+      titleSub: t('titleHeroSub').trim(),
+      schedHero: t('schedHeroCount').trim()
+    }
+  })
+  check('fresh install: the Empty state removes every demo row and recomputes the counts',
+    fresh.schedules === 0 && fresh.keywords === 0 && fresh.titles === 0
+    && fresh.services === 0 && fresh.feed === 0 && fresh.history === 0
+    && fresh.manageSub === '0 keywords · 0 websites · 0 trusted'
+    && fresh.blkKeywords === '133' && fresh.blkLayers === '3'
+    && fresh.homeBlocked === '0' && fresh.homeSchedules === '0'
+    && fresh.titleSub === 'Add a rule to start blocking Settings pages by title.'
+    && fresh.schedHero === '0 active schedules',
+    JSON.stringify(fresh))
+
+  // ... and switching back restores the same rows, so the walkthrough survives.
+  const back = await page.evaluate(async () => {
+    window.setDemo('lists', 'populated')
+    await new Promise(r => setTimeout(r, 120))
+    return {
+      schedules: document.querySelectorAll('#schedList .sched-card').length,
+      keywords: document.querySelectorAll('#kwList .kw-row').length,
+      titles: document.querySelectorAll('#titleList .kw-row').length,
+      services: document.querySelectorAll('#svcList .svc-row').length,
+      feed: document.querySelectorAll('#homeFeed .f').length,
+      manageSub: document.getElementById('mgCardSub').textContent.trim(),
+      feedText: document.getElementById('homeFeed').textContent
+    }
+  })
+  check('populated state restores the demo rows and their derived counts',
+    back.schedules === 3 && back.keywords === 2 && back.titles === 3
+    && back.services === 2 && back.feed === 3
+    && back.manageSub === '2 keywords · 2 websites · 0 trusted'
+    && back.feedText.includes('Website blocked')
+    && back.feedText.includes('Launch blocking active')
+    && back.feedText.includes('VPN active'),
+    JSON.stringify(back))
+
+  // Surfaces production hands to the OS, or commits silently, must not toast a
+  // sentence that exists nowhere in the app's resources.
+  const silent = await page.evaluate(async () => {
+    const out = {}
+    const drain = () => { document.getElementById('toasts').innerHTML = '' }
+    const read = () => document.getElementById('toasts').textContent.trim()
+    window.nav('vpn')
+    await new Promise(r => setTimeout(r, 60))
+    const seg = [...document.querySelectorAll('#sc-vpn .seg button')]
+      .filter(b => ['Default', 'Hide', 'Custom'].includes(b.textContent.trim()))
+    drain()
+    if (seg[1]) seg[1].click()
+    await new Promise(r => setTimeout(r, 40))
+    out.vpnNotif = read()
+    drain()
+    const preset = [...document.querySelectorAll('#sc-vpn .list .li')]
+      .find(li => li.textContent.includes('AdGuard Family'))
+    if (preset) preset.click()
+    await new Promise(r => setTimeout(r, 40))
+    out.vpnPreset = read()
+    window.nav('servicepicker')
+    await new Promise(r => setTimeout(r, 60))
+    drain()
+    const svc = document.querySelector('#svcList .svc-row .sw')
+    if (svc) svc.click()
+    await new Promise(r => setTimeout(r, 40))
+    out.svcToggle = read()
+    return out
+  })
+  check('silent surfaces stay silent (VPN mode/preset, service picker)',
+    silent.vpnNotif === '' && silent.vpnPreset === '' && silent.svcToggle === '',
+    JSON.stringify(silent))
+
   // ---- toast docks above the bottom nav on a tab root --------------------
   const toastGap = await page.evaluate(async () => {
     window.nav('home')

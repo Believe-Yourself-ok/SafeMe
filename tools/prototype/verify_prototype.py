@@ -1473,7 +1473,7 @@ def group_h(rep: Report, ctx):
               f"T.vpnWlOne={tpl('vpnWlOne')!r} T.vpnWlMany={tpl('vpnWlMany')!r}")
     doc = DEVIATIONS_DOC.read_text() if DEVIATIONS_DOC.exists() else ""
     copy_section = doc.split("## Copy", 1)[-1].split("\n## ", 1)[0]  # icon rows live in their own table
-    rows = [ln for ln in copy_section.splitlines() if ln.startswith("| `")]
+    rows = [ln for ln in copy_section.splitlines() if re.match(r"\| `[a-z0-9_]+`", ln)]
     rep.check("H", "every copy deviation is registered in DEVIATIONS.md",
               len(rows) == len(DEVIATIONS)
               and all(f"`{k}`" in doc and dev["prod"] in doc
@@ -1875,9 +1875,240 @@ def group_j(rep: Report, ctx):
               not bad, "; ".join(bad))
 
 
+
+# --------------------------------------------------------------------------- #
+# Phase 7: demo data & copy policy
+# --------------------------------------------------------------------------- #
+# Every string a renderer writes to a node, or hands to the toast host, must be
+# one production can produce. Production is read from strings.xml (strings +
+# plural items) and from the literals its `ui/**` Kotlin renders.
+JS_LITERAL = re.compile(r"""'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*\"""")
+JS_COMPARISON = re.compile(r"(===|!==|==|!=)\s*$|^\s*(===|!==|==|!=)")
+JS_SINKS = (
+    (re.compile(r"\btoast\("), "toast"),
+    (re.compile(r"\.textContent\s*="), "text"),
+    (re.compile(r"\.placeholder\s*="), "placeholder"),
+    (re.compile(r"""setAttribute\(\s*(['"])(placeholder|aria-label|title)\1\s*,"""), "attr"),
+)
+DECODE_JS = re.compile(r"\\u([0-9a-fA-F]{4})")
+
+
+def js_expr(src: str, i: int) -> str:
+    """The expression starting at `i`, balanced over brackets and strings."""
+    depth = 0
+    out = []
+    while i < len(src):
+        c = src[i]
+        if c in "'\"`":
+            q = c
+            out.append(c)
+            i += 1
+            while i < len(src) and src[i] != q:
+                if src[i] == "\\":
+                    out.append(src[i])
+                    i += 1
+                if i < len(src):
+                    out.append(src[i])
+                    i += 1
+            out.append(q if i < len(src) else "")
+            i += 1
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                break
+            depth -= 1
+        elif c in ",;" and depth == 0:
+            break
+        out.append(c)
+        i += 1
+    return "".join(out).strip()
+
+
+def js_pieces(expr: str) -> list[tuple[str, str]]:
+    """[('lit', text) | ('expr', text)] — literals versus interpolations, in order."""
+    out, i = [], 0
+    while i < len(expr):
+        m = JS_LITERAL.match(expr, i)
+        if m:
+            out.append(("lit", m.group(0)[1:-1]))
+            i = m.end()
+            continue
+        j = i
+        while j < len(expr) and not JS_LITERAL.match(expr, j):
+            j += 1
+        if expr[i:j].strip():
+            out.append(("expr", expr[i:j]))
+        i = j
+    return out
+
+
+def decode_js(text: str) -> str:
+    """\\u2713 → ✓, \\' → ', &amp; → & — the characters Android actually renders."""
+    text = DECODE_JS.sub(lambda m: chr(int(m.group(1), 16)), text)
+    return html_mod.unescape(text.replace("\\'", "'").replace('\\"', '"'))
+
+
+def copy_corpus() -> tuple[list[re.Pattern], list[str], str]:
+    """Production's renderable text: resources, plural items and Kotlin literals.
+    Placeholders become wildcards so a value formatted at runtime still counts."""
+    root = ET.parse(STRINGS).getroot()
+    values = list(strings_xml().values())
+    values += [(it.text or "").replace("\\'", "'").replace('\\"', '"')
+               for pl in root.findall("plurals") for it in pl.findall("item")]
+    kt = kotlin_literals()
+    patterns, plain = [], []
+    for v in values:
+        t = norm(v)
+        if len(t) < 3:
+            continue
+        plain.append(t)
+        patterns.append(re.compile(re.escape(t).replace(re.escape("\x00"), ".+?")))
+    return patterns, plain, kt
+
+
+def sink_literals(js: str) -> list[tuple[int, str, str]]:
+    """(line, sink, text) for every literal written to a node or a toast, minus
+    literals that are not copy: comparison operands and query selectors."""
+    out = []
+    for rx, kind in JS_SINKS:
+        for m in rx.finditer(js):
+            expr = js_expr(js, m.end())
+            offset = 0
+            for piece, text in js_pieces(expr):
+                if piece == "lit":
+                    left, right = expr[:offset], expr[offset + len(text) + 2:]
+                    offset += len(text) + 2
+                    if JS_COMPARISON.search(left) or JS_COMPARISON.match(right):
+                        continue
+                    if re.search(r"querySelector(All)?\(\s*$", left):
+                        continue
+                    out.append((js.count("\n", 0, m.start()) + 1, kind, decode_js(text)))
+                else:
+                    offset += len(text)
+    return out
+
+
+def producible(text: str, patterns, plain, kt: str) -> bool:
+    t = norm(text)
+    if len(t) < 3 or t.isdigit() or not re.search(r"[a-z]{3}", t):
+        return True                                   # units, counts, separators
+    if any(pat.fullmatch(t) for pat in patterns):
+        return True
+    esc = re.escape(t)
+    return (any(esc in pat.pattern for pat in patterns)
+            or any(t in item for item in plain)
+            or t in kt)
+
+
+# Demo fixtures: rows a fresh install cannot contain. Each is declared once in JS
+# (never baked into markup) and removed by the toolbar's "Empty (first launch)"
+# state, so a reviewer can see both the walkthrough and the shipped default.
+# label -> (JS array, one value per row, the container that renders it)
+DEMO_DATA = {
+    "schedules":     ("DEMO_SCHEDULES", ["Study", "Night", "Weekend"], "schedList"),
+    "keywords":      ("DEMO_KEYWORDS", ["gambling", "casino"], "kwList"),
+    "websites":      ("DEMO_WEBSITES", ["bet365.com", "poker.com"], "kwList"),
+    "title rules":   ("DEMO_TITLE_RULES", ["Settings", "Apps", "Google Play"], "titleList"),
+    "a11y services": ("DEMO_SERVICES", ["Keyguard AppLock", "ScreenGuard"], "svcList"),
+    "activity":      ("DEMO_ACTIVITY", ["Website blocked", "Launch blocking active", "VPN active"],
+                      "homeFeed"),
+}
+# What the empty state has to undo, and the renderers it has to re-run afterwards.
+DEMO_RESET = ["list.innerHTML = ''", "KW.keywords.blocklist = []", "KW.websites.blocked = []",
+              "ACTIVITY.length = 0", "TITLES = []", "SERVICES = []"]
+DEMO_RERENDER = ["titleRender()", "svcRender()", "kwRender()", "feedRender()",
+                 "histRender()", "schedCount()", "renderHome()"]
+
+# Inline singular/plural compositions, in file order, each pinned to the resource
+# (or Kotlin expression) that produces the same two forms.
+PLURAL_SITES = [
+    ("active schedule", "sch_hero_count", None),
+    ("rule", "tb_hero_sub", None),
+    ("app", "sche_apps_selected", None),
+    ("app", "sche_toast_apps", None),
+    ("app", None, 'app${if (SocialBlockingPrefs.displayCount(pkgs) == 1) "" else "s"} blocked (whole-app)'),
+    ("app", "vpn_whitelist_count", None),        # registered deviation: "(s)" → real pair
+]
+INLINE_PLURAL = re.compile(r"'([ a-z][a-z ]*?)'\+\s*\(\s*[^()]+?\s*===\s*1\s*\?\s*''\s*:\s*'s'\s*\)")
+
+
+def group_k(rep: Report, ctx):
+    js, html = ctx["js"], ctx["html"]
+    patterns, plain, kt = copy_corpus()
+
+    # 1. nothing on screen that production cannot say
+    unknown = sorted({(kind, text) for _, kind, text in sink_literals(js)
+                      if not producible(text, patterns, plain, kt)})
+    rep.check("K", "every string a renderer writes exists in strings.xml or Kotlin copy",
+              not unknown, f"{len(unknown)} invented: {unknown[:6]}")
+
+    # 2. demo fixtures live in one array each, and never in markup
+    missing, baked = [], []
+    # A fixture value that is itself a resource text (sche_apps == "Apps") proves
+    # nothing, so those are ignored; everything else must stay out of the markup.
+    resource_texts = {norm(v) for v in strings_xml().values()}
+    for label, (array, values, container) in DEMO_DATA.items():
+        block = re.search(rf"const {array} = \[(.*?)\n  \];", js, re.S)
+        if not block:
+            missing.append(f"{label}: no {array}")
+            continue
+        for v in values:
+            if f"'{v}'" not in block.group(1) and f'"{v}"' not in block.group(1):
+                missing.append(f"{label}: {v!r} not in {array}")
+            # The renderer owns every row: the container ships empty, always.
+            if not re.search(rf'<div id="{container}"[^>]*>\s*</div>', html):
+                baked.append(f"{label}: #{container} is not empty in index.html")
+            elif re.search(rf">\s*{re.escape(v)}\s*<", html) and norm(v) not in resource_texts:
+                baked.append(f"{label}: {v!r} in index.html")
+    rep.check("K", "demo fixtures are declared in JS, one array per list",
+              not missing, f"{missing[:6]}")
+    rep.check("K", "no demo fixture is baked into the markup", not baked, f"{baked[:6]}")
+
+    # 3. the toolbar's empty state really clears them
+    empty = re.search(r"function setDemoLists\(mode\)\{(.*?)\n  \}", js, re.S)
+    body = empty.group(1) if empty else ""
+    cleared = [stmt for stmt in DEMO_RESET if stmt not in body]
+    rerendered = [fn for fn in DEMO_RERENDER if fn not in body]
+    rep.check("K", "the 'Empty (first launch)' state clears every fixture and re-renders",
+              not cleared and not rerendered and 'value="empty"' in html
+              and "setDemo('lists',this.value)" in html,
+              f"missing resets {cleared} / rerenders {rerendered}")
+
+    # 4. inline pluralisation is the same pluralisation production uses
+    sites = [(w.strip(), js.count("\n", 0, m.start()) + 1) for m in INLINE_PLURAL.finditer(js)
+             for w in [m.group(1)]]
+    expected = [word for word, _, _ in PLURAL_SITES]
+    plurals = {pl.get("name"): {it.get("quantity"): it.text or "" for it in pl.findall("item")}
+               for pl in ET.parse(STRINGS).getroot().findall("plurals")}
+    bad = []
+    if [w for w, _ in sites] != expected:
+        bad.append(f"sites {sites} != registry {expected}")
+    for word, resource, kotlin in PLURAL_SITES:
+        if resource in DEVIATIONS:
+            one, other = DEVIATIONS[resource]["proto"]
+            if other != one.replace(word, word + "s", 1):
+                bad.append(f"{resource}: {one!r}/{other!r} is not {word!r}+'s'")
+            continue
+        if resource:
+            items = plurals.get(resource)
+            if not items:
+                bad.append(f"{resource}: no plurals entry")
+                continue
+            one, other = items.get("one", ""), items.get("other", "")
+            if other != one.replace(word, word + "s", 1) or word not in one:
+                bad.append(f"{resource}: {one!r}/{other!r} is not {word!r}+'s'")
+            continue
+        if kotlin and kotlin not in read(UI / "screens/socialblocking/SocialBlockingViewModel.kt"):
+            bad.append(f"{word}: Kotlin plural {kotlin!r} not found")
+    rep.check("K", "every inline plural matches production's plural forms",
+              not bad, f"{bad[:4]}")
+
+
 GROUPS = {"A": group_a, "B": group_b, "C": group_c, "D": group_d,
           "E": group_e, "F": group_f, "G": group_g, "H": group_h, "I": group_i,
-          "J": group_j}
+          "J": group_j, "K": group_k}
 
 
 def main() -> int:
@@ -1889,7 +2120,8 @@ def main() -> int:
     args = ap.parse_args()
     if args.list:
         print("groups: A integrity · B wiring · C screens · D tokens · E geometry · "
-              "F copy · G drift · H state machines · I copy provenance · J icons")
+              "F copy · G drift · H state machines · I copy provenance · J icons · "
+              "K demo data & copy policy")
         return 0
 
     html, css, js = read(INDEX), read(CSS), read(JS)

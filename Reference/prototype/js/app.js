@@ -69,7 +69,6 @@
     btn.classList.add('granted');
     btn.textContent = 'Granted ✓';
     if(key) localStorage.setItem('safeme_perm_'+key,'1');
-    toast('Permission granted \u2713');
     permStatus();
     setTimeout(()=>permAdvance(btn), 700);
   }
@@ -84,7 +83,7 @@
     if(!ok){ toast('Grant the required permissions to continue'); nav('permissions'); return; }
     const was = !!localStorage.getItem('safeme_onboarded');
     localStorage.setItem('safeme_onboarded','1');
-    toast(was ? 'All permissions granted \u2014 you\u2019re fully protected' : 'Welcome to SafeMe \u2014 you\u2019re protected');
+    toast(was ? 'All permissions granted \u2014 you\'re fully protected' : 'Welcome to SafeMe \u2014 you\'re protected');
     nav('home');
   }
 
@@ -543,7 +542,7 @@
     if(!v){ toast('Keyword can\'t be empty'); return; }
     const cat = document.querySelector('#kwCat .chip.on').textContent.trim();
     if(kwSource==='screen'){ kwSource='manage'; if(kwSave(v,cat)) closeSheets(); return; }
-    toast('Keyword saved');
+    toast('Keyword added to '+cat);
   }
   function addSite(){
     const si = document.getElementById('siteInput');
@@ -552,7 +551,7 @@
     if(/\s/.test(v) || v.indexOf('.')===-1){ toast('Enter a valid domain (e.g. example.com)'); return; }
     const cat = document.querySelector('#siteCat .chip.on').textContent.trim();
     if(kwSource==='screen'){ kwSource='manage'; if(kwSave(v,cat)) closeSheets(); return; }
-    toast('Website saved');
+    toast('Website added to '+cat);
   }
   function togSel(li){
     const c=li.querySelector('.checkbox'); c.classList.toggle('on');
@@ -715,7 +714,7 @@
       const v4=document.getElementById('dnsIpv4'), v6=document.getElementById('dnsIpv6');
       if(v4) v4.value=dnsV4; if(v6) v6.value=dnsV6;
       openSheet('sheetDnsCustom');
-    } else { toast('Preset: '+vpnPreset); }
+    }
     vpnStatus();
   }
   // ---------- App Lock ----------
@@ -865,7 +864,7 @@
   }
   function checkUnlock(){
     if(unlockVal===lockCode){ lockFails=0; lockCooldownUntil=0; if(lockTick){clearInterval(lockTick);lockTick=null;}
-      closeLockov(); toast('Unlocked'); renderLock(); return; }
+      closeLockov(); renderLock(); return; }
     unlockVal=''; unlockPat=[];
     const card=document.getElementById('lockovCard'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
     renderUnlock(); registerFail();
@@ -886,13 +885,19 @@
   function bioUnlock(){
     const sw=document.querySelector('#sc-applock .list .li:nth-child(2) .sw');
     const on=!!(sw && sw.classList.contains('on'));
-    if(on && DEMO.home.bioAvailable){ toast('Face ID prompt — unlock SafeMe'); return; }
+    // The unlock path hands over to BiometricPrompt — the OS owns that UI and
+    // production emits no app copy for it (AppLockUnlockOverlay.kt). A successful
+    // authentication closes the gate, which is what the prototype models here.
+    if(on && DEMO.home.bioAvailable){
+      lockFails=0; lockCooldownUntil=0; if(lockTick){ clearInterval(lockTick); lockTick=null; }
+      closeLockov(); renderLock(); return;
+    }
     if(!DEMO.home.bioAvailable){ toast("Biometrics aren't available on this device"); return; }
     toast('Turn on Touch ID / Face ID in App Lock settings');
   }
   function lockForgotTap(){
-    const forgot=document.getElementById('lockForgot');
-    toast(forgot.dataset.kind==='password' ? 'Forgot password — recovery email opened' : 'Forgot PIN — recovery email opened');
+    // AppLockUnlockOverlay.kt fires ACTION_SENDTO at support@safeme.app; the
+    // chooser and the mail app are system UI, so there is no app toast here.
   }
   function renderLockForgot(){
     const el=document.getElementById('lockForgot'); if(!el) return;
@@ -1087,10 +1092,13 @@
   let SERVICES = DEMO_SERVICES.slice();
   const DEMO_KEYWORDS = ['gambling', 'casino'];
   const DEMO_WEBSITES = ['bet365.com', 'poker.com'];
+  // Titles/subs are the exact strings production logs into the activity store:
+  // BlockGateActivity.kt:78-91 ("Website blocked" + the matched term),
+  // ScheduleEngine.kt:140-144, SafeMeVpnService.kt:369. Nothing here is invented.
   const DEMO_ACTIVITY = [
-    {type:'block',    title:'Blocked site',      sub:'bet365.com · keyword rule',  time:'9:31 PM'},
-    {type:'schedule', title:'Study window ended', sub:'Restrictions lifted',       time:'9:00 PM'},
-    {type:'vpn',      title:'VPN filtering on',   sub:'Cloudflare Family',         time:'8:45 PM'}
+    {type:'block',    title:'Website blocked',        sub:'bet365.com',                time:'9:31 PM'},
+    {type:'schedule', title:'Launch blocking active', sub:"Scheduled apps can't open", time:'9:00 PM'},
+    {type:'vpn',      title:'VPN active',             sub:'Internet filtering is on',  time:'8:45 PM'}
   ];
   let demoListsMode = null;
   function setDemoLists(mode){
@@ -1238,7 +1246,7 @@
     const h=document.getElementById('titleHeroTitle'); if(h) h.textContent=all.length?(on?'Title blocking is on':'Title blocking is paused'):'No title rules yet';
     const tag=document.querySelector('#titleHero .tag'); if(tag) tag.textContent=all.length?(on?'Active':'Paused'):'Setup';
     const sub=document.getElementById('titleHeroSub');
-    if(sub) sub.textContent=all.length?(all.length+' rule'+(all.length===1?'':'s')+' · '+on+' active · matching in real time'):'Add a rule to start blocking by window title';
+    if(sub) sub.textContent=all.length?(all.length+' rule'+(all.length===1?'':'s')+' · '+on+' active · matching in real time'):'Add a rule to start blocking Settings pages by title.';
     const empty=document.getElementById('titleEmpty'); if(empty) empty.style.display=all.length?'none':'';
   }
   (function(){
@@ -1548,13 +1556,12 @@
   function vpnAppsDone(){
     vpnWhitelist=[...vpnPickSel];
     const sub=document.getElementById('vpnWhitelistSub'); if(sub) sub.textContent=vpnWhitelist.length?vpnWhitelist.length+' app'+(vpnWhitelist.length===1?'':'s')+' exempt':'No apps exempt';
-    closeSheets(); toast(vpnWhitelist.length?vpnWhitelist.length+' app'+(vpnWhitelist.length===1?'':'s')+' whitelisted':'Whitelist cleared'); vpnStatus();
+    closeSheets(); toast(vpnWhitelist.length?vpnWhitelist.length+' whitelisted':'Whitelist cleared'); vpnStatus();
   }
   function filterVpnApps(q){ filterPickerGroups('vpnAppList', q) }
   function setVpnNotif(btn){
     vpnNotif=btn.textContent;
     const w=document.getElementById('vpnNotifWrap'); if(w) w.style.display=vpnNotif==='Custom'?'':'none';
-    toast('Notification: '+vpnNotif);
   }
   // DnsVpnScreen.vpnStatusSub(): preset/custom -> optional System-wide -> exempt
   // count -> optional schedule-block suffix; not running -> re-enable hint.
@@ -1611,18 +1618,19 @@
   // the disabled one — and renderHome() owns whether it is on screen.
   let a11yOn=false;
   function openA11y(){
-    toast('Opening: Accessibility → SafeMe…');
+    // ScheduleScreen.kt starts Settings.ACTION_ACCESSIBILITY_SETTINGS and toasts
+    // nothing; the prototype models the return trip instead.
     setTimeout(()=>{ a11yOn=true; DEMO.home.a11y='on';
       const sel=document.getElementById('stA11y'); if(sel) sel.value='on';
       schedA11yDismissed=false; schedWarnings();      // refresh(): banner clears on resume
-      renderHome(); toast('Accessibility service enabled'); }, 1600);
+      renderHome(); }, 1600);
   }
   /** ExactAlarmBanner.onEnable: opens the system screen; granting clears the banner. */
   function openExactAlarm(){
-    toast('Opening exact-alarm settings');
+    // Same shape: startActivity(exactAlarmSettingsIntent(context)), no toast.
     setTimeout(()=>{ schedExactGranted=true; schedExactDismissed=false;
       const sel=document.getElementById('stExact'); if(sel) sel.value='granted';
-      schedWarnings(); toast('Exact alarms allowed'); }, 1600);
+      schedWarnings(); }, 1600);
   }
 
   // AntiTamperScreen.PreventUninstallCard: the pill label is at_activate or
@@ -1674,9 +1682,7 @@
       note.textContent = kwSelTab==='trusted' ? 'Trusted websites override the blocked list.' : 'Whitelist keywords override the blocklist.';
     }
     const lbl=document.getElementById('kwAddLabel');
-    if(lbl) lbl.textContent = kwOverride()
-      ? (kwSelType==='keywords'?'Add whitelist':'Add trusted')
-      : (kwSelType==='keywords'?'Add keyword':'Add website');
+    if(lbl) lbl.textContent = kwSelType==='keywords' ? 'Add keyword' : 'Add website';
     const q=document.getElementById('kwQuery');
     if(q) q.placeholder = kwSelType==='keywords' ? 'Search keywords…' : 'Search websites…';
   }
@@ -1745,7 +1751,7 @@
   function togSvc(el){
     el.classList.toggle('on');
     const row=el.closest('.svc-row'); if(row) row.classList.toggle('on', el.classList.contains('on'));
-    toast(el.classList.contains('on')?'Protected':'Not protected');
+    // ServicePickerViewModel.setProtected() persists and refreshes; no toast.
   }
   function kwRowHTML(v){
     const art = kwSelType==='keywords'
