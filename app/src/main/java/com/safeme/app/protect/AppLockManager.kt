@@ -11,6 +11,7 @@ import com.safeme.app.data.setAppLockBiometric
 import com.safeme.app.data.setAppLockForgotDisabled
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.util.concurrent.atomic.AtomicReference
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import kotlinx.coroutines.Dispatchers
@@ -22,32 +23,76 @@ import kotlinx.coroutines.withContext
  * [com.safeme.app.SafeMeApp] and refreshed by the App Lock screen. The gate
  * controller reads this synchronously so a cold start can lock immediately
  * without waiting on DataStore.
+ *
+ * ## One snapshot, not one field per setting
+ *
+ * The mirror is a whole [AppLockPrefsState] behind an [AtomicReference], and
+ * each setting is exposed as a lens onto it. This used to be one `@Volatile
+ * var` per field, which forced every credential rewrite to rebuild a full
+ * state by hand and list each field explicitly — so any field added later
+ * silently reverted to its default. That is exactly how COD-79's two protection
+ * flags would have been switched back ON the moment the user changed their
+ * lock, defeating the whole feature.
+ *
+ * Holding one immutable snapshot also removes torn reads (a caller can no
+ * longer see a new [lockType] alongside a stale [credentialLength]), and
+ * `updateAndGet` keeps the lenses race-free: the SafeMeApp collector writes
+ * from `Dispatchers.Default` while [com.safeme.app.ui.screens.applock.AppLockViewModel]
+ * writes optimistically from the main thread.
  */
 object AppLockStateHolder {
-    @Volatile
-    var lockType: LockType = LockType.OFF
 
-    @Volatile
-    var autoLock: AutoLockDelay = AutoLockDelay.IMMEDIATELY
+    private val current = AtomicReference(AppLockPrefsState())
 
-    @Volatile
-    var credentialLength: Int = 0
+    /** The whole mirrored state. Prefer this to the individual lenses. */
+    val state: AppLockPrefsState get() = current.get()
 
-    @Volatile
-    var biometricEnabled: Boolean = false
+    var lockType: LockType
+        get() = current.get().lockType
+        set(value) { current.updateAndGet { it.copy(lockType = value) } }
 
-    @Volatile
-    var forgotPasswordDisabled: Boolean = false
+    var autoLock: AutoLockDelay
+        get() = current.get().autoLock
+        set(value) { current.updateAndGet { it.copy(autoLock = value) } }
 
-    val enabled: Boolean get() = lockType != LockType.OFF
+    var credentialLength: Int
+        get() = current.get().credentialLength
+        set(value) { current.updateAndGet { it.copy(credentialLength = value) } }
 
+    var biometricEnabled: Boolean
+        get() = current.get().biometricEnabled
+        set(value) { current.updateAndGet { it.copy(biometricEnabled = value) } }
+
+    var forgotPasswordDisabled: Boolean
+        get() = current.get().forgotPasswordDisabled
+        set(value) { current.updateAndGet { it.copy(forgotPasswordDisabled = value) } }
+
+    /** A credential is stored, so there is something to verify against. */
+    val hasCredential: Boolean get() = current.get().hasCredential
+
+    /**
+     * COD-79 card 1 — is the entry gate armed?
+     *
+     * Deliberately **not** `lockType != LockType.OFF`. A stored credential with
+     * the entry toggle off means "open the app freely, but still verify before
+     * a protection is weakened", which is the entire point of the issue.
+     * [com.safeme.app.ui.screens.applock.AppLockGateController] reads only this
+     * property, so all four of its branches honour card 1 with no changes of
+     * their own.
+     */
+    val enabled: Boolean get() = current.get().entryLockActive
+
+    /** Replace the mirror wholesale (DataStore collector, post-write refresh). */
     fun update(state: AppLockPrefsState) {
-        lockType = state.lockType
-        autoLock = state.autoLock
-        credentialLength = state.credentialLength
-        biometricEnabled = state.biometricEnabled
-        forgotPasswordDisabled = state.forgotPasswordDisabled
+        current.set(state)
     }
+
+    /**
+     * The current mirror, for `update(snapshot().copy(...))`. Always rebuild
+     * through this rather than constructing an [AppLockPrefsState] by hand, so
+     * fields you did not mean to change survive the rewrite.
+     */
+    fun snapshot(): AppLockPrefsState = current.get()
 }
 
 /**
@@ -162,32 +207,40 @@ object AppLockManager {
         }
         context.setAppLock(type, stored, credentialLength = credentialLength)
         resetRateLimiter(context)
+        // Rebuild from the live snapshot so settings this call does not own —
+        // biometric, forgot-password, auto-lock and both COD-79 protection
+        // flags — survive a credential change instead of snapping back to their
+        // defaults. Hand-listing the fields here is what silently reset them.
         AppLockStateHolder.update(
-            AppLockPrefsState(
+            AppLockStateHolder.snapshot().copy(
                 lockType = type,
                 storedHash = stored,
                 credentialLength = credentialLength,
-                biometricEnabled = AppLockStateHolder.biometricEnabled,
-                forgotPasswordDisabled = AppLockStateHolder.forgotPasswordDisabled,
-                autoLock = AppLockStateHolder.autoLock,
             ),
         )
     }
 
-    /** Disable App Lock entirely and clear all dependent settings. */
+    /**
+     * Destroy the stored credential and clear the settings that depend on it.
+     *
+     * Note this is strictly stronger than either COD-79 toggle: with no
+     * credential left, [AppLockStateHolder.hasCredential] is false, so the entry
+     * gate and the feature-disabling guard both go inert no matter how the two
+     * flags are set. The flags themselves are carried over untouched, so a user
+     * who later sets a new lock gets their preferences back rather than a reset.
+     */
     suspend fun disableLock(context: Context) {
         context.setAppLock(LockType.OFF, "", credentialLength = 0)
         context.setAppLockBiometric(false)
         context.setAppLockForgotDisabled(false)
         resetRateLimiter(context)
         AppLockStateHolder.update(
-            AppLockPrefsState(
+            AppLockStateHolder.snapshot().copy(
                 lockType = LockType.OFF,
                 storedHash = "",
                 credentialLength = 0,
                 biometricEnabled = false,
                 forgotPasswordDisabled = false,
-                autoLock = AppLockStateHolder.autoLock,
             ),
         )
     }

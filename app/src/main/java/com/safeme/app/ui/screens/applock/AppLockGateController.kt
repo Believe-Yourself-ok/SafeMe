@@ -10,13 +10,26 @@ import kotlinx.coroutines.flow.asStateFlow
  * Drives the full-screen unlock gate.
  *
  * Semantics:
- *  - A fresh process with a lock enabled starts locked ([onStateLoaded] /
+ *  - A fresh process with the entry gate armed starts locked ([onStateLoaded] /
  *    [onAppForeground]); the user must unlock once per session.
  *  - [unlock] keeps the session unlocked while the app is foregrounded.
  *  - Backgrounding starts the auto-lock timer: "Immediately" locks at once;
  *    a delay locks only if the user returns after the delay; "Off" never
  *    auto-locks (manual "Lock now" only).
- *  - Disabling the lock clears the locked state ([onStateLoaded]).
+ *  - Disarming the gate clears the locked state ([onStateLoaded]).
+ *
+ * ## COD-79: this controller is card 1 and nothing else
+ *
+ * All four branches read [AppLockStateHolder.enabled], which is now
+ * `entryLockEnabled && hasCredential` instead of `lockType != OFF`. So switching
+ * "App Entry Password Protection" off drops the gate immediately — the SafeMeApp
+ * collector calls [onStateLoaded] on every prefs emission — while the stored
+ * credential stays put and card 2 keeps guarding feature changes. Switching it
+ * back on re-arms the gate at once, exactly as setting a lock for the first
+ * time already does today.
+ *
+ * No COD-79 logic lives in this file on purpose: the split is entirely in
+ * [AppLockStateHolder.enabled], so the gate cannot drift out of step with it.
  *
  * The controller reads [AppLockStateHolder] synchronously, so a cold start
  * can lock before the DataStore emits (the holder is fed by SafeMeApp).
