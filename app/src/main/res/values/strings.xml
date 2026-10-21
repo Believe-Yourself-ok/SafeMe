@@ -573,6 +573,9 @@
     <string name="al_hero_on_sub">SafeMe locks automatically when you leave the app.</string>
     <string name="al_hero_pill_on">On</string>
     <string name="al_hero_pill_off">Off</string>
+    <!-- COD-79: a lock is stored but the entry gate is disarmed -->
+    <string name="al_hero_stored_title">Opens without a lock</string>
+    <string name="al_hero_stored_sub">Your lock is still stored and protects feature changes.</string>
     <string name="al_lock_now">Lock now</string>
     <string name="al_change_lock">Change lock</string>
     <string name="al_setup_cta_title">Set up App Lock</string>
@@ -584,11 +587,21 @@
     <string name="al_forgot">Disable "Forgot Password"</string>
     <string name="al_forgot_sub">Hides the recovery option</string>
     <string name="al_note">Hashed with PBKDF2-HMAC-SHA256 + per-user salt, constant-time compare. Brute-force → exponential backoff → 5-min lockout.</string>
-    <string name="al_disable">Disable App Lock</string>
-    <string name="al_disable_title">Turn off App Lock?</string>
-    <string name="al_disable_body">SafeMe will stop asking for your PIN, password or pattern when you open it.</string>
-    <string name="al_disable_cancel">Cancel</string>
-    <string name="al_disable_confirm">Disable</string>
+    <!-- COD-79: the two independent protection switches -->
+    <string name="al_protection_label">Password protection</string>
+    <string name="al_protect_entry">App entry password</string>
+    <string name="al_protect_entry_sub">Asks when SafeMe opens</string>
+    <string name="al_protect_entry_sub_off">Opens without asking</string>
+    <string name="al_protect_disable">Feature disable password</string>
+    <string name="al_protect_disable_sub">Asks before turning off</string>
+    <string name="al_protect_disable_sub_off">No prompt to turn off</string>
+    <string name="al_protect_needs_lock">Set a lock to use this</string>
+    <!-- Deleting the credential once neither protection is using it -->
+    <string name="al_remove_lock">Remove stored lock</string>
+    <string name="al_remove_lock_title">Remove your lock?</string>
+    <string name="al_remove_lock_body">Deletes the stored PIN, password or pattern. Both protections are already off, so SafeMe will stop asking for it anywhere.</string>
+    <string name="al_remove_lock_cancel">Cancel</string>
+    <string name="al_remove_lock_confirm">Remove</string>
 
     <string name="al_setup_method">Choose lock method</string>
     <string name="al_setup_method_sub">How do you want to lock SafeMe?</string>
@@ -616,7 +629,11 @@
     <string name="al_toast_on">App Lock is on</string>
     <string name="al_toast_auto">Auto-lock: %1$s</string>
     <string name="al_toast_bio_unavailable">Biometrics aren\'t available on this device</string>
-    <string name="al_toast_disabled">App Lock is off</string>
+    <string name="al_toast_entry_on">SafeMe will ask for your lock on entry</string>
+    <string name="al_toast_entry_off">SafeMe now opens without asking</string>
+    <string name="al_toast_disable_prot_on">A password is now needed to turn protections off</string>
+    <string name="al_toast_disable_prot_off">Protections can now be turned off freely</string>
+    <string name="al_toast_removed">Lock removed</string>
 
     <string name="al_auto_sheet_title">Auto-lock</string>
     <string name="al_auto_sheet_sub">Lock SafeMe automatically after a delay.</string>

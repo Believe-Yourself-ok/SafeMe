@@ -1,5 +1,6 @@
 package com.safeme.app.ui.screens.applock
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -53,6 +54,7 @@ import com.safeme.app.R
 import com.safeme.app.data.AutoLockDelay
 import com.safeme.app.data.LockType
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 
@@ -69,7 +71,7 @@ fun AppLockScreen(
 
     var showSetup by remember { mutableStateOf(false) }
     var showAutoLock by remember { mutableStateOf(false) }
-    var showDisableDialog by remember { mutableStateOf(false) }
+    var showRemoveDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
         Column(
@@ -87,31 +89,43 @@ fun AppLockScreen(
                     .verticalScroll(rememberScrollState()),
             ) {
                 HeroCard(
-                    enabled = state.enabled,
+                    hasCredential = state.hasCredential,
+                    entryLockActive = state.entryLockActive,
                     lockType = state.lockType,
                 )
-                if (state.enabled) {
+                if (state.hasCredential) {
                     Spacer(Modifier.height(14.dp))
                     LockActions(
+                        // "Lock now" is a no-op unless the entry gate is armed
+                        // (AppLockGateController.lockNow checks it), so showing
+                        // it with card 1 off would be a button that does nothing.
+                        showLockNow = state.entryLockActive,
                         onLockNow = viewModel::lockNow,
                         onChangeLock = { showSetup = true },
                     )
-                }
-                if (!state.enabled) {
+                } else {
                     Spacer(Modifier.height(14.dp))
                     SetupCta(onClick = { showSetup = true })
                 }
+
+                // COD-79: the two protections, as separate independent switches.
                 Spacer(Modifier.height(20.dp))
-                Text(
-                    text = stringResource(R.string.al_settings_label),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 0.2.sp,
-                    color = colors.ink,
-                    modifier = Modifier.padding(start = 2.dp, bottom = 10.dp),
+                SectionLabel(R.string.al_protection_label)
+                ProtectionToggles(
+                    hasCredential = state.hasCredential,
+                    entryLockEnabled = state.entryLockEnabled,
+                    disableProtectionEnabled = state.disableProtectionEnabled,
+                    onEntryLock = viewModel::setEntryLockEnabled,
+                    onDisableProtection = viewModel::setDisableProtectionEnabled,
                 )
+
+                Spacer(Modifier.height(20.dp))
+                SectionLabel(R.string.al_settings_label)
                 SettingsList(
-                    enabled = state.enabled,
+                    // All three of these configure the entry gate, so they are
+                    // live only while it is armed. A stored credential with
+                    // card 1 off dims them exactly as "no lock at all" used to.
+                    enabled = state.entryLockActive,
                     autoLock = state.autoLock,
                     biometricEnabled = state.biometricEnabled,
                     forgotDisabled = state.forgotPasswordDisabled,
@@ -119,9 +133,12 @@ fun AppLockScreen(
                     onBiometric = viewModel::setBiometricEnabled,
                     onForgot = viewModel::setForgotDisabled,
                 )
-                if (state.enabled) {
+
+                // Deleting the credential outright is only offered once neither
+                // protection is using it, so it cannot undermine either one.
+                if (state.credentialIdle) {
                     Spacer(Modifier.height(14.dp))
-                    DisableButton(onClick = { showDisableDialog = true })
+                    RemoveLockButton(onClick = { showRemoveDialog = true })
                 }
                 Spacer(Modifier.height(12.dp))
                 Note()
@@ -137,7 +154,7 @@ fun AppLockScreen(
 
     if (showSetup) {
         AppLockSetupSheet(
-            initialMethod = if (state.enabled) state.lockType else LockType.PIN,
+            initialMethod = if (state.hasCredential) state.lockType else LockType.PIN,
             onDismiss = { showSetup = false },
             onSave = { type, input ->
                 showSetup = false
@@ -158,13 +175,17 @@ fun AppLockScreen(
         )
     }
 
-    if (showDisableDialog) {
+    // COD-79 card 2: prompts before this screen's own protected action, which is
+    // switching "Feature disabling password" off.
+    ProtectedActionHost(viewModel)
+
+    if (showRemoveDialog) {
         AlertDialog(
-            onDismissRequest = { showDisableDialog = false },
+            onDismissRequest = { showRemoveDialog = false },
             containerColor = colors.surface,
             title = {
                 Text(
-                    text = stringResource(R.string.al_disable_title),
+                    text = stringResource(R.string.al_remove_lock_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.danger,
@@ -172,7 +193,7 @@ fun AppLockScreen(
             },
             text = {
                 Text(
-                    text = stringResource(R.string.al_disable_body),
+                    text = stringResource(R.string.al_remove_lock_body),
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                     color = colors.ink2,
@@ -180,20 +201,20 @@ fun AppLockScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    showDisableDialog = false
-                    viewModel.disableLock()
+                    showRemoveDialog = false
+                    viewModel.removeLock()
                 }) {
                     Text(
-                        text = stringResource(R.string.al_disable_confirm),
+                        text = stringResource(R.string.al_remove_lock_confirm),
                         color = colors.danger,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDisableDialog = false }) {
+                TextButton(onClick = { showRemoveDialog = false }) {
                     Text(
-                        text = stringResource(R.string.al_disable_cancel),
+                        text = stringResource(R.string.al_remove_lock_cancel),
                         color = colors.ink2,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -242,7 +263,8 @@ private fun Header(title: String, onBack: () -> Unit) {
 /** The gradient hero card (prototype `.hero` + `lockHero`). */
 @Composable
 private fun HeroCard(
-    enabled: Boolean,
+    hasCredential: Boolean,
+    entryLockActive: Boolean,
     lockType: LockType,
 ) {
     val colors = LocalAppColors.current
@@ -296,23 +318,29 @@ private fun HeroCard(
                 color = Color.White.copy(alpha = 0.85f),
             )
             Spacer(Modifier.height(6.dp))
+            // Three states, not two: COD-79 separates "a lock is stored" from
+            // "the app asks for it on entry". The middle state is the one the
+            // issue is about — the app opens freely, but the credential is still
+            // there guarding feature changes.
+            val heroTitle = when {
+                entryLockActive -> stringResource(R.string.al_hero_on_title, methodLabel(lockType))
+                hasCredential -> stringResource(R.string.al_hero_stored_title)
+                else -> stringResource(R.string.al_hero_off_title)
+            }
+            val heroSub = when {
+                entryLockActive -> stringResource(R.string.al_hero_on_sub)
+                hasCredential -> stringResource(R.string.al_hero_stored_sub)
+                else -> stringResource(R.string.al_hero_off_sub)
+            }
             Text(
-                text = if (enabled) {
-                    stringResource(R.string.al_hero_on_title, methodLabel(lockType))
-                } else {
-                    stringResource(R.string.al_hero_off_title)
-                },
+                text = heroTitle,
                 fontSize = 27.sp,
                 lineHeight = 31.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
             )
             Text(
-                text = if (enabled) {
-                    stringResource(R.string.al_hero_on_sub)
-                } else {
-                    stringResource(R.string.al_hero_off_sub)
-                },
+                text = heroSub,
                 fontSize = 13.sp,
                 color = Color.White.copy(alpha = 0.92f),
                 modifier = Modifier.padding(top = 4.dp),
@@ -333,11 +361,12 @@ private fun HeroCard(
                             modifier = Modifier
                                 .size(7.dp)
                                 .clip(CircleShape)
-                                .background(if (enabled) PillGreen else PillRed),
+                                .background(if (entryLockActive) PillGreen else PillRed),
                         )
                         Text(
                             text = stringResource(
-                                if (enabled) R.string.al_hero_pill_on else R.string.al_hero_pill_off,
+                                if (entryLockActive) R.string.al_hero_pill_on
+                                else R.string.al_hero_pill_off,
                             ),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
@@ -356,26 +385,29 @@ private fun HeroCard(
  */
 @Composable
 private fun LockActions(
+    showLockNow: Boolean,
     onLockNow: () -> Unit,
     onChangeLock: () -> Unit,
 ) {
     val colors = LocalAppColors.current
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(52.dp)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(colors.brandDark, colors.brand)))
-                .clickable(onClick = onLockNow),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = stringResource(R.string.al_lock_now),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White,
-            )
+        if (showLockNow) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(colors.brandDark, colors.brand)))
+                    .clickable(onClick = onLockNow),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(R.string.al_lock_now),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                )
+            }
         }
         Box(
             modifier = Modifier
@@ -456,6 +488,101 @@ private fun SetupCta(onClick: () -> Unit) {
             contentDescription = null,
             modifier = Modifier.size(20.dp),
             tint = Color.White.copy(alpha = 0.95f),
+        )
+    }
+}
+
+/** Small caps label above each settings card. */
+@Composable
+private fun SectionLabel(@StringRes text: Int) {
+    val colors = LocalAppColors.current
+    Text(
+        text = stringResource(text),
+        fontSize = 13.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = 0.2.sp,
+        color = colors.ink,
+        modifier = Modifier.padding(start = 2.dp, bottom = 10.dp),
+    )
+}
+
+/**
+ * COD-79's two protections, as separate switches in one card.
+ *
+ * Built from the same [SettingRow] + [MasterSwitch] pair the "Lock settings"
+ * card below uses, so the two cards are visually identical and neither reads as
+ * subordinate — which is the point: they are independent settings, and the
+ * issue asks for exactly that.
+ *
+ * Both switches are inert until a credential exists. Arming either without one
+ * would be a promise the app cannot keep: card 1 would raise the unlock
+ * overlay's `LockType.OFF` branch, which renders no input at all, and card 2
+ * would prompt for a password the user never set.
+ *
+ * `checked` is the *active* state (flag AND credential), never the raw flag, so
+ * a switch can't read "on" while doing nothing.
+ */
+@Composable
+private fun ProtectionToggles(
+    hasCredential: Boolean,
+    entryLockEnabled: Boolean,
+    disableProtectionEnabled: Boolean,
+    onEntryLock: (Boolean) -> Unit,
+    onDisableProtection: (Boolean) -> Unit,
+) {
+    val colors = LocalAppColors.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(colors.surface)
+            .border(1.dp, colors.line, RoundedCornerShape(20.dp)),
+    ) {
+        SettingRow(
+            icon = AlShieldIcon,
+            iconBackground = colors.iconGreenBg,
+            iconTint = colors.success,
+            title = stringResource(R.string.al_protect_entry),
+            sub = stringResource(
+                when {
+                    !hasCredential -> R.string.al_protect_needs_lock
+                    entryLockEnabled -> R.string.al_protect_entry_sub
+                    else -> R.string.al_protect_entry_sub_off
+                },
+            ),
+            enabled = hasCredential,
+            trailing = {
+                MasterSwitch(
+                    checked = entryLockEnabled && hasCredential,
+                    enabled = hasCredential,
+                    onToggle = { onEntryLock(!entryLockEnabled) },
+                )
+            },
+            onClick = null,
+            modifier = Modifier.padding(top = 3.dp),
+        )
+        HorizontalDivider(color = colors.line)
+        SettingRow(
+            icon = AlLockIcon,
+            iconBackground = colors.iconAmberBg,
+            iconTint = colors.warning,
+            title = stringResource(R.string.al_protect_disable),
+            sub = stringResource(
+                when {
+                    !hasCredential -> R.string.al_protect_needs_lock
+                    disableProtectionEnabled -> R.string.al_protect_disable_sub
+                    else -> R.string.al_protect_disable_sub_off
+                },
+            ),
+            enabled = hasCredential,
+            trailing = {
+                MasterSwitch(
+                    checked = disableProtectionEnabled && hasCredential,
+                    enabled = hasCredential,
+                    onToggle = { onDisableProtection(!disableProtectionEnabled) },
+                )
+            },
+            onClick = null,
         )
     }
 }
@@ -596,8 +723,17 @@ private fun Chevron(tint: Color) {
     )
 }
 
+/**
+ * COD-79: delete the stored credential outright.
+ *
+ * Replaces the old red "Disable App Lock" button, which conflated "stop asking
+ * on entry" with "destroy the credential" — the exact confusion this issue
+ * splits apart. Rendered only when neither protection is using the credential
+ * (`AppLockUiState.credentialIdle`), so it cannot undermine either one and needs
+ * no verification prompt of its own.
+ */
 @Composable
-private fun DisableButton(onClick: () -> Unit) {
+private fun RemoveLockButton(onClick: () -> Unit) {
     val colors = LocalAppColors.current
     Box(
         modifier = Modifier
@@ -615,7 +751,7 @@ private fun DisableButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = stringResource(R.string.al_disable),
+            text = stringResource(R.string.al_remove_lock),
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
