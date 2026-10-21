@@ -788,6 +788,17 @@ def group_g(rep: Report, ctx):
               "launch-row extra" in js and "class SocialBlocking" not in js
               and "if(defaults.has(name)) return;" in js,
               "extras rows are no longer derived from wholeBlocked - DEFAULT_LAUNCH")
+    # MainScreen.kt:211 -> PlaceholderScreen(prof_troubleshoot_title): one centred
+    # title, no app bar. An extra header shipped two "Troubleshooting" texts.
+    ts = ctx["sections"].get("troubleshoot", "")
+    rep.check("G", "troubleshoot is production's PlaceholderScreen (B-19)",
+              'class="sub"' not in ts
+              and ts.count("Troubleshooting") == 1
+              and "font-weight:700" in ts and "font-size:18px" in ts
+              and 'PlaceholderScreen(R.string.prof_troubleshoot_title)' in
+                  read(UI / "screens/main/MainScreen.kt"),
+              "troubleshoot drifted from PlaceholderScreen (title-only, centred)")
+
     rep.check("G", "Blocking manage-sub is state-driven (A-12)", "mgCardSub" in js and "trusted" in js.lower(),
               "manage subtitle not wired")
     rep.check("G", "toast stack anchored 24 dp (A-03)", px(ctx["rules"].get(".toasts", {}), "bottom") == 24,
@@ -2106,9 +2117,56 @@ def group_k(rep: Report, ctx):
               not bad, f"{bad[:4]}")
 
 
+
+# --------------------------------------------------------------------------- #
+# Phase 8: the sign-off package describes the harness that actually exists
+# --------------------------------------------------------------------------- #
+SIGNOFF = ROOT / "tools" / "prototype" / "SIGNOFF.md"
+
+
+def group_l(rep: Report, ctx):
+    """The device checklist is what closes the gap this tooling cannot: it has to
+    name every group, every screen and every state control, and it must not carry
+    copy that contradicts the tree."""
+    doc = SIGNOFF.read_text()
+    routes = sorted(compose_routes() - {"main"})
+    unnamed = [r for r in routes if f"`{r}`" not in doc]
+    rep.check("L", "the checklist names every Compose route", not unnamed,
+              f"not in SIGNOFF.md: {unnamed}")
+
+    groups = sorted(GROUPS)
+    absent = [g for g in groups if not re.search(rf"^\|\s*\*\*{g}\*\*", doc, re.M)]
+    rep.check("L", "the gate table covers every verifier group", not absent,
+              f"groups missing from SIGNOFF.md: {absent}")
+
+    # every toolbar control the checklist tells the reviewer to use must exist
+    controls = re.findall(r"setDemo\('(\w+)'", ctx["html"])
+    missing = [c for c in sorted(set(controls)) if f"**{c.capitalize()}" not in doc
+               and f"→ {c}" not in doc and c.capitalize() not in doc]
+    rep.check("L", "every state control the checklist cites exists in the toolbar",
+              not missing, f"toolbar controls not documented: {missing}")
+
+    # the two commands the doc promises are the ones the tree ships
+    rep.check("L", "the sign-off quotes the real entry points",
+              "python3 tools/prototype/verify_prototype.py" in doc
+              and "node tools/prototype/smoke.mjs" in doc
+              and "node tools/prototype/shots.mjs" in doc
+              and (ROOT / "tools/prototype/smoke.mjs").exists()
+              and (ROOT / "tools/prototype/shots.mjs").exists(),
+              "SIGNOFF.md cites a command that does not exist")
+
+    # a deviation the docs call accepted must be registered where group J/H read it
+    for icon in GEOMETRY_DEVIATIONS:
+        if f"`{icon}`" not in doc:
+            rep.check("L", "documented deviations appear in the sign-off", False,
+                      f"{icon} missing from SIGNOFF.md")
+            return
+    rep.check("L", "documented deviations appear in the sign-off", True)
+
+
 GROUPS = {"A": group_a, "B": group_b, "C": group_c, "D": group_d,
           "E": group_e, "F": group_f, "G": group_g, "H": group_h, "I": group_i,
-          "J": group_j, "K": group_k}
+          "J": group_j, "K": group_k, "L": group_l}
 
 
 def main() -> int:
@@ -2121,7 +2179,7 @@ def main() -> int:
     if args.list:
         print("groups: A integrity · B wiring · C screens · D tokens · E geometry · "
               "F copy · G drift · H state machines · I copy provenance · J icons · "
-              "K demo data & copy policy")
+              "K demo data & copy policy · L sign-off package")
         return 0
 
     html, css, js = read(INDEX), read(CSS), read(JS)

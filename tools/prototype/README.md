@@ -7,7 +7,7 @@ failure here can never affect the app.
 | Command | What it proves |
 |---|---|
 | `python3 tools/prototype/verify_prototype.py` | Static parity: CSS/HTML integrity, JS wiring, screen-set equality with the Compose routes, design tokens vs `ui/theme/Color.kt`, Appendix-A component geometry, production copy, and closure of the SAD-319 drift register. |
-| `python3 tools/prototype/verify_prototype.py --group C` | Run one group (A integrity · B wiring · C screens · D tokens · E geometry · F copy · G drift · H state machines · I copy provenance · J icons · K demo data & copy policy). |
+| `python3 tools/prototype/verify_prototype.py --group C` | Run one group (A integrity · B wiring · C screens · D tokens · E geometry · F copy · G drift · H state machines · I copy provenance · J icons · K demo data & copy policy · L sign-off package). |
 | `python3 tools/prototype/verify_prototype.py --dump-css out.json` | Emit the parsed `selector → declarations` map used for the geometry comparisons. |
 | `node tools/prototype/smoke.mjs` | Runtime smoke in Chromium (43 checks): 24 screens navigate, 4 tabs, 14 sheets, permission pill, dark theme, renderers don't throw, the Home/schedule/VPN/backup/social state matrices render every variant, the block countdown and App Lock guard run live, the fresh-install state computes production's zero values, silent surfaces stay silent, zero console errors. |
 | `node tools/prototype/shots.mjs [--sheets] [--screen home]` | Screenshot every screen in both themes (392×852 CSS px = the px→dp contract) into `.prototype-shots/` with a contact sheet. |
@@ -51,6 +51,15 @@ silently passes the first check and fails the second.
 
 See `PROTOTYPE_PARITY_PLAN_SAD-319.md` at the repo root for the full drift
 register, phase plan, and the device sign-off checklist.
+
+## Sign-off
+
+`SIGNOFF.md` is the phase-8 package: the two gate commands with what they must
+print, what each group proves, how to regenerate the screenshot pack, and the
+device checklist (every screen, every state the toolbar can drive, and the
+accepted differences). Group L asserts it still names every Compose route, every
+verifier group and every toolbar control it cites, so the checklist cannot rot
+away from the harness.
 
 ## Copy provenance for rendered text (group K)
 
