@@ -389,14 +389,25 @@ fun AppLockUnlockOverlay(onUnlocked: () -> Unit) {
     }
 }
 
-private fun methodLabel(context: android.content.Context, type: LockType): String = when (type) {
+/**
+ * Human name of the lock method, for prompts that say "Enter your PIN…".
+ * `internal` (was `private`) so [AppLockVerifySheet] words itself exactly like
+ * the unlock gate instead of shipping a second, drifting copy.
+ */
+internal fun methodLabel(context: android.content.Context, type: LockType): String = when (type) {
     LockType.PIN -> context.getString(R.string.al_method_pin)
     LockType.PASSWORD -> context.getString(R.string.al_method_password)
     LockType.PATTERN -> context.getString(R.string.al_method_pattern)
     LockType.OFF -> ""
 }
 
-private fun formatLockout(ms: Long): String {
+/**
+ * `"4m 12s"` / `"38s"` for the brute-force lockout countdown.
+ * `internal` (was `private`) because [AppLockVerifySheet] shares
+ * [AppLockManager]'s rate limiter and therefore has to render the same
+ * countdown — see the note on that shared limiter in the sheet's KDoc.
+ */
+internal fun formatLockout(ms: Long): String {
     val totalSec = (ms / 1000).coerceAtLeast(0)
     val min = totalSec / 60
     val sec = totalSec % 60

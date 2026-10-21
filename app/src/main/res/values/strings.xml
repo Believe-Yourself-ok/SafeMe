@@ -653,6 +653,32 @@
     <string name="al_gate_bio_negative">Use another method</string>
     <string name="al_gate_password_placeholder">Enter password</string>
 
+    <!-- COD-79: the verify prompt shown before a protection is weakened -->
+    <string name="al_verify_title">Confirm it\'s you</string>
+    <string name="al_verify_sub">Enter your %1$s to %2$s.</string>
+    <string name="al_verify_cancel">Cancel</string>
+
+    <!-- What each protected action is about to do — %2$s of al_verify_sub -->
+    <string name="al_verify_purpose_master_blocking">turn off all blocking</string>
+    <string name="al_verify_purpose_anti_tamper">deactivate Anti-Tamper</string>
+    <string name="al_verify_purpose_admin_sync">remove SafeMe\'s device-admin protection</string>
+    <string name="al_verify_purpose_a11y">turn off Accessibility Protection</string>
+    <string name="al_verify_purpose_social_master">turn off Social Media Blocking</string>
+    <string name="al_verify_purpose_social_app">allow this app again</string>
+    <string name="al_verify_purpose_social_tab">allow this tab again</string>
+    <string name="al_verify_purpose_dns_vpn">turn off DNS filtering</string>
+    <string name="al_verify_purpose_image_video">turn off image &amp; video search blocking</string>
+    <string name="al_verify_purpose_schedule_item">turn off this schedule</string>
+    <string name="al_verify_purpose_schedule_editor">save this schedule as off</string>
+    <string name="al_verify_purpose_schedule_delete">delete this schedule</string>
+    <string name="al_verify_purpose_title_rule">turn off this title rule</string>
+    <string name="al_verify_purpose_title_rule_delete">delete this title rule</string>
+    <string name="al_verify_purpose_keyword_delete">delete this keyword</string>
+    <string name="al_verify_purpose_website_delete">delete this website</string>
+    <string name="al_verify_purpose_quick_action">remove this quick action</string>
+    <string name="al_verify_purpose_block_why">hide the block explanation</string>
+    <string name="al_verify_purpose_disable_protection">stop asking for a password before these changes</string>
+
     <!-- Social Media Blocking -->
     <string name="social_title">Social Media Blocking</string>
     <string name="social_sub">Block a whole app at launch, or target specific addictive tabs.</string>

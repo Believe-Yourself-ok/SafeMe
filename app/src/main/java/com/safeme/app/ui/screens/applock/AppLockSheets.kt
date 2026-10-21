@@ -376,8 +376,14 @@ fun AutoLockSheet(
     }
 }
 
+/**
+ * The 40×5dp grab handle every App Lock sheet opens with.
+ * `internal` (was `private`) so [AppLockVerifySheet] renders the identical
+ * handle instead of duplicating it — COD-79's verify prompt must look like the
+ * rest of the App Lock sheets, not like a new component.
+ */
 @Composable
-private fun GrabBar() {
+internal fun GrabBar() {
     val colors = LocalAppColors.current
     Box(
         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -660,9 +666,13 @@ private fun PrimaryButton(
     }
 }
 
-/** Prototype `.btn-ghost`: transparent, ink-2 text. */
+/**
+ * Prototype `.btn-ghost`: transparent, ink-2 text.
+ * `internal` (was `private`) so [AppLockVerifySheet] can reuse the project's
+ * cancel affordance rather than inventing a second one.
+ */
 @Composable
-private fun GhostButton(
+internal fun GhostButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
