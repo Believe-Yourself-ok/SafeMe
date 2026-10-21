@@ -67,6 +67,15 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default is "tools platform-tools". The legacy `tools`
+          # package (the pre-AGP ant build + `android` CLI) has been removed
+          # from Google's SDK repository, so the action's `sdkmanager tools`
+          # now exits 1 with "Failed to find package 'tools'" and fails EVERY
+          # job before a single build step runs. Nothing here needs `tools` —
+          # AGP 8+/Gradle 9 use platform-tools + build-tools + platforms, which
+          # the next step installs explicitly.
+          packages: platform-tools
 
       - name: Install SDK components
         run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
@@ -179,6 +188,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # See the same fix in the `build` job: the action's default installs
+          # the legacy `tools` package, which no longer exists in Google's SDK
+          # repository and makes `sdkmanager` exit 1 before anything builds.
+          packages: platform-tools
 
       - name: Install SDK components
         run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
