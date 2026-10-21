@@ -529,7 +529,7 @@ internal fun blockActivityTitle(type: String, label: String, matched: String): S
 
 /** Pure subtitle for the activity feed entry — mirrors BlockGateActivity.addBlockActivity. */
 internal fun blockActivitySub(type: String, matched: String): String = when (type) {
-    "schedule" -> "Launch blocked by schedule"
+    "schedule" -> "Launch blocked by focus session"
     "pu" -> "Prevent Uninstall is on"
     "socialWhole" -> if (matched.isNotEmpty()) "Blocked by Social Media Blocking — whole-app ($matched)" else "Blocked by Social Media Blocking — whole-app"
     "socialTab" -> if (matched.isNotEmpty()) "Blocked by Social Media Blocking — tab ($matched)" else "Blocked by Social Media Blocking — tab"

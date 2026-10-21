@@ -86,7 +86,7 @@ class BlockGateActivity : ComponentActivity() {
         }
         val sub = when {
             matched.isNotEmpty() -> matched
-            type == "schedule" -> "Launch blocked by schedule"
+            type == "schedule" -> "Launch blocked by focus session"
             type == "pu" -> "Prevent Uninstall is on"
             else -> "Blocked by SafeMe"
         }

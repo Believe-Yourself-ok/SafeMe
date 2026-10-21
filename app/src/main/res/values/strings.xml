@@ -29,7 +29,7 @@
 
     <string name="nav_home">Home</string>
     <string name="nav_block">Block</string>
-    <string name="nav_schedule">Schedule</string>
+    <string name="nav_focusme">FocusMe</string>
     <string name="nav_profile">Profile</string>
 
     <string name="accessibility_service_label">SafeMe Accessibility</string>
@@ -129,7 +129,7 @@
     <string name="home_edit">Edit</string>
     <string name="home_add_keyword">Add keyword</string>
     <string name="home_add_keyword_sub">Block more sites</string>
-    <string name="home_new_schedule">New schedule</string>
+    <string name="home_new_schedule">New focus session</string>
     <string name="home_new_schedule_sub">Recurring window</string>
     <string name="home_backup">Backup</string>
     <string name="home_backup_sub">Export to JSON</string>
@@ -151,11 +151,11 @@
 
     <string name="home_today">Today</string>
     <string name="home_stat_blocked">Blocked</string>
-    <string name="home_stat_schedules">Schedules</string>
+    <string name="home_stat_schedules">Focus sessions</string>
 
     <string name="home_recent_activity">Recent activity</string>
     <string name="home_history">History</string>
-    <string name="home_feed_empty">No activity yet — blocks, schedules and protection changes will show up here</string>
+    <string name="home_feed_empty">No activity yet — blocks, focus sessions and protection changes will show up here</string>
 
     <string name="home_toast_on">On</string>
     <string name="home_toast_off">Off</string>
@@ -180,7 +180,7 @@
     <string name="backup_confirm_cancel">Cancel</string>
     <string name="backup_confirm_restore">Restore</string>
     <string name="backup_section_blocking">Blocking &amp; keywords</string>
-    <string name="backup_section_schedules">Schedules</string>
+    <string name="backup_section_schedules">Focus sessions</string>
     <string name="backup_section_vpn">VPN &amp; DNS</string>
     <string name="backup_section_quick_actions">Quick Actions</string>
     <string name="backup_section_app_lock">App Lock</string>
@@ -273,22 +273,22 @@
     <string name="tb_search_no_match">No rules match your search.</string>
     <string name="tb_sheet_delete">Delete rule</string>
 
-    <string name="sch_title">Schedule-Based App Blocking</string>
+    <string name="sch_title">FocusMe</string>
     <string name="sch_new">+ New</string>
-    <string name="sch_hero_tag">Schedule-Based App Blocking</string>
-    <string name="sch_your_schedules">Your schedules</string>
+    <string name="sch_hero_tag">FocusMe</string>
+    <string name="sch_your_schedules">Your focus sessions</string>
     <string name="sch_edit">Edit</string>
     <string name="sch_note">Alarm-driven boundaries with a 15-min safety net and boot re-arm — restrictions never silently lapse.</string>
-    <string name="sch_toast_on">Schedule on</string>
-    <string name="sch_toast_off">Schedule off</string>
+    <string name="sch_toast_on">Focus session on</string>
+    <string name="sch_toast_off">Focus session off</string>
     <string name="sch_hero_pill_on">On</string>
     <string name="sch_hero_pill_off">Off</string>
     <string name="sch_hero_sub_on">Next boundary · %1$s at %2$s</string>
-    <string name="sch_hero_sub_paused">All schedules paused</string>
-    <string name="sch_hero_sub_empty">No schedules yet — create one</string>
+    <string name="sch_hero_sub_paused">All focus sessions paused</string>
+    <string name="sch_hero_sub_empty">No focus sessions yet — create one</string>
     <plurals name="sch_hero_count">
-        <item quantity="one">%1$d active schedule</item>
-        <item quantity="other">%1$d active schedules</item>
+        <item quantity="one">%1$d active focus session</item>
+        <item quantity="other">%1$d active focus sessions</item>
     </plurals>
     <string name="sch_card_next">Next · %1$s</string>
     <string name="sch_card_apps_all">All apps</string>
@@ -297,27 +297,27 @@
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="sch_warn_a11y_title">Accessibility Service required</string>
-    <string name="sch_warn_a11y_sub">This schedule blocks app launches, so it won\'t work until SafeMe\'s Accessibility Service is enabled.</string>
+    <string name="sch_warn_a11y_sub">Focus sessions block app launches, so they won\'t work until SafeMe\'s Accessibility Service is enabled.</string>
     <string name="sch_warn_a11y_enable">Enable</string>
     <string name="sch_warn_a11y_dismiss">Dismiss warning</string>
-    <string name="sch_warn_exact_title">Precise schedule timing is off</string>
-    <string name="sch_warn_exact_sub">Schedules may start or stop minutes late until you allow SafeMe to set exact alarms.</string>
+    <string name="sch_warn_exact_title">Precise timing is off</string>
+    <string name="sch_warn_exact_sub">Focus sessions may start or stop minutes late until you allow SafeMe to set exact alarms.</string>
     <string name="sch_warn_exact_enable">Enable</string>
     <string name="sch_warn_exact_dismiss">Dismiss warning</string>
 
     <string name="sch_exclude_title">Exclude Apps</string>
-    <string name="sch_exclude_sub">Never blocked by any schedule</string>
+    <string name="sch_exclude_sub">Never blocked by any focus session</string>
     <string name="sch_exclude_manage">Manage</string>
     <string name="sch_exclude_sheet_title">Exclude apps</string>
-    <string name="sch_exclude_sheet_sub">Excluded apps are skipped by every schedule and hidden from schedule app pickers.</string>
+    <string name="sch_exclude_sheet_sub">Excluded apps are skipped by every focus session and hidden from its app pickers.</string>
     <plurals name="sch_exclude_count">
         <item quantity="one">%d app excluded</item>
         <item quantity="other">%d apps excluded</item>
     </plurals>
 
-    <string name="sche_title_new">New Schedule</string>
-    <string name="sche_title_edit">Edit Schedule</string>
-    <string name="sche_name_placeholder">Schedule name (e.g. Study)</string>
+    <string name="sche_title_new">New focus session</string>
+    <string name="sche_title_edit">Edit focus session</string>
+    <string name="sche_name_placeholder">Session name (e.g. Study)</string>
     <string name="sche_repeat">Repeat</string>
     <string name="sche_time_window">Time window</string>
     <string name="sche_to">to</string>
@@ -330,27 +330,27 @@
         <item quantity="one">%1$d app selected</item>
         <item quantity="other">%1$d apps selected</item>
     </plurals>
-    <string name="sche_apps_sub_none">No apps — schedule blocks everything</string>
+    <string name="sche_apps_sub_none">No apps — this session blocks everything</string>
     <string name="sche_apps_sub_list">%1$s…</string>
     <string name="sche_choose">Choose</string>
-    <string name="sche_create">Create schedule</string>
+    <string name="sche_create">Create focus session</string>
     <string name="sche_save">Save changes</string>
-    <string name="sche_delete">Delete schedule</string>
-    <string name="sche_note">Boundary alarms + 15-min safety net + boot re-arm keep this schedule enforced.</string>
+    <string name="sche_delete">Delete focus session</string>
+    <string name="sche_note">Boundary alarms + 15-min safety net + boot re-arm keep this session enforced.</string>
     <string name="sche_enabled">Enabled</string>
-    <string name="sche_enabled_sub">Turn off to pause this schedule without deleting it</string>
-    <string name="sche_toast_name">Give your schedule a name</string>
+    <string name="sche_enabled_sub">Turn off to pause this focus session without deleting it</string>
+    <string name="sche_toast_name">Give your focus session a name</string>
     <string name="sche_toast_day">Pick at least one day</string>
     <string name="sche_toast_time">Start and end can\'t be the same</string>
     <string name="sche_overnight">Ends next day</string>
-    <string name="sche_toast_saved">Schedule saved — alarms set</string>
-    <string name="sche_toast_deleted">Schedule deleted</string>
+    <string name="sche_toast_saved">Focus session saved — alarms set</string>
+    <string name="sche_toast_deleted">Focus session deleted</string>
     <plurals name="sche_toast_apps">
         <item quantity="one">%1$d app selected</item>
         <item quantity="other">%1$d apps selected</item>
     </plurals>
     <string name="sche_time_sheet_title">Time window</string>
-    <string name="sche_time_sheet_sub">Choose when this schedule is active.</string>
+    <string name="sche_time_sheet_sub">Choose when this focus session is active.</string>
     <string name="sche_hours">Hours</string>
     <string name="sche_minutes">Minutes</string>
     <string name="sche_cancel">Cancel</string>
@@ -361,7 +361,7 @@
     <string name="sche_apps_sheet_sub">Search &amp; multi-select, then Done.</string>
     <string name="sche_apps_search">Search apps…</string>
     <string name="sche_apps_empty">No apps found</string>
-    <string name="schedule_gate_message">App blocked by SafeMe — active schedule window</string>
+    <string name="schedule_gate_message">App blocked by SafeMe — active focus session</string>
 
     <string name="prof_title">Profile</string>
     <string name="prof_header_sub">Your account, appearance, permissions &amp; support.</string>
@@ -424,7 +424,7 @@
     <string name="vpn_custom_status_v4v6">Custom · %1$s · %2$s</string>
     <string name="vpn_sub_exempt">%1$s · %2$d exempt</string>
     <string name="vpn_sub_system_prefix">System-wide · %1$s</string>
-    <string name="vpn_sub_schedule_suffix">%1$s · schedule block active</string>
+    <string name="vpn_sub_schedule_suffix">%1$s · focus block active</string>
     <string name="vpn_status_re_enable">Tap to re-enable protection</string>
     <string name="vpn_group_dns">DNS preset</string>
     <string name="vpn_group_notification">Notification</string>

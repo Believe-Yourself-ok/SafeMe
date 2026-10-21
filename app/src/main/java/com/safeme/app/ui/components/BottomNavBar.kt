@@ -61,7 +61,7 @@ data class NavDestination(
 val MainNavDestinations = listOf(
     NavDestination("home", R.string.nav_home, NavHomeIcon),
     NavDestination("block", R.string.nav_block, NavBlockIcon),
-    NavDestination("schedule", R.string.nav_schedule, NavScheduleIcon),
+    NavDestination("schedule", R.string.nav_focusme, NavScheduleIcon),
     NavDestination("profile", R.string.nav_profile, NavProfileIcon),
 )
 

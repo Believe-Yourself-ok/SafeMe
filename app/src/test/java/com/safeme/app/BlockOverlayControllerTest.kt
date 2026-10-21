@@ -51,7 +51,7 @@ class BlockOverlayControllerTest {
 
     @Test
     fun scheduleSubWhenNoMatch() {
-        assertEquals("Launch blocked by schedule", blockActivitySub("schedule", ""))
+        assertEquals("Launch blocked by focus session", blockActivitySub("schedule", ""))
     }
 
     @Test

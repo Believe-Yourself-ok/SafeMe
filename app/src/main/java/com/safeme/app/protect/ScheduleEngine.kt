@@ -137,10 +137,10 @@ object ScheduleEngine {
             val launchOn = active.launchBlockAll || filteredLaunch.isNotEmpty()
             val internetOn = active.internetBlockAll || filteredInternet.isNotEmpty()
             if (launchChanged && launchOn) {
-                logScheduleEvent(context, "Launch blocking active", "Scheduled apps can't open")
+                logScheduleEvent(context, "Focus session active", "Apps paused until it ends")
             }
             if (internetChanged && internetOn) {
-                logScheduleEvent(context, "Internet blocking active", "Scheduled apps can't reach the web")
+                logScheduleEvent(context, "Focus internet pause active", "Paused apps can't reach the web")
             }
         } catch (t: Throwable) {
             // Coordinator failures must never crash callers (App, receiver).
