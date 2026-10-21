@@ -237,6 +237,58 @@ class BackupCodecTest {
         assertEquals(LockType.OFF, snapshot.appLock?.lockType)
     }
 
+    // ------------------------------------------------------------ COD-79
+
+    /** Both protection flags are ordinary state: they must survive verbatim. */
+    @Test
+    fun appLockProtectionFlags_roundTripWhenBothOff() {
+        val base = fullSnapshot()
+        val snapshot = base.copy(
+            appLock = base.appLock?.copy(
+                entryLockEnabled = false,
+                disableProtectionEnabled = false,
+            ),
+        )
+        val decoded = successOf(decode(encode(snapshot)))
+        assertEquals(false, decoded.appLock?.entryLockEnabled)
+        assertEquals(false, decoded.appLock?.disableProtectionEnabled)
+        // The pre-existing fields must be untouched by the addition.
+        assertEquals(LockType.PIN, decoded.appLock?.lockType)
+        assertEquals("salt:hash", decoded.appLock?.storedHash)
+        assertEquals(AutoLockDelay.AFTER_1M, decoded.appLock?.autoLock)
+    }
+
+    /** Independence: one flag off, the other on, both restored exactly. */
+    @Test
+    fun appLockProtectionFlags_roundTripIndependently() {
+        val base = fullSnapshot()
+        val snapshot = base.copy(
+            appLock = base.appLock?.copy(
+                entryLockEnabled = false,
+                disableProtectionEnabled = true,
+            ),
+        )
+        val decoded = successOf(decode(encode(snapshot)))
+        assertEquals(false, decoded.appLock?.entryLockEnabled)
+        assertEquals(true, decoded.appLock?.disableProtectionEnabled)
+    }
+
+    /**
+     * A backup written before COD-79 contains neither key. Both must default
+     * to true — the same default the on-device upgrade uses — so restoring an
+     * old file never silently downgrades either protection.
+     */
+    @Test
+    fun appLockProtectionFlags_absentKeysDefaultToTrue() {
+        val raw = """
+            {"format": "safeme-backup", "schemaVersion": 1,
+             "appLock": {"lockType": "pin", "storedHash": "s:h", "credentialLength": 4}}
+        """.trimIndent()
+        val snapshot = successOf(decode(raw))
+        assertEquals(true, snapshot.appLock?.entryLockEnabled)
+        assertEquals(true, snapshot.appLock?.disableProtectionEnabled)
+    }
+
     @Test
     fun unknownVpnPresetFallsBackToDefault() {
         val raw = """{"format": "safeme-backup", "schemaVersion": 1, "vpn": {"preset": "nope"}}"""

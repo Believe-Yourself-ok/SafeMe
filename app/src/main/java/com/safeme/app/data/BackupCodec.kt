@@ -320,6 +320,10 @@ object BackupCodec {
         o.put("biometricEnabled", biometricEnabled)
         o.put("forgotPasswordDisabled", forgotPasswordDisabled)
         o.put("autoLock", autoLock.storage)
+        // COD-79: both protections ride in the existing APP_LOCK section, so no
+        // new BackupSection and no change to the restore/rollback pipeline.
+        o.put("entryLockEnabled", entryLockEnabled)
+        o.put("disableProtectionEnabled", disableProtectionEnabled)
         return o
     }
 
@@ -330,6 +334,11 @@ object BackupCodec {
         biometricEnabled = boolean("biometricEnabled", false),
         forgotPasswordDisabled = boolean("forgotPasswordDisabled", false),
         autoLock = AutoLockDelay.fromStorage(string("autoLock")),
+        // Default TRUE for keys a pre-COD-79 backup does not contain, matching
+        // the on-device upgrade default. A restore therefore never silently
+        // downgrades either protection.
+        entryLockEnabled = boolean("entryLockEnabled", true),
+        disableProtectionEnabled = boolean("disableProtectionEnabled", true),
     )
 
     private fun PreventUninstallPrefsState.toJson(): JSONObject {
