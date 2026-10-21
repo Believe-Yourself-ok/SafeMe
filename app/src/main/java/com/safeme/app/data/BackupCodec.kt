@@ -17,7 +17,7 @@ const val BACKUP_FORMAT_ID = "safeme-backup"
  */
 enum class BackupSection {
     BLOCKING,
-    SCHEDULES,
+    FOCUS_SESSIONS,
     VPN,
     QUICK_ACTIONS,
     APP_LOCK,
@@ -76,7 +76,7 @@ data class BackupSnapshot(
     val appVersion: String = "",
     val createdAt: String = "",
     val blocking: BlockingPrefsState? = null,
-    val schedules: SchedulePrefsState? = null,
+    val schedules: FocusPrefsState? = null,
     val vpn: DnsVpnSettings? = null,
     val quickActions: List<QuickActionType>? = null,
     val appLock: AppLockPrefsState? = null,
@@ -89,7 +89,7 @@ data class BackupSnapshot(
     /** The sections that carry data — in canonical order. */
     val presentSections: List<BackupSection> get() = buildList {
         if (blocking != null) add(BackupSection.BLOCKING)
-        if (schedules != null) add(BackupSection.SCHEDULES)
+        if (schedules != null) add(BackupSection.FOCUS_SESSIONS)
         if (vpn != null) add(BackupSection.VPN)
         if (quickActions != null) add(BackupSection.QUICK_ACTIONS)
         if (appLock != null) add(BackupSection.APP_LOCK)
@@ -102,7 +102,7 @@ data class BackupSnapshot(
 
     fun valueFor(section: BackupSection): Any? = when (section) {
         BackupSection.BLOCKING -> blocking
-        BackupSection.SCHEDULES -> schedules
+        BackupSection.FOCUS_SESSIONS -> schedules
         BackupSection.VPN -> vpn
         BackupSection.QUICK_ACTIONS -> quickActions
         BackupSection.APP_LOCK -> appLock
@@ -196,7 +196,7 @@ object BackupCodec {
                 appVersion = root.optString("appVersion", ""),
                 createdAt = root.optString("createdAt", ""),
                 blocking = root.parseSection("blocking") { it.parseBlocking() },
-                schedules = root.parseSection("schedules") { it.parseSchedules() },
+                schedules = root.parseSection("schedules") { it.parseFocusSessions() },
                 vpn = root.parseSection("vpn") { it.parseVpn() },
                 quickActions = root.parseArraySection("quickActions") { quickActionsFromJson(it.toString()) },
                 appLock = root.parseSection("appLock") { it.parseAppLock() },
@@ -268,17 +268,17 @@ object BackupCodec {
         excludedApps = stringArray("excludedApps").map { it.trim() }.filter { it.isNotEmpty() }.toSet(),
     )
 
-    private fun SchedulePrefsState.toJson(): JSONObject {
+    private fun FocusPrefsState.toJson(): JSONObject {
         val o = JSONObject()
-        o.put("schedules", JSONArray(schedulesToJson(schedules)))
+        o.put("schedules", JSONArray(focusSessionsToJson(schedules)))
         o.put("a11yWarningDismissed", a11yWarningDismissed)
         o.put("exactAlarmWarningDismissed", exactAlarmWarningDismissed)
         o.put("excludedApps", JSONArray(excludedApps.toList()))
         return o
     }
 
-    private fun JSONObject.parseSchedules(): SchedulePrefsState = SchedulePrefsState(
-        schedules = schedulesFromJson(jsonArray("schedules")?.toString()),
+    private fun JSONObject.parseFocusSessions(): FocusPrefsState = FocusPrefsState(
+        schedules = focusSessionsFromJson(jsonArray("schedules")?.toString()),
         a11yWarningDismissed = boolean("a11yWarningDismissed", false),
         exactAlarmWarningDismissed = boolean("exactAlarmWarningDismissed", false),
         excludedApps = buildSet {

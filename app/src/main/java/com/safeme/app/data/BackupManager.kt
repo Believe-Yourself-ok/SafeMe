@@ -37,7 +37,7 @@ suspend fun Context.createBackup(): BackupFile {
 
     val snapshot = BackupSnapshot(
         blocking = blockingPrefs().first(),
-        schedules = schedulePrefs().first(),
+        schedules = focusPrefs().first(),
         vpn = dnsVpnSettings().first(),
         quickActions = quickActionPrefs().first(),
         appLock = appLockPrefs().first(),
@@ -105,7 +105,7 @@ suspend fun executeRestore(
 /** Production wiring: every section backed by its DataStore. */
 fun Context.backupStores(): Map<BackupSection, BackupStateStore> = mapOf(
     BackupSection.BLOCKING to BlockingStore(this),
-    BackupSection.SCHEDULES to ScheduleStore(this),
+    BackupSection.FOCUS_SESSIONS to FocusPrefsStore(this),
     BackupSection.VPN to VpnStore(this),
     BackupSection.QUICK_ACTIONS to QuickActionsStore(this),
     BackupSection.APP_LOCK to AppLockStore(this),
@@ -123,10 +123,10 @@ private class BlockingStore(private val context: Context) : BackupStateStore {
     }
 }
 
-private class ScheduleStore(private val context: Context) : BackupStateStore {
-    override suspend fun read(): Any? = context.schedulePrefs().first()
+private class FocusPrefsStore(private val context: Context) : BackupStateStore {
+    override suspend fun read(): Any? = context.focusPrefs().first()
     override suspend fun write(value: Any?) {
-        if (value != null) context.writeSchedulePrefs(value as SchedulePrefsState)
+        if (value != null) context.writeFocusPrefs(value as FocusPrefsState)
     }
 }
 

@@ -15,13 +15,13 @@ import kotlinx.coroutines.launch
  * Re-applies schedule rules at the next boundary, and re-arms alarms after
  * boot / package update — the prototype's "boot re-arm" guarantee.
  *
- * [ScheduleEngine.apply] schedules one exact alarm for the next start/end
+ * [FocusEngine.apply] schedules one exact alarm for the next start/end
  * boundary; when it fires, this receiver re-evaluates (which may restart the
  * VPN or poke the accessibility service) and schedules the following boundary.
  * On API 31+ without the exact-alarm permission the alarm degrades to inexact
  * — the 60s safety ticker in [com.safeme.app.SafeMeApp] bounds the drift.
  */
-class ScheduleAlarmReceiver : BroadcastReceiver() {
+class FocusAlarmReceiver : BroadcastReceiver() {
 
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -34,7 +34,7 @@ class ScheduleAlarmReceiver : BroadcastReceiver() {
                 val result = goAsync()
                 receiverScope.launch {
                     try {
-                        ScheduleEngine.reevaluate(context)
+                        FocusEngine.reevaluate(context)
                     } catch (_: Throwable) {
                         // Re-evaluation failures are swallowed by the engine;
                         // nothing more to do here.
@@ -53,7 +53,7 @@ class ScheduleAlarmReceiver : BroadcastReceiver() {
         /** (Re)arms the next boundary alarm. [atMillis] == Long.MAX_VALUE cancels. */
         fun scheduleBoundary(context: Context, atMillis: Long) {
             val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-            val intent = Intent(context, ScheduleAlarmReceiver::class.java).setAction(ACTION_BOUNDARY)
+            val intent = Intent(context, FocusAlarmReceiver::class.java).setAction(ACTION_BOUNDARY)
             val pi = PendingIntent.getBroadcast(
                 context,
                 REQUEST_CODE,

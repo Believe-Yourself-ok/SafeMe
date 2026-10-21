@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import com.safeme.app.R
 import com.safeme.app.data.ACTIVITY_A11Y
 import com.safeme.app.data.ACTIVITY_BLOCK
-import com.safeme.app.data.ACTIVITY_SCHEDULE
+import com.safeme.app.data.ACTIVITY_FOCUS
 import com.safeme.app.data.ACTIVITY_VPN
 import com.safeme.app.data.ActivityEntry
 import com.safeme.app.data.activityLog
@@ -165,7 +165,7 @@ private fun HistoryRow(entry: ActivityEntry) {
 /** Feed dot color per event kind, matching the Home feed. */
 fun dotColor(type: String): Color = when (type) {
     ACTIVITY_BLOCK -> Color(0xFFD97757)
-    ACTIVITY_SCHEDULE -> Color(0xFFC0822B)
+    ACTIVITY_FOCUS -> Color(0xFFC0822B)
     ACTIVITY_VPN -> Color(0xFF2E7D5B)
     ACTIVITY_A11Y -> Color(0xFFC4453C)
     else -> Color(0xFFA89E94)

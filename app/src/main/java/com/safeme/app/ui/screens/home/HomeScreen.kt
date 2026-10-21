@@ -71,7 +71,7 @@ private val HeroRingTrack = Color(0xFFEADFD6)
 fun HomeScreen(
     onReviewShield: () -> Unit = {},
     onAddKeyword: () -> Unit = {},
-    onNewSchedule: () -> Unit = {},
+    onNewFocusSession: () -> Unit = {},
     onBackup: () -> Unit = {},
     onHistory: () -> Unit = {},
     onOpenWebsites: () -> Unit = {},
@@ -136,7 +136,7 @@ fun HomeScreen(
             QuickActionsGrid(
                 actions = quickActions,
                 onAddKeyword = onAddKeyword,
-                onNewSchedule = onNewSchedule,
+                onNewFocusSession = onNewFocusSession,
                 onBackup = onBackup,
                 onWebsites = onOpenWebsites,
                 onVpn = onOpenVpn,
@@ -146,7 +146,7 @@ fun HomeScreen(
             SectionTitle(title = stringResource(R.string.home_today))
             StatsRow(
                 blocked = state.blockedToday,
-                schedules = state.scheduleCount
+                schedules = state.focusSessionCount
             )
             SectionTitle(
                 title = stringResource(R.string.home_recent_activity),
@@ -505,7 +505,7 @@ private fun SectionTitle(title: String, moreText: String? = null, onMore: () -> 
 private fun QuickActionsGrid(
     actions: List<QuickActionType>,
     onAddKeyword: () -> Unit,
-    onNewSchedule: () -> Unit,
+    onNewFocusSession: () -> Unit,
     onBackup: () -> Unit,
     onWebsites: () -> Unit,
     onVpn: () -> Unit,
@@ -534,7 +534,7 @@ private fun QuickActionsGrid(
                         sub = stringResource(action.subRes()),
                         onClick = action.onClick(
                             onAddKeyword,
-                            onNewSchedule,
+                            onNewFocusSession,
                             onBackup,
                             onWebsites,
                             onVpn,
@@ -553,7 +553,7 @@ private fun QuickActionsGrid(
 
 internal fun QuickActionType.icon() = when (this) {
     QuickActionType.KEYWORD -> HomeHashtagIcon
-    QuickActionType.SCHEDULE -> HomeCalendarIcon
+    QuickActionType.FOCUS_SESSIONS -> HomeCalendarIcon
     QuickActionType.BACKUP -> HomeDownloadIcon
     QuickActionType.WEBSITES -> HomeGlobeIcon
     QuickActionType.VPN -> HomeShieldIcon
@@ -563,7 +563,7 @@ internal fun QuickActionType.icon() = when (this) {
 
 internal fun QuickActionType.titleRes() = when (this) {
     QuickActionType.KEYWORD -> R.string.home_add_keyword
-    QuickActionType.SCHEDULE -> R.string.home_new_schedule
+    QuickActionType.FOCUS_SESSIONS -> R.string.home_new_schedule
     QuickActionType.BACKUP -> R.string.home_backup
     QuickActionType.WEBSITES -> R.string.home_websites
     QuickActionType.VPN -> R.string.home_vpn
@@ -573,7 +573,7 @@ internal fun QuickActionType.titleRes() = when (this) {
 
 internal fun QuickActionType.subRes() = when (this) {
     QuickActionType.KEYWORD -> R.string.home_add_keyword_sub
-    QuickActionType.SCHEDULE -> R.string.home_new_schedule_sub
+    QuickActionType.FOCUS_SESSIONS -> R.string.home_new_schedule_sub
     QuickActionType.BACKUP -> R.string.home_backup_sub
     QuickActionType.WEBSITES -> R.string.home_websites_sub
     QuickActionType.VPN -> R.string.home_vpn_sub
@@ -583,7 +583,7 @@ internal fun QuickActionType.subRes() = when (this) {
 
 private fun QuickActionType.onClick(
     onAddKeyword: () -> Unit,
-    onNewSchedule: () -> Unit,
+    onNewFocusSession: () -> Unit,
     onBackup: () -> Unit,
     onWebsites: () -> Unit,
     onVpn: () -> Unit,
@@ -591,7 +591,7 @@ private fun QuickActionType.onClick(
     onHistory: () -> Unit
 ): () -> Unit = when (this) {
     QuickActionType.KEYWORD -> onAddKeyword
-    QuickActionType.SCHEDULE -> onNewSchedule
+    QuickActionType.FOCUS_SESSIONS -> onNewFocusSession
     QuickActionType.BACKUP -> onBackup
     QuickActionType.WEBSITES -> onWebsites
     QuickActionType.VPN -> onVpn

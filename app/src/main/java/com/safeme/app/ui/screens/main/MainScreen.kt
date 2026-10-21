@@ -45,14 +45,14 @@ import com.safeme.app.ui.screens.keywords.KeywordManagerScreen
 import com.safeme.app.ui.screens.permissions.ManagePermissionsFlow
 import com.safeme.app.ui.screens.profile.AboutScreen
 import com.safeme.app.ui.screens.profile.ProfileScreen
-import com.safeme.app.ui.screens.schedule.ScheduleEditScreen
-import com.safeme.app.ui.screens.schedule.ScheduleScreen
+import com.safeme.app.ui.screens.focus.FocusEditScreen
+import com.safeme.app.ui.screens.focus.FocusScreen
 import com.safeme.app.ui.screens.socialblocking.SocialBlockingScreen
 import com.safeme.app.ui.screens.titleblock.TitleBlockScreen
 import com.safeme.app.ui.screens.vpn.DnsVpnScreen
 import com.safeme.app.ui.theme.LocalAppColors
 
-private val MainTabRoutes = setOf("home", "block", "schedule", "profile")
+private val MainTabRoutes = setOf("home", "block", "focus", "profile")
 
 @Composable
 fun MainScreen() {
@@ -101,7 +101,7 @@ fun MainScreen() {
                 HomeScreen(
                     onReviewShield = { navigateToTab("block") },
                     onAddKeyword = { navController.navigate("keywords") },
-                    onNewSchedule = { navController.navigate("scheduleedit") },
+                    onNewFocusSession = { navController.navigate("focusedit") },
                     onBackup = { navController.navigate("backup") },
                     onHistory = { navController.navigate("history") },
                     onOpenWebsites = {
@@ -152,10 +152,10 @@ fun MainScreen() {
             composable("servicepicker") {
                 ServicePickerScreen(onBack = { navController.popBackStack() })
             }
-            composable("schedule") {
-                ScheduleScreen(
-                    onNewSchedule = { navController.navigate("scheduleedit") },
-                    onEditSchedule = { id -> navController.navigate("scheduleedit?editId=$id") }
+            composable("focus") {
+                FocusScreen(
+                    onNewFocusSession = { navController.navigate("focusedit") },
+                    onEditFocusSession = { id -> navController.navigate("focusedit?editId=$id") }
                 )
             }
             composable("profile") {
@@ -188,10 +188,10 @@ fun MainScreen() {
                 )
             }
             composable(
-                route = "scheduleedit?editId={editId}",
+                route = "focusedit?editId={editId}",
                 arguments = listOf(navArgument("editId") { nullable = true }),
             ) { entry ->
-                ScheduleEditScreen(
+                FocusEditScreen(
                     editId = entry.arguments?.getString("editId"),
                     onBack = { navController.popBackStack() },
                 )

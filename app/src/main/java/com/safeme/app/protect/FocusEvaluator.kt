@@ -1,11 +1,11 @@
 package com.safeme.app.protect
 
-import com.safeme.app.data.ScheduleBlock
-import com.safeme.app.data.ScheduleMode
+import com.safeme.app.data.FocusSession
+import com.safeme.app.data.FocusMode
 import java.util.Calendar
 
 /**
- * Pure decision core for Schedule-Based App Blocking.
+ * Pure decision core for FocusMe.
  *
  * No Android, I/O or side effects — trivially unit-testable (mirrors the
  * reference `ScheduleEvaluator` in the Protect-Yourself project).
@@ -13,11 +13,11 @@ import java.util.Calendar
  * Day convention: schedules store 0=Mon … 6=Sun (prototype order); this file
  * converts to [Calendar.DAY_OF_WEEK] (1=Sun … 7=Sat) internally.
  *
- * An empty [ScheduleBlock.appPackages] list means "no apps picked" → the rule
- * blocks every app ([ScheduleBlock.blocksAllApps]), per the prototype's
+ * An empty [FocusSession.appPackages] list means "no apps picked" → the rule
+ * blocks every app ([FocusSession.blocksAllApps]), per the prototype's
  * "No apps — schedule blocks everything" editor copy.
  */
-object ScheduleEvaluator {
+object FocusEvaluator {
 
     /** Which apps are restricted at a given instant. */
     data class ActiveRules(
@@ -34,7 +34,7 @@ object ScheduleEvaluator {
     fun calendarDayOfWeek(dayIndex: Int): Int = ((dayIndex + 1) % 7) + 1
 
     /** True when [dayIndex] (0=Mon..6=Sun) is part of the rule's repeat set. */
-    fun matchesDay(rule: ScheduleBlock, dayIndex: Int): Boolean =
+    fun matchesDay(rule: FocusSession, dayIndex: Int): Boolean =
         dayIndex in 0..6 && dayIndex in rule.days
 
     /**
@@ -44,7 +44,7 @@ object ScheduleEvaluator {
      * `[00:00, end)` spilling into the following day. Degenerate windows
      * (`end == start`) never match.
      */
-    fun isActiveAt(rule: ScheduleBlock, dayIndex: Int, minuteOfDay: Int): Boolean {
+    fun isActiveAt(rule: FocusSession, dayIndex: Int, minuteOfDay: Int): Boolean {
         if (!rule.enabled || dayIndex !in 0..6) return false
         val start = rule.startMinute
         val end = rule.endMinute
@@ -68,7 +68,7 @@ object ScheduleEvaluator {
      * targets a package, that package is blocked.
      */
     fun evaluate(
-        rules: List<ScheduleBlock>,
+        rules: List<FocusSession>,
         nowMillis: Long = System.currentTimeMillis(),
     ): ActiveRules {
         val calendar = Calendar.getInstance().apply { timeInMillis = nowMillis }
@@ -85,13 +85,13 @@ object ScheduleEvaluator {
         for (rule in rules) {
             if (!isActiveAt(rule, dayIndex, minuteOfDay)) continue
             when (rule.mode) {
-                ScheduleMode.INTERNET -> {
+                FocusMode.INTERNET -> {
                     if (rule.blocksAllApps) internetBlockAll = true else internetBlocked.addAll(rule.appPackages)
                 }
-                ScheduleMode.LAUNCH -> {
+                FocusMode.LAUNCH -> {
                     if (rule.blocksAllApps) launchBlockAll = true else launchBlocked.addAll(rule.appPackages)
                 }
-                ScheduleMode.BOTH -> {
+                FocusMode.BOTH -> {
                     if (rule.blocksAllApps) {
                         internetBlockAll = true
                         launchBlockAll = true
@@ -112,7 +112,7 @@ object ScheduleEvaluator {
      * rule's end is emitted on the day it spills into.
      */
     fun nextBoundary(
-        rules: List<ScheduleBlock>,
+        rules: List<FocusSession>,
         nowMillis: Long = System.currentTimeMillis(),
     ): Long {
         val enabled = rules.filter { it.enabled && it.days.isNotEmpty() }

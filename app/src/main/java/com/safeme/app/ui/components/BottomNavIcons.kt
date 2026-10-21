@@ -63,9 +63,9 @@ internal val NavBlockIcon: ImageVector by lazy {
     }.build()
 }
 
-internal val NavScheduleIcon: ImageVector by lazy {
+internal val NavFocusIcon: ImageVector by lazy {
     ImageVector.Builder(
-        name = "NavSchedule",
+        name = "NavFocus",
         defaultWidth = 24.dp,
         defaultHeight = 24.dp,
         viewportWidth = 24f,

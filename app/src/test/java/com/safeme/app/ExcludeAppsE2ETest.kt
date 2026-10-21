@@ -26,7 +26,7 @@ class ExcludeAppsE2ETest {
     // ------------------------------------------------------------ prefs layer
 
     @Test
-    fun keysAreDistinctFromSchedulePrefs() {
+    fun keysAreDistinctFromFocusPrefs() {
         // The blocking feature must not collide with Schedule's own
         // per-schedule exclusion list stored under "excluded_apps".
         assertEquals("blocking_excluded_apps", KEY_BLOCKING_EXCLUDED_APPS.name)

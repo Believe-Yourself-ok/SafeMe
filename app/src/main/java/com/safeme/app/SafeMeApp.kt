@@ -6,13 +6,13 @@ import com.safeme.app.data.a11yProtectionPrefs
 import com.safeme.app.data.appLockPrefs
 import com.safeme.app.data.contentEnginePrefs
 import com.safeme.app.data.preventUninstallPrefs
-import com.safeme.app.data.schedulePrefs
+import com.safeme.app.data.focusPrefs
 import com.safeme.app.data.themePref
 import com.safeme.app.protect.A11yProtectionGuard
 import com.safeme.app.protect.A11yProtectionStateHolder
 import com.safeme.app.protect.A11yProtectionUtils
 import com.safeme.app.protect.AppLockStateHolder
-import com.safeme.app.protect.ScheduleEngine
+import com.safeme.app.protect.FocusEngine
 import com.safeme.app.service.SafeMeProtectionService
 import com.safeme.app.ui.screens.applock.AppLockGateController
 import com.safeme.app.ui.theme.ThemePrefHolder
@@ -37,7 +37,7 @@ class SafeMeApp : Application() {
 
     /** True while at least one schedule is enabled — gates the safety ticker. */
     @Volatile
-    private var hasEnabledSchedules = false
+    private var hasEnabledFocusSessions = false
 
     override fun onCreate() {
         super.onCreate()
@@ -113,9 +113,9 @@ class SafeMeApp : Application() {
         // permission on API 31+) or missed in doze.
         appScope.launch {
             try {
-                app.schedulePrefs().collect { state ->
-                    hasEnabledSchedules = state.schedules.any { it.enabled }
-                    ScheduleEngine.apply(app, state.schedules, state.excludedApps)
+                app.focusPrefs().collect { state ->
+                    hasEnabledFocusSessions = state.schedules.any { it.enabled }
+                    FocusEngine.apply(app, state.schedules, state.excludedApps)
                 }
             } catch (_: Throwable) {
             }
@@ -127,8 +127,8 @@ class SafeMeApp : Application() {
                     // Tick only while a schedule is enabled. With none, there
                     // is nothing that can drift, and a reevaluate would just
                     // re-read DataStore from disk every minute for no effect.
-                    if (hasEnabledSchedules) {
-                        ScheduleEngine.reevaluate(app)
+                    if (hasEnabledFocusSessions) {
+                        FocusEngine.reevaluate(app)
                     }
                 }
             } catch (_: Throwable) {

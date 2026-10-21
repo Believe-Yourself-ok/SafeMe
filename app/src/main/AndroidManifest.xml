@@ -100,7 +100,7 @@
         </receiver>
 
         <receiver
-            android:name=".protect.ScheduleAlarmReceiver"
+            android:name=".protect.FocusAlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.safeme.app.action.SCHEDULE_BOUNDARY" />

@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
  * that raises the block screen over the offending app WITHOUT launching an
  * activity. Used by every gate system — Prevent Uninstall, keyword/title,
  * website and schedule blocks — via [SafeMeAccessibilityService.launchGate] /
- * [launchScheduleGate].
+ * [launchFocusGate].
  *
  * The block screen is the SAME self-contained [BlockOverlay] composable that
  * [BlockGateActivity] renders — it is reused and adapted here, not duplicated:
@@ -545,14 +545,14 @@ internal fun blockGateWhyReason(
     type: String,
     matched: String,
     puMessage: String,
-    scheduleMessage: String,
+    focusMessage: String,
 ): String = when (type) {
     "website" ->
         if (matched.isNotEmpty()) "Why: website blocked by SafeMe ($matched)" else "Why: website blocked by SafeMe"
     "title" ->
         if (matched.isNotEmpty()) "Why: Settings page blocked by SafeMe ($matched)" else "Why: Settings page blocked by SafeMe"
     "pu" -> puMessage
-    "schedule" -> scheduleMessage
+    "schedule" -> focusMessage
     "socialWhole" -> if (matched.isNotEmpty()) "Why: app blocked by Social Media Blocking ($matched)" else "Why: app blocked by Social Media Blocking"
     "socialTab" -> if (matched.isNotEmpty()) "Why: tab blocked by Social Media Blocking ($matched)" else "Why: tab blocked by Social Media Blocking"
     else -> if (matched.isNotEmpty()) "Why: $matched blocked by SafeMe" else "Why: this content or action was blocked by an active SafeMe rule"

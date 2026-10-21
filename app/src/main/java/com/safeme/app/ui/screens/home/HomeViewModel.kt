@@ -13,7 +13,7 @@ import com.safeme.app.data.DnsVpnSettings
 import com.safeme.app.data.LockType
 import com.safeme.app.data.PreventUninstallPrefsState
 import com.safeme.app.data.QuickActionType
-import com.safeme.app.data.SchedulePrefsState
+import com.safeme.app.data.FocusPrefsState
 import com.safeme.app.data.a11yProtectionPrefs
 import com.safeme.app.data.activityLog
 import com.safeme.app.data.appLockPrefs
@@ -22,7 +22,7 @@ import com.safeme.app.data.dnsVpnSettings
 import com.safeme.app.data.maybeRolloverBlockedCounter
 import com.safeme.app.data.preventUninstallPrefs
 import com.safeme.app.data.quickActionPrefs
-import com.safeme.app.data.schedulePrefs
+import com.safeme.app.data.focusPrefs
 import com.safeme.app.data.setBlockingEnabled
 import com.safeme.app.protect.DeviceAdminUtils
 import com.safeme.app.protect.ProtectionLayersEvaluator
@@ -53,7 +53,7 @@ data class HomeUiState(
     val greeting: String = "",
     val dateLine: String = "",
     val blockedToday: String = "0",
-    val scheduleCount: String = "0",
+    val focusSessionCount: String = "0",
     val heroProgress: Float = 0f,
     val heroTitleRes: Int = R.string.home_hero_title,
     val heroSubtitle: String = "",
@@ -106,7 +106,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var lastA11yProt = A11yProtectionPrefsState()
     private var lastPu = PreventUninstallPrefsState()
     private var lastVpn = DnsVpnSettings()
-    private var lastSchedules = SchedulePrefsState()
+    private var lastFocus = FocusPrefsState()
 
     init {
         val prefs = combine(
@@ -119,13 +119,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             PrefsSnapshot(blocking, appLock, a11yProt, pu, vpn)
         }
         viewModelScope.launch {
-            combine(prefs, app.schedulePrefs().distinctUntilChanged()) { snapshot, schedules ->
+            combine(prefs, app.focusPrefs().distinctUntilChanged()) { snapshot, schedules ->
                 lastBlocking = snapshot.blocking
                 lastAppLock = snapshot.appLock
                 lastA11yProt = snapshot.a11yProt
                 lastPu = snapshot.pu
                 lastVpn = snapshot.vpn
-                lastSchedules = schedules
+                lastFocus = schedules
                 rebuild()
             }.collect { }
         }
@@ -152,14 +152,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             appLockEnabled = lastAppLock.lockType != LockType.OFF,
             a11yProtectionEnabled = lastA11yProt.protectionEnabled,
             preventUninstallEnabled = lastPu.preventUninstallEnabled,
-            hasEnabledSchedule = lastSchedules.schedules.any { it.enabled },
+            hasEnabledFocusSession = lastFocus.schedules.any { it.enabled },
             hasContentRules =
                 blocking.blocklistKeywords.isNotEmpty() || blocking.blockedWebsites.isNotEmpty(),
             hasTitleRules = blocking.titleBlockRules.isNotEmpty(),
             deviceAdminActive = deviceAdminActive,
         )
         val paused = !blocking.blockingEnabled
-        val enabledSchedules = lastSchedules.schedules.count { it.enabled }
+        val enabledFocusSessions = lastFocus.schedules.count { it.enabled }
         val titleRes = when {
             paused -> R.string.home_hero_paused
             layers.attention.isEmpty() -> R.string.home_hero_title
@@ -189,7 +189,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 a11yStateKnown = a11y.stateKnown,
                 a11yChecking = a11y.checking,
                 blockedToday = blocking.blockedToday.toString(),
-                scheduleCount = enabledSchedules.toString(),
+                focusSessionCount = enabledFocusSessions.toString(),
                 heroProgress = if (paused) 0f else layers.progress,
                 heroTitleRes = titleRes,
                 heroSubtitle = subtitle,

@@ -16,17 +16,17 @@ import org.json.JSONObject
 import java.util.UUID
 
 /**
- * Blocking mode of a schedule. Mirrors the prototype's segmented control
+ * Blocking mode of a focus session. Mirrors the prototype's segmented control
  * (Internet | Launch | Both).
  */
-enum class ScheduleMode(val label: String) {
+enum class FocusMode(val label: String) {
     INTERNET("Internet"),
     LAUNCH("Launch"),
     BOTH("Both");
 
     companion object {
         /** Resilient lookup — unknown/corrupt persisted names fall back to null. */
-        fun fromName(name: String?): ScheduleMode? = entries.firstOrNull { it.name == name }
+        fun fromName(name: String?): FocusMode? = entries.firstOrNull { it.name == name }
     }
 }
 
@@ -40,47 +40,47 @@ enum class ScheduleMode(val label: String) {
  *   which spill into the next day (the UI validates "Start and end can't be
  *   the same").
  * @param appPackages Packages targeted by this rule. Empty means "no apps
- *   picked" → the schedule blocks everything ([blocksAllApps]).
+ *   picked" → the focus session blocks everything ([blocksAllApps]).
  */
-data class ScheduleBlock(
+data class FocusSession(
     val id: String,
     val name: String,
     val days: List<Int>,
     val startMinute: Int,
     val endMinute: Int,
-    val mode: ScheduleMode,
+    val mode: FocusMode,
     val appPackages: List<String>,
     val enabled: Boolean = true,
 ) {
     val blocksAllApps: Boolean get() = appPackages.isEmpty()
 }
 
-data class SchedulePrefsState(
-    val schedules: List<ScheduleBlock> = emptyList(),
+data class FocusPrefsState(
+    val schedules: List<FocusSession> = emptyList(),
     /** User dismissed the "Accessibility Service required" banner. */
     val a11yWarningDismissed: Boolean = false,
-    /** User dismissed the "Precise schedule timing" banner. */
+    /** User dismissed the "Precise timing" banner. */
     val exactAlarmWarningDismissed: Boolean = false,
-    /** Global exclusion list: packages never blocked by any schedule. */
+    /** Global exclusion list: packages never blocked by any focus session. */
     val excludedApps: Set<String> = emptySet(),
 )
 
-private val Context.scheduleDataStore by preferencesDataStore(name = "schedule_prefs")
+private val Context.focusDataStore by preferencesDataStore(name = "schedule_prefs")
 
-val KEY_SCHEDULES_JSON = stringPreferencesKey("schedules_json")
+val KEY_FOCUS_SESSIONS_JSON = stringPreferencesKey("schedules_json")
 val KEY_A11Y_WARN_DISMISSED = booleanPreferencesKey("a11y_warn_dismissed")
 val KEY_EXACT_ALARM_WARN_DISMISSED = booleanPreferencesKey("exact_alarm_warn_dismissed")
 val KEY_EXCLUDED_APPS = stringSetPreferencesKey("excluded_apps")
 
 /** Prototype day order: Mon … Sun. */
-val SCHEDULE_DAY_NAMES = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+val FOCUS_DAY_NAMES = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-fun Context.schedulePrefs(): Flow<SchedulePrefsState> =
-    scheduleDataStore.data
+fun Context.focusPrefs(): Flow<FocusPrefsState> =
+    focusDataStore.data
         .catch { emit(emptyPreferences()) }
         .map { prefs ->
-            SchedulePrefsState(
-                schedules = schedulesFromJson(prefs[KEY_SCHEDULES_JSON]),
+            FocusPrefsState(
+                schedules = focusSessionsFromJson(prefs[KEY_FOCUS_SESSIONS_JSON]),
                 a11yWarningDismissed = prefs[KEY_A11Y_WARN_DISMISSED] ?: false,
                 exactAlarmWarningDismissed = prefs[KEY_EXACT_ALARM_WARN_DISMISSED] ?: false,
                 excludedApps = prefs[KEY_EXCLUDED_APPS] ?: emptySet(),
@@ -89,26 +89,26 @@ fun Context.schedulePrefs(): Flow<SchedulePrefsState> =
 
 /** Persist the "Accessibility Service required" banner dismissal. */
 suspend fun Context.setA11yWarningDismissed(dismissed: Boolean) {
-    scheduleDataStore.edit { prefs ->
+    focusDataStore.edit { prefs ->
         prefs[KEY_A11Y_WARN_DISMISSED] = dismissed
     }
 }
 
-/** Persist the "Precise schedule timing" banner dismissal. */
+/** Persist the "Precise timing" banner dismissal. */
 suspend fun Context.setExactAlarmWarningDismissed(dismissed: Boolean) {
-    scheduleDataStore.edit { prefs ->
+    focusDataStore.edit { prefs ->
         prefs[KEY_EXACT_ALARM_WARN_DISMISSED] = dismissed
     }
 }
 
-/** Persist the global schedule-exclusion list. */
+/** Persist the global focus-session exclusion list. */
 suspend fun Context.setExcludedApps(apps: Set<String>) {
-    scheduleDataStore.edit { prefs ->
+    focusDataStore.edit { prefs ->
         prefs[KEY_EXCLUDED_APPS] = apps
     }
 }
 
-fun schedulesToJson(list: List<ScheduleBlock>): String {
+fun focusSessionsToJson(list: List<FocusSession>): String {
     val arr = JSONArray()
     list.forEach { s ->
         val o = JSONObject()
@@ -125,7 +125,7 @@ fun schedulesToJson(list: List<ScheduleBlock>): String {
     return arr.toString()
 }
 
-fun schedulesFromJson(json: String?): List<ScheduleBlock> {
+fun focusSessionsFromJson(json: String?): List<FocusSession> {
     val text = json ?: ""
     if (text.isBlank()) return emptyList()
     return try {
@@ -149,7 +149,7 @@ fun schedulesFromJson(json: String?): List<ScheduleBlock> {
                 val start = o.optInt("st", -1)
                 val end = o.optInt("en", -1)
                 if (start !in 0..1439 || end !in 0..1439 || end == start) continue
-                val mode = ScheduleMode.fromName(o.optString("m")) ?: continue
+                val mode = FocusMode.fromName(o.optString("m")) ?: continue
                 val apps = buildList {
                     val a = o.optJSONArray("a")
                     if (a != null) {
@@ -160,7 +160,7 @@ fun schedulesFromJson(json: String?): List<ScheduleBlock> {
                     }
                 }
                 add(
-                    ScheduleBlock(
+                    FocusSession(
                         id = id,
                         name = name,
                         days = days,
@@ -178,62 +178,62 @@ fun schedulesFromJson(json: String?): List<ScheduleBlock> {
     }
 }
 
-suspend fun Context.addSchedule(schedule: ScheduleBlock) {
-    scheduleDataStore.edit { prefs ->
-        val list = schedulesFromJson(prefs[KEY_SCHEDULES_JSON])
-        if (list.none { it.id == schedule.id }) {
-            prefs[KEY_SCHEDULES_JSON] = schedulesToJson(list + schedule)
+suspend fun Context.addFocusSession(session: FocusSession) {
+    focusDataStore.edit { prefs ->
+        val list = focusSessionsFromJson(prefs[KEY_FOCUS_SESSIONS_JSON])
+        if (list.none { it.id == session.id }) {
+            prefs[KEY_FOCUS_SESSIONS_JSON] = focusSessionsToJson(list + session)
         }
     }
 }
 
-suspend fun Context.updateSchedule(schedule: ScheduleBlock) {
-    scheduleDataStore.edit { prefs ->
-        val list = schedulesFromJson(prefs[KEY_SCHEDULES_JSON])
-        val updated = list.map { if (it.id == schedule.id) schedule else it }
-        prefs[KEY_SCHEDULES_JSON] = schedulesToJson(updated)
+suspend fun Context.updateFocusSession(session: FocusSession) {
+    focusDataStore.edit { prefs ->
+        val list = focusSessionsFromJson(prefs[KEY_FOCUS_SESSIONS_JSON])
+        val updated = list.map { if (it.id == session.id) session else it }
+        prefs[KEY_FOCUS_SESSIONS_JSON] = focusSessionsToJson(updated)
     }
 }
 
-suspend fun Context.deleteSchedule(id: String) {
-    scheduleDataStore.edit { prefs ->
-        val list = schedulesFromJson(prefs[KEY_SCHEDULES_JSON])
-        prefs[KEY_SCHEDULES_JSON] = schedulesToJson(list.filter { it.id != id })
+suspend fun Context.deleteFocusSession(id: String) {
+    focusDataStore.edit { prefs ->
+        val list = focusSessionsFromJson(prefs[KEY_FOCUS_SESSIONS_JSON])
+        prefs[KEY_FOCUS_SESSIONS_JSON] = focusSessionsToJson(list.filter { it.id != id })
     }
 }
 
-suspend fun Context.toggleSchedule(id: String, enabled: Boolean) {
-    scheduleDataStore.edit { prefs ->
-        val list = schedulesFromJson(prefs[KEY_SCHEDULES_JSON])
+suspend fun Context.toggleFocusSession(id: String, enabled: Boolean) {
+    focusDataStore.edit { prefs ->
+        val list = focusSessionsFromJson(prefs[KEY_FOCUS_SESSIONS_JSON])
         val updated = list.map { if (it.id == id) it.copy(enabled = enabled) else it }
-        prefs[KEY_SCHEDULES_JSON] = schedulesToJson(updated)
+        prefs[KEY_FOCUS_SESSIONS_JSON] = focusSessionsToJson(updated)
     }
 }
 
-/** Replaces all schedule configuration in one atomic edit (backup restore). */
-suspend fun Context.writeSchedulePrefs(state: SchedulePrefsState) {
-    scheduleDataStore.edit { prefs ->
-        prefs[KEY_SCHEDULES_JSON] = schedulesToJson(state.schedules)
+/** Replaces all focus-session configuration in one atomic edit (backup restore). */
+suspend fun Context.writeFocusPrefs(state: FocusPrefsState) {
+    focusDataStore.edit { prefs ->
+        prefs[KEY_FOCUS_SESSIONS_JSON] = focusSessionsToJson(state.schedules)
         prefs[KEY_A11Y_WARN_DISMISSED] = state.a11yWarningDismissed
         prefs[KEY_EXACT_ALARM_WARN_DISMISSED] = state.exactAlarmWarningDismissed
         prefs[KEY_EXCLUDED_APPS] = state.excludedApps
     }
 }
 
-/** Factory for new schedule ids — mirrors [addTitleBlockRule] in BlockingPrefs. */
-fun newScheduleId(): String = UUID.randomUUID().toString()
+/** Factory for new focus-session ids — mirrors [addTitleBlockRule] in BlockingPrefs. */
+fun newFocusSessionId(): String = UUID.randomUUID().toString()
 
-/** True when a schedule mode needs SafeMe's accessibility service (launch blocking). */
-fun requiresAccessibility(mode: ScheduleMode): Boolean =
-    mode == ScheduleMode.LAUNCH || mode == ScheduleMode.BOTH
+/** True when a focus-blocking mode needs SafeMe's accessibility service (launch blocking). */
+fun requiresAccessibility(mode: FocusMode): Boolean =
+    mode == FocusMode.LAUNCH || mode == FocusMode.BOTH
 
 /**
  * Visibility of the "Accessibility Service required" banner: at least one
- * ENABLED schedule needs launch blocking, the service is off, and the user
- * hasn't dismissed the warning. A paused schedule never nags.
+ * ENABLED focus session needs launch blocking, the service is off, and the user
+ * hasn't dismissed the warning. A paused focus session never nags.
  */
 fun shouldShowA11yWarning(
-    schedules: List<ScheduleBlock>,
+    schedules: List<FocusSession>,
     a11yEnabled: Boolean,
     dismissed: Boolean,
 ): Boolean {
@@ -242,13 +242,13 @@ fun shouldShowA11yWarning(
 }
 
 /**
- * Visibility of the "Precise schedule timing" banner: API 31+, at least one
- * ENABLED schedule exists, exact alarms are not granted, and the user hasn't
- * dismissed the warning. A paused schedule never nags. [sdkInt] is injectable
+ * Visibility of the "Precise timing" banner: API 31+, at least one
+ * ENABLED focus session exists, exact alarms are not granted, and the user hasn't
+ * dismissed the warning. A paused focus session never nags. [sdkInt] is injectable
  * for unit tests (defaults to the device SDK).
  */
 fun shouldShowExactAlarmWarning(
-    schedules: List<ScheduleBlock>,
+    schedules: List<FocusSession>,
     granted: Boolean,
     dismissed: Boolean,
     sdkInt: Int = android.os.Build.VERSION.SDK_INT,
@@ -260,28 +260,28 @@ fun shouldShowExactAlarmWarning(
 // ---------------------------------------------------------------- pure helpers
 
 /** Prototype `daysLabel`: "Daily" for all 7 days, else "Mon · Wed · Fri". */
-fun scheduleDaysLabel(days: List<Int>): String {
+fun focusDaysLabel(days: List<Int>): String {
     val normalized = days.distinct().filter { it in 0..6 }
     if (normalized.isEmpty()) return ""
     if (normalized.size == 7) return "Daily"
-    return normalized.sorted().joinToString(" · ") { SCHEDULE_DAY_NAMES[it] }
+    return normalized.sorted().joinToString(" · ") { FOCUS_DAY_NAMES[it] }
 }
 
 /** Prototype `modeTxt`: Both → "Internet + Launch", etc. */
-fun scheduleModeLabel(mode: ScheduleMode): String = when (mode) {
-    ScheduleMode.BOTH -> "Internet + Launch"
-    ScheduleMode.INTERNET -> "Internet blocked"
-    ScheduleMode.LAUNCH -> "Launch blocked"
+fun focusModeLabel(mode: FocusMode): String = when (mode) {
+    FocusMode.BOTH -> "Internet + Launch"
+    FocusMode.INTERNET -> "Internet blocked"
+    FocusMode.LAUNCH -> "Launch blocked"
 }
 
 /** 24h "HH:mm" formatting (prototype `.sched-time-txt` / hero boundary text). */
-fun scheduleTimeLabel(minute: Int): String =
+fun focusTimeLabel(minute: Int): String =
     "${(minute / 60).toString().padStart(2, '0')}:${(minute % 60).toString().padStart(2, '0')}"
 
 /**
  * "21:00 – 23:00" card time row (prototype uses an en-dash with spaces).
  * Overnight windows append " (+1)" to mark the spill into the next day.
  */
-fun scheduleWindowLabel(startMinute: Int, endMinute: Int): String =
-    "${scheduleTimeLabel(startMinute)} – ${scheduleTimeLabel(endMinute)}" +
+fun focusWindowLabel(startMinute: Int, endMinute: Int): String =
+    "${focusTimeLabel(startMinute)} – ${focusTimeLabel(endMinute)}" +
         if (endMinute < startMinute) " (+1)" else ""

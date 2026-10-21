@@ -23,7 +23,7 @@ object ProtectionLayersEvaluator {
     const val LAYER_APP_LOCK = "appLock"
     const val LAYER_A11Y_PROTECTION = "a11yProtection"
     const val LAYER_PREVENT_UNINSTALL = "preventUninstall"
-    const val LAYER_SCHEDULES = "schedules"
+    const val LAYER_FOCUS = "schedules"
     const val LAYER_CONTENT_RULES = "contentRules"
     const val LAYER_TITLE_RULES = "titleRules"
     const val LAYER_DEVICE_ADMIN = "deviceAdmin"
@@ -35,7 +35,7 @@ object ProtectionLayersEvaluator {
         LAYER_APP_LOCK,
         LAYER_A11Y_PROTECTION,
         LAYER_PREVENT_UNINSTALL,
-        LAYER_SCHEDULES,
+        LAYER_FOCUS,
         LAYER_CONTENT_RULES,
         LAYER_TITLE_RULES,
         LAYER_DEVICE_ADMIN,
@@ -53,7 +53,7 @@ object ProtectionLayersEvaluator {
         appLockEnabled: Boolean,
         a11yProtectionEnabled: Boolean,
         preventUninstallEnabled: Boolean,
-        hasEnabledSchedule: Boolean,
+        hasEnabledFocusSession: Boolean,
         hasContentRules: Boolean,
         hasTitleRules: Boolean,
         deviceAdminActive: Boolean,
@@ -65,7 +65,7 @@ object ProtectionLayersEvaluator {
             if (appLockEnabled) add(LAYER_APP_LOCK)
             if (a11yProtectionEnabled) add(LAYER_A11Y_PROTECTION)
             if (preventUninstallEnabled) add(LAYER_PREVENT_UNINSTALL)
-            if (hasEnabledSchedule) add(LAYER_SCHEDULES)
+            if (hasEnabledFocusSession) add(LAYER_FOCUS)
             if (hasContentRules) add(LAYER_CONTENT_RULES)
             if (hasTitleRules) add(LAYER_TITLE_RULES)
             if (deviceAdminActive) add(LAYER_DEVICE_ADMIN)

@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
 import com.safeme.app.ui.components.ToastHost
-import com.safeme.app.ui.screens.schedule.AppPickerSheet
+import com.safeme.app.ui.screens.focus.AppPickerSheet
 import com.safeme.app.ui.theme.LocalAppColors
 
 @Composable

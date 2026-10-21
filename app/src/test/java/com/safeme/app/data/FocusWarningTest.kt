@@ -5,12 +5,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Unit tests for the \"Accessibility Service required\" banner predicate. */
-class ScheduleWarningTest {
+class FocusWarningTest {
 
     private fun block(
-        mode: ScheduleMode,
+        mode: FocusMode,
         enabled: Boolean = true,
-    ) = ScheduleBlock(
+    ) = FocusSession(
         id = "id",
         name = "n",
         days = listOf(0),
@@ -23,17 +23,17 @@ class ScheduleWarningTest {
 
     @Test
     fun requiresAccessibility_onlyLaunchAndBoth() {
-        assertTrue(requiresAccessibility(ScheduleMode.LAUNCH))
-        assertTrue(requiresAccessibility(ScheduleMode.BOTH))
-        assertFalse(requiresAccessibility(ScheduleMode.INTERNET))
+        assertTrue(requiresAccessibility(FocusMode.LAUNCH))
+        assertTrue(requiresAccessibility(FocusMode.BOTH))
+        assertFalse(requiresAccessibility(FocusMode.INTERNET))
     }
 
     @Test
-    fun banner_hiddenWhenNoEnabledScheduleNeedsA11y() {
+    fun banner_hiddenWhenNoEnabledFocusSessionNeedsA11y() {
         assertFalse(shouldShowA11yWarning(emptyList(), a11yEnabled = false, dismissed = false))
         assertFalse(
             shouldShowA11yWarning(
-                listOf(block(ScheduleMode.INTERNET)),
+                listOf(block(FocusMode.INTERNET)),
                 a11yEnabled = false,
                 dismissed = false,
             )
@@ -41,10 +41,10 @@ class ScheduleWarningTest {
     }
 
     @Test
-    fun banner_hiddenWhenOnlyPausedScheduleNeedsA11y() {
+    fun banner_hiddenWhenOnlyPausedFocusSessionNeedsA11y() {
         assertFalse(
             shouldShowA11yWarning(
-                listOf(block(ScheduleMode.LAUNCH, enabled = false)),
+                listOf(block(FocusMode.LAUNCH, enabled = false)),
                 a11yEnabled = false,
                 dismissed = false,
             )
@@ -52,17 +52,17 @@ class ScheduleWarningTest {
     }
 
     @Test
-    fun banner_visibleWhenEnabledLaunchOrBothScheduleAndA11yOff() {
+    fun banner_visibleWhenEnabledLaunchOrBothFocusSessionAndA11yOff() {
         assertTrue(
             shouldShowA11yWarning(
-                listOf(block(ScheduleMode.LAUNCH)),
+                listOf(block(FocusMode.LAUNCH)),
                 a11yEnabled = false,
                 dismissed = false,
             )
         )
         assertTrue(
             shouldShowA11yWarning(
-                listOf(block(ScheduleMode.BOTH)),
+                listOf(block(FocusMode.BOTH)),
                 a11yEnabled = false,
                 dismissed = false,
             )
@@ -70,7 +70,7 @@ class ScheduleWarningTest {
         // One a11y-requiring schedule among internet-only ones is enough.
         assertTrue(
             shouldShowA11yWarning(
-                listOf(block(ScheduleMode.INTERNET), block(ScheduleMode.LAUNCH)),
+                listOf(block(FocusMode.INTERNET), block(FocusMode.LAUNCH)),
                 a11yEnabled = false,
                 dismissed = false,
             )
@@ -81,7 +81,7 @@ class ScheduleWarningTest {
     fun banner_hiddenWhenA11yEnabled() {
         assertFalse(
             shouldShowA11yWarning(
-                listOf(block(ScheduleMode.BOTH)),
+                listOf(block(FocusMode.BOTH)),
                 a11yEnabled = true,
                 dismissed = false,
             )
@@ -92,7 +92,7 @@ class ScheduleWarningTest {
     fun banner_hiddenWhenDismissed() {
         assertFalse(
             shouldShowA11yWarning(
-                listOf(block(ScheduleMode.BOTH)),
+                listOf(block(FocusMode.BOTH)),
                 a11yEnabled = false,
                 dismissed = true,
             )
@@ -105,7 +105,7 @@ class ScheduleWarningTest {
     fun exactBanner_hiddenBelowS() {
         assertFalse(
             shouldShowExactAlarmWarning(
-                listOf(block(ScheduleMode.BOTH)),
+                listOf(block(FocusMode.BOTH)),
                 granted = false,
                 dismissed = false,
                 sdkInt = 30,
@@ -117,7 +117,7 @@ class ScheduleWarningTest {
     fun exactBanner_hiddenWhenGranted() {
         assertFalse(
             shouldShowExactAlarmWarning(
-                listOf(block(ScheduleMode.BOTH)),
+                listOf(block(FocusMode.BOTH)),
                 granted = true,
                 dismissed = false,
                 sdkInt = 34,
@@ -129,7 +129,7 @@ class ScheduleWarningTest {
     fun exactBanner_hiddenWhenDismissed() {
         assertFalse(
             shouldShowExactAlarmWarning(
-                listOf(block(ScheduleMode.BOTH)),
+                listOf(block(FocusMode.BOTH)),
                 granted = false,
                 dismissed = true,
                 sdkInt = 34,
@@ -138,7 +138,7 @@ class ScheduleWarningTest {
     }
 
     @Test
-    fun exactBanner_hiddenWithNoEnabledSchedules() {
+    fun exactBanner_hiddenWithNoEnabledFocusSessions() {
         assertFalse(
             shouldShowExactAlarmWarning(
                 emptyList(),
@@ -149,7 +149,7 @@ class ScheduleWarningTest {
         )
         assertFalse(
             shouldShowExactAlarmWarning(
-                listOf(block(ScheduleMode.BOTH, enabled = false)),
+                listOf(block(FocusMode.BOTH, enabled = false)),
                 granted = false,
                 dismissed = false,
                 sdkInt = 34,
@@ -158,10 +158,10 @@ class ScheduleWarningTest {
     }
 
     @Test
-    fun exactBanner_visibleWhenDeniedWithEnabledSchedule() {
+    fun exactBanner_visibleWhenDeniedWithEnabledFocusSession() {
         assertTrue(
             shouldShowExactAlarmWarning(
-                listOf(block(ScheduleMode.BOTH)),
+                listOf(block(FocusMode.BOTH)),
                 granted = false,
                 dismissed = false,
                 sdkInt = 31,
@@ -170,7 +170,7 @@ class ScheduleWarningTest {
         // One enabled schedule among paused ones is enough.
         assertTrue(
             shouldShowExactAlarmWarning(
-                listOf(block(ScheduleMode.INTERNET, enabled = false), block(ScheduleMode.LAUNCH)),
+                listOf(block(FocusMode.INTERNET, enabled = false), block(FocusMode.LAUNCH)),
                 granted = false,
                 dismissed = false,
                 sdkInt = 34,

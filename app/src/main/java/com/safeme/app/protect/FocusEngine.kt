@@ -1,10 +1,10 @@
 package com.safeme.app.protect
 
 import android.content.Context
-import com.safeme.app.data.ACTIVITY_SCHEDULE
-import com.safeme.app.data.ScheduleBlock
+import com.safeme.app.data.ACTIVITY_FOCUS
+import com.safeme.app.data.FocusSession
 import com.safeme.app.data.addActivity
-import com.safeme.app.data.schedulePrefs
+import com.safeme.app.data.focusPrefs
 import com.safeme.app.service.SafeMeAccessibilityService
 import com.safeme.app.service.SafeMeVpnService
 import kotlinx.coroutines.CoroutineScope
@@ -14,19 +14,19 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * Process-wide coordinator for Schedule-Based App Blocking.
+ * Process-wide coordinator for FocusMe.
  *
  * The ONLY component that turns schedule rules into enforcement:
  *  - launch-blocked apps → [SafeMeAccessibilityService] (gates the app on open)
  *  - internet-blocked apps → [SafeMeVpnService] (per-app-block tunnel mode)
- *  - next boundary → [ScheduleAlarmReceiver] (precise re-application at the
+ *  - next boundary → [FocusAlarmReceiver] (precise re-application at the
  *    next window start/end)
  *
  * Mirrors the reference `ScheduleEngine` singleton: idempotent, safe to call
  * from any thread, and only restarts the VPN when the active set actually
  * changes (so a no-op re-evaluation never tears down a healthy tunnel).
  */
-object ScheduleEngine {
+object FocusEngine {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -70,10 +70,10 @@ object ScheduleEngine {
 
     /**
      * Re-load schedules from DataStore and apply. Called by [SafeMeApp] on
-     * every persisted change and by [ScheduleAlarmReceiver] at boundaries.
+     * every persisted change and by [FocusAlarmReceiver] at boundaries.
      */
     suspend fun reevaluate(context: Context, nowMillis: Long = System.currentTimeMillis()) {
-        val state = context.schedulePrefs().first()
+        val state = context.focusPrefs().first()
         apply(context, state.schedules, state.excludedApps, nowMillis)
     }
 
@@ -84,12 +84,12 @@ object ScheduleEngine {
      */
     fun apply(
         context: Context,
-        schedules: List<ScheduleBlock>,
+        schedules: List<FocusSession>,
         excludedApps: Set<String> = emptySet(),
         nowMillis: Long = System.currentTimeMillis(),
     ) {
         try {
-            val active = ScheduleEvaluator.evaluate(schedules, nowMillis)
+            val active = FocusEvaluator.evaluate(schedules, nowMillis)
             // Capture the prior exclusion set so a change to ONLY the exclusion
             // list (while a block is active) is detected and re-applied.
             val prevExcluded = excludedPackages
@@ -109,7 +109,7 @@ object ScheduleEngine {
             launchBlockedPackages = filteredLaunch
             launchBlockAll = active.launchBlockAll
             if (launchChanged) {
-                SafeMeAccessibilityService.onScheduleSetsChanged()
+                SafeMeAccessibilityService.onFocusSetsChanged()
             }
 
             // VPN (internet blocking): restart only when the active set changed.
@@ -120,7 +120,7 @@ object ScheduleEngine {
             internetBlockedPackages = filteredInternet
             internetBlockAll = active.internetBlockAll
             if (internetChanged) {
-                SafeMeVpnService.applyScheduledBlocks(
+                SafeMeVpnService.applyFocusBlocks(
                     filteredInternet,
                     active.internetBlockAll,
                     excludedApps,
@@ -129,28 +129,28 @@ object ScheduleEngine {
             }
 
             // Re-arm the next boundary alarm.
-            val next = ScheduleEvaluator.nextBoundary(schedules, nowMillis)
-            ScheduleAlarmReceiver.scheduleBoundary(context, next)
+            val next = FocusEvaluator.nextBoundary(schedules, nowMillis)
+            FocusAlarmReceiver.scheduleBoundary(context, next)
 
             // Activity feed: log when a block actually turns ON (deduped by
             // the store, so re-applies and the safety ticker stay quiet).
             val launchOn = active.launchBlockAll || filteredLaunch.isNotEmpty()
             val internetOn = active.internetBlockAll || filteredInternet.isNotEmpty()
             if (launchChanged && launchOn) {
-                logScheduleEvent(context, "Focus session active", "Apps paused until it ends")
+                logFocusEvent(context, "Focus session active", "Apps paused until it ends")
             }
             if (internetChanged && internetOn) {
-                logScheduleEvent(context, "Focus internet pause active", "Paused apps can't reach the web")
+                logFocusEvent(context, "Focus internet pause active", "Paused apps can't reach the web")
             }
         } catch (t: Throwable) {
             // Coordinator failures must never crash callers (App, receiver).
         }
     }
 
-    private fun logScheduleEvent(context: Context, title: String, sub: String) {
+    private fun logFocusEvent(context: Context, title: String, sub: String) {
         scope.launch {
             try {
-                context.applicationContext.addActivity(ACTIVITY_SCHEDULE, title, sub)
+                context.applicationContext.addActivity(ACTIVITY_FOCUS, title, sub)
             } catch (_: Throwable) {
             }
         }

@@ -19,7 +19,7 @@ import org.json.JSONException
  */
 enum class QuickActionType(val id: String) {
     KEYWORD("keyword"),
-    SCHEDULE("schedule"),
+    FOCUS_SESSIONS("schedule"),
     BACKUP("backup"),
     WEBSITES("websites"),
     VPN("vpn"),
@@ -34,7 +34,7 @@ enum class QuickActionType(val id: String) {
 
 /** The default actions, in their original order — used when no prefs exist yet. */
 val DEFAULT_QUICK_ACTIONS: List<QuickActionType> =
-    listOf(QuickActionType.KEYWORD, QuickActionType.SCHEDULE, QuickActionType.BACKUP, QuickActionType.APPLOCK)
+    listOf(QuickActionType.KEYWORD, QuickActionType.FOCUS_SESSIONS, QuickActionType.BACKUP, QuickActionType.APPLOCK)
 
 private val Context.quickActionsDataStore by preferencesDataStore(name = "quick_actions_prefs")
 

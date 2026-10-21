@@ -1,4 +1,4 @@
-package com.safeme.app.ui.screens.schedule
+package com.safeme.app.ui.screens.focus
 
 import android.graphics.drawable.BitmapDrawable
 import androidx.compose.foundation.Image
@@ -211,9 +211,9 @@ fun TimePickerSheet(
                     onClick = {
                         val value = minuteValue()
                         val ok = if (target == TimeTarget.START) {
-                            isValidScheduleWindow(value, endMinute)
+                            isValidFocusWindow(value, endMinute)
                         } else {
-                            isValidScheduleWindow(startMinute, value)
+                            isValidFocusWindow(startMinute, value)
                         }
                         if (!ok) {
                             error = timeError
@@ -479,7 +479,7 @@ private fun CheckBox(checked: Boolean) {
     ) {
         if (checked) {
             Icon(
-                imageVector = SchCheckIcon,
+                imageVector = FocusCheckIcon,
                 contentDescription = null,
                 modifier = Modifier.size(14.dp),
                 tint = Color.White,
@@ -513,7 +513,7 @@ private fun SearchField(value: String, onValueChange: (String) -> Unit, placehol
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = SchSearchIcon,
+            imageVector = FocusSearchIcon,
             contentDescription = null,
             modifier = Modifier.size(19.dp),
             tint = colors.ink3,

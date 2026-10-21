@@ -496,7 +496,7 @@ private fun errorRes(error: BackupError): Int = when (error) {
 
 private fun sectionLabelRes(section: BackupSection): Int = when (section) {
     BackupSection.BLOCKING -> R.string.backup_section_blocking
-    BackupSection.SCHEDULES -> R.string.backup_section_schedules
+    BackupSection.FOCUS_SESSIONS -> R.string.backup_section_schedules
     BackupSection.VPN -> R.string.backup_section_vpn
     BackupSection.QUICK_ACTIONS -> R.string.backup_section_quick_actions
     BackupSection.APP_LOCK -> R.string.backup_section_app_lock

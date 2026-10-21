@@ -1,18 +1,18 @@
-package com.safeme.app.ui.screens.schedule
+package com.safeme.app.ui.screens.focus
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ScheduleEditEnabledTest {
+class FocusEditEnabledTest {
 
     @Test
-    fun newScheduleDefaultsEnabled() {
+    fun newFocusSessionDefaultsEnabled() {
         assertTrue(resolveEditedEnabled(editId = null, storedEnabled = null))
     }
 
     @Test
-    fun newScheduleIgnoresAnyStoredValue() {
+    fun newFocusSessionIgnoresAnyStoredValue() {
         assertTrue(resolveEditedEnabled(editId = null, storedEnabled = false))
     }
 
@@ -27,8 +27,8 @@ class ScheduleEditEnabledTest {
     }
 
     @Test
-    fun editWithMissingScheduleFailsSafeToEnabled() {
-        // Schedule deleted elsewhere while editing: updateSchedule() no-ops,
+    fun editWithMissingFocusSessionFailsSafeToEnabled() {
+        // Schedule deleted elsewhere while editing: updateFocusSession() no-ops,
         // and the flag must not strand a phantom disabled state.
         assertTrue(resolveEditedEnabled(editId = "exams", storedEnabled = null))
     }

@@ -108,7 +108,7 @@ class BlockOverlayControllerTest {
     }
 
     @Test
-    fun scheduleWhyUsesScheduleMessage() {
+    fun focusWhyUsesFocusMessage() {
         assertEquals("sched", blockGateWhyReason("schedule", "", "pu", "sched"))
     }
 

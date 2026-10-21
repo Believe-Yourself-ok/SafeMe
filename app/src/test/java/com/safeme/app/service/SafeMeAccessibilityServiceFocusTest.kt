@@ -5,14 +5,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Regression coverage for immediate schedule activation checks. */
-class SafeMeAccessibilityServiceScheduleTest {
+class SafeMeAccessibilityServiceFocusTest {
 
     @Test
-    fun forcedScheduleRecheck_bypassesThrottle() {
+    fun forcedFocusRecheck_bypassesThrottle() {
         val now = 10_000L
 
         assertFalse(
-            shouldThrottleScheduleRecheck(
+            shouldThrottleFocusRecheck(
                 lastRecheckMs = now - 1_000L,
                 nowMs = now,
                 force = true,
@@ -21,11 +21,11 @@ class SafeMeAccessibilityServiceScheduleTest {
     }
 
     @Test
-    fun normalScheduleRecheck_keepsThrottle() {
+    fun normalFocusRecheck_keepsThrottle() {
         val now = 10_000L
 
         assertTrue(
-            shouldThrottleScheduleRecheck(
+            shouldThrottleFocusRecheck(
                 lastRecheckMs = now - 1_000L,
                 nowMs = now,
                 force = false,

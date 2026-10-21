@@ -18,7 +18,7 @@ import org.json.JSONObject
 
 /** Activity feed event kinds (drives dot color + icon choice on the Home feed). */
 const val ACTIVITY_BLOCK = "block"
-const val ACTIVITY_SCHEDULE = "schedule"
+const val ACTIVITY_FOCUS = "schedule"
 const val ACTIVITY_VPN = "vpn"
 const val ACTIVITY_A11Y = "a11y"
 

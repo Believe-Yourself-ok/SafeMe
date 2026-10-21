@@ -48,7 +48,7 @@ import com.safeme.app.R
 import com.safeme.app.data.NOTIF_CUSTOM
 import com.safeme.app.data.NOTIF_DEFAULT
 import com.safeme.app.data.NOTIF_HIDE
-import com.safeme.app.protect.ScheduleEngine
+import com.safeme.app.protect.FocusEngine
 import com.safeme.app.ui.components.SafeMeTextField
 import com.safeme.app.ui.components.ToastHost
 import com.safeme.app.ui.theme.LocalAppColors
@@ -108,7 +108,7 @@ fun DnsVpnScreen(
                 systemDns = state.enabled &&
                     PrivateDnsFilter.dotHostname(state.preset) != null &&
                     PrivateDnsFilter.hasPermission(context),
-                scheduleBlocking = remember { ScheduleEngine.hasInternetBlock() },
+                focusBlocking = remember { FocusEngine.hasInternetBlock() },
                 onToggle = viewModel::toggle,
             )
 
@@ -237,7 +237,7 @@ private fun VpnStatusCard(
     customV6: String,
     exemptCount: Int,
     systemDns: Boolean,
-    scheduleBlocking: Boolean,
+    focusBlocking: Boolean,
     onToggle: () -> Unit,
 ) {
     val colors = LocalAppColors.current
@@ -276,7 +276,7 @@ private fun VpnStatusCard(
                         customV6,
                         exemptCount,
                         systemDns,
-                        scheduleBlocking,
+                        focusBlocking,
                     ),
                     fontSize = 12.5.sp,
                     color = colors.brandDark,
@@ -296,7 +296,7 @@ private fun vpnStatusSub(
     customV6: String,
     exemptCount: Int,
     systemDns: Boolean,
-    scheduleBlocking: Boolean,
+    focusBlocking: Boolean,
 ): String {
     if (!running) return stringResource(R.string.vpn_status_re_enable)
     val base = if (preset == DnsPreset.CUSTOM && customV4.isNotBlank()) {
@@ -310,7 +310,7 @@ private fun vpnStatusSub(
     }
     val scoped = if (systemDns) stringResource(R.string.vpn_sub_system_prefix, base) else base
     val withExempt = stringResource(R.string.vpn_sub_exempt, scoped, exemptCount)
-    return if (scheduleBlocking) {
+    return if (focusBlocking) {
         stringResource(R.string.vpn_sub_schedule_suffix, withExempt)
     } else {
         withExempt

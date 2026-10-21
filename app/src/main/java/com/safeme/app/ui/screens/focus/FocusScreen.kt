@@ -1,4 +1,4 @@
-package com.safeme.app.ui.screens.schedule
+package com.safeme.app.ui.screens.focus
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -72,10 +72,10 @@ private val HeroPillDot = Color(0xFF7CE0B3)
 private val HeroPillDotOff = Color(0xFFFFB4AB)
 
 @Composable
-fun ScheduleScreen(
-    onNewSchedule: () -> Unit = {},
-    onEditSchedule: (String) -> Unit = {},
-    viewModel: ScheduleViewModel = viewModel(),
+fun FocusScreen(
+    onNewFocusSession: () -> Unit = {},
+    onEditFocusSession: (String) -> Unit = {},
+    viewModel: FocusViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = LocalAppColors.current
@@ -105,7 +105,7 @@ fun ScheduleScreen(
         ) {
             SubHeader(
                 title = stringResource(R.string.sch_title),
-                onNew = onNewSchedule
+                onNew = onNewFocusSession
             )
             HeroCard(
                 count = state.heroCount,
@@ -138,10 +138,10 @@ fun ScheduleScreen(
                 }
             )
             SectionTitle(text = stringResource(R.string.sch_your_schedules))
-            ScheduleList(
+            FocusSessionList(
                 cards = state.cards,
-                onToggle = viewModel::toggleSchedule,
-                onEdit = onEditSchedule
+                onToggle = viewModel::toggleFocusSession,
+                onEdit = onEditFocusSession
             )
             Spacer(Modifier.size(12.dp))
             Note()
@@ -241,7 +241,7 @@ private fun HeroCard(count: String, pill: String, nextBoundary: String) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = SchCalendarIcon,
+                    imageVector = FocusCalendarIcon,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(22.dp)
@@ -384,7 +384,7 @@ private fun A11yWarningBanner(onEnable: () -> Unit, onDismiss: () -> Unit) {
         }
         Spacer(Modifier.width(4.dp))
         Icon(
-            imageVector = SchCloseIcon,
+            imageVector = FocusCloseIcon,
             contentDescription = stringResource(R.string.sch_warn_a11y_dismiss),
             tint = colors.ink3,
             modifier = Modifier
@@ -424,7 +424,7 @@ private fun ExactAlarmBanner(onEnable: () -> Unit, onDismiss: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = SchClockIcon,
+                imageVector = FocusClockIcon,
                 contentDescription = null,
                 tint = colors.danger,
                 modifier = Modifier.size(20.dp)
@@ -465,7 +465,7 @@ private fun ExactAlarmBanner(onEnable: () -> Unit, onDismiss: () -> Unit) {
         }
         Spacer(Modifier.width(4.dp))
         Icon(
-            imageVector = SchCloseIcon,
+            imageVector = FocusCloseIcon,
             contentDescription = stringResource(R.string.sch_warn_exact_dismiss),
             tint = colors.ink3,
             modifier = Modifier
@@ -495,7 +495,7 @@ private fun ExcludeAppsCard(
         // subtitle never wraps into a cramped stack between two pills.
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconBox(
-                icon = SchInfoIcon,
+                icon = FocusInfoIcon,
                 background = colors.brandSoft,
                 tint = colors.brand,
                 size = 40.dp,
@@ -545,8 +545,8 @@ private fun ExcludeAppsCard(
 }
 
 @Composable
-private fun ScheduleList(
-    cards: List<ScheduleCard>,
+private fun FocusSessionList(
+    cards: List<FocusSessionCard>,
     onToggle: (String) -> Unit,
     onEdit: (String) -> Unit,
 ) {
@@ -557,7 +557,7 @@ private fun ScheduleList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         cards.forEach { card ->
-            ScheduleCard(
+            FocusSessionCard(
                 card = card,
                 onToggle = { onToggle(card.id) },
                 onEdit = { onEdit(card.id) }
@@ -567,8 +567,8 @@ private fun ScheduleList(
 }
 
 @Composable
-private fun ScheduleCard(
-    card: ScheduleCard,
+private fun FocusSessionCard(
+    card: FocusSessionCard,
     onToggle: () -> Unit,
     onEdit: () -> Unit,
 ) {
@@ -582,7 +582,7 @@ private fun ScheduleCard(
         // Prototype `.sched-head`: icon · title/subtitle · switch.
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconBox(
-                icon = SchCalendarIcon,
+                icon = FocusCalendarIcon,
                 background = colors.iconAmberBg,
                 tint = colors.warning,
                 size = 40.dp,
@@ -621,7 +621,7 @@ private fun ScheduleCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = SchClockIcon,
+                    imageVector = FocusClockIcon,
                     contentDescription = null,
                     tint = colors.brand,
                     modifier = Modifier.size(20.dp)
@@ -652,7 +652,7 @@ private fun ScheduleCard(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                imageVector = SchCalendarIcon,
+                imageVector = FocusCalendarIcon,
                 contentDescription = null,
                 tint = colors.ink3,
                 modifier = Modifier.size(14.dp)
@@ -751,7 +751,7 @@ private fun Note() {
     val colors = LocalAppColors.current
     Row(modifier = Modifier.fillMaxWidth()) {
         Icon(
-            imageVector = SchInfoIcon,
+            imageVector = FocusInfoIcon,
             contentDescription = null,
             tint = colors.brand,
             modifier = Modifier.size(16.dp).padding(top = 1.dp)

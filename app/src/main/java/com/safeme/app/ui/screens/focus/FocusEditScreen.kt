@@ -1,4 +1,4 @@
-package com.safeme.app.ui.screens.schedule
+package com.safeme.app.ui.screens.focus
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -51,9 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
-import com.safeme.app.data.SCHEDULE_DAY_NAMES
-import com.safeme.app.data.ScheduleMode
-import com.safeme.app.data.scheduleTimeLabel
+import com.safeme.app.data.FOCUS_DAY_NAMES
+import com.safeme.app.data.FocusMode
+import com.safeme.app.data.focusTimeLabel
 import com.safeme.app.ui.components.SafeMeTextField
 import com.safeme.app.ui.components.ToastHost
 import com.safeme.app.ui.screens.permissions.ChevronIcon
@@ -64,14 +64,14 @@ import com.safeme.app.ui.theme.LocalAppColors
  * block-mode segmented control, apps card, save + (edit-only) delete.
  */
 @Composable
-fun ScheduleEditScreen(
+fun FocusEditScreen(
     editId: String?,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
-    val viewModel: ScheduleEditViewModel = viewModel(
-        key = "scheduleedit_${editId ?: "new"}",
-        factory = ScheduleEditViewModel.Factory(
+    val viewModel: FocusEditViewModel = viewModel(
+        key = "focusedit_${editId ?: "new"}",
+        factory = FocusEditViewModel.Factory(
             context.applicationContext as android.app.Application,
             editId,
         ),
@@ -199,7 +199,7 @@ fun ScheduleEditScreen(
 }
 
 @Composable
-private fun appSummary(state: ScheduleEditUiState, viewModel: ScheduleEditViewModel): String {
+private fun appSummary(state: FocusEditUiState, viewModel: FocusEditViewModel): String {
     val context = LocalContext.current
     if (state.selectedApps.isEmpty()) {
         return context.getString(R.string.sche_apps_sub_none)
@@ -312,7 +312,7 @@ private fun NameField(value: String, onValueChange: (String) -> Unit, placeholde
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = SchNameIcon,
+            imageVector = FocusNameIcon,
             contentDescription = null,
             modifier = Modifier.size(19.dp),
             tint = colors.ink3,
@@ -353,7 +353,7 @@ private fun DayCircles(selected: Set<Int>, onToggle: (Int) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        SCHEDULE_DAY_NAMES.forEachIndexed { index, label ->
+        FOCUS_DAY_NAMES.forEachIndexed { index, label ->
             val on = index in selected
             Box(
                 modifier = Modifier
@@ -459,11 +459,11 @@ private fun TimeBox(minute: Int, onClick: () -> Unit, modifier: Modifier = Modif
 
 /** Prototype `.seg` block-mode control (Internet | Launch | Both). */
 @Composable
-private fun ModeSegment(mode: ScheduleMode, onSelect: (ScheduleMode) -> Unit) {
+private fun ModeSegment(mode: FocusMode, onSelect: (FocusMode) -> Unit) {
     val options = listOf(
-        ScheduleMode.INTERNET to stringResource(R.string.sche_mode_internet),
-        ScheduleMode.LAUNCH to stringResource(R.string.sche_mode_launch),
-        ScheduleMode.BOTH to stringResource(R.string.sche_mode_both),
+        FocusMode.INTERNET to stringResource(R.string.sche_mode_internet),
+        FocusMode.LAUNCH to stringResource(R.string.sche_mode_launch),
+        FocusMode.BOTH to stringResource(R.string.sche_mode_both),
     )
     Segmented(
         options = options.map { (m, label) -> label to (m == mode) },
@@ -558,7 +558,7 @@ private fun Note() {
     val colors = LocalAppColors.current
     Row(modifier = Modifier.fillMaxWidth()) {
         Icon(
-            imageVector = SchInfoIcon,
+            imageVector = FocusInfoIcon,
             contentDescription = null,
             tint = colors.brand,
             modifier = Modifier.size(16.dp).padding(top = 1.dp),

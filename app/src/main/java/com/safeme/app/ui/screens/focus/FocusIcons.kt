@@ -1,4 +1,4 @@
-package com.safeme.app.ui.screens.schedule
+package com.safeme.app.ui.screens.focus
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-internal val SchCalendarIcon: ImageVector by lazy {
+internal val FocusCalendarIcon: ImageVector by lazy {
     ImageVector.Builder(
         name = "SchCalendar",
         defaultWidth = 24.dp,
@@ -44,7 +44,7 @@ internal val SchCalendarIcon: ImageVector by lazy {
     }.build()
 }
 
-internal val SchClockIcon: ImageVector by lazy {
+internal val FocusClockIcon: ImageVector by lazy {
     ImageVector.Builder(
         name = "SchClock",
         defaultWidth = 24.dp,
@@ -70,7 +70,7 @@ internal val SchClockIcon: ImageVector by lazy {
     }.build()
 }
 
-internal val SchSearchIcon: ImageVector by lazy {
+internal val FocusSearchIcon: ImageVector by lazy {
     ImageVector.Builder(
         name = "SchSearch",
         defaultWidth = 24.dp,
@@ -95,7 +95,7 @@ internal val SchSearchIcon: ImageVector by lazy {
     }.build()
 }
 
-internal val SchCheckIcon: ImageVector by lazy {
+internal val FocusCheckIcon: ImageVector by lazy {
     ImageVector.Builder(
         name = "SchCheck",
         defaultWidth = 24.dp,
@@ -118,7 +118,7 @@ internal val SchCheckIcon: ImageVector by lazy {
     }.build()
 }
 
-internal val SchNameIcon: ImageVector by lazy {
+internal val FocusNameIcon: ImageVector by lazy {
     ImageVector.Builder(
         name = "SchName",
         defaultWidth = 24.dp,
@@ -144,7 +144,7 @@ internal val SchNameIcon: ImageVector by lazy {
     }.build()
 }
 
-internal val SchInfoIcon: ImageVector by lazy {
+internal val FocusInfoIcon: ImageVector by lazy {
     ImageVector.Builder(
         name = "SchInfo",
         defaultWidth = 24.dp,
@@ -174,7 +174,7 @@ internal val SchInfoIcon: ImageVector by lazy {
 }
 
 /** Small × for dismissing the a11y warning banner. */
-internal val SchCloseIcon: ImageVector by lazy {
+internal val FocusCloseIcon: ImageVector by lazy {
     ImageVector.Builder(
         name = "SchClose",
         defaultWidth = 24.dp,

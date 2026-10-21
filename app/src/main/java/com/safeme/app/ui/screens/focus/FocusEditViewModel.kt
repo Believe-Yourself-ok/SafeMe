@@ -1,4 +1,4 @@
-package com.safeme.app.ui.screens.schedule
+package com.safeme.app.ui.screens.focus
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -8,13 +8,13 @@ import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.AppCatalog
 import com.safeme.app.data.InstalledApp
-import com.safeme.app.data.ScheduleBlock
-import com.safeme.app.data.ScheduleMode
-import com.safeme.app.data.addSchedule
-import com.safeme.app.data.deleteSchedule
-import com.safeme.app.data.newScheduleId
-import com.safeme.app.data.schedulePrefs
-import com.safeme.app.data.updateSchedule
+import com.safeme.app.data.FocusSession
+import com.safeme.app.data.FocusMode
+import com.safeme.app.data.addFocusSession
+import com.safeme.app.data.deleteFocusSession
+import com.safeme.app.data.newFocusSessionId
+import com.safeme.app.data.focusPrefs
+import com.safeme.app.data.updateFocusSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,27 +27,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class ScheduleEditUiState(
+data class FocusEditUiState(
     val loading: Boolean = true,
     val editId: String? = null,
     val name: String = "",
     val days: Set<Int> = setOf(0, 1, 2),
     val startMinute: Int = 21 * 60,
     val endMinute: Int = 23 * 60,
-    val mode: ScheduleMode = ScheduleMode.BOTH,
+    val mode: FocusMode = FocusMode.BOTH,
     val enabled: Boolean = true,
     val selectedApps: Set<String> = emptySet(),
     val installedApps: List<InstalledApp> = emptyList(),
     val appsLoaded: Boolean = false,
 )
 
-class ScheduleEditViewModel(
+class FocusEditViewModel(
     application: Application,
     private val editId: String?,
 ) : AndroidViewModel(application) {
 
-    private val _uiState = MutableStateFlow(ScheduleEditUiState(editId = editId))
-    val uiState: StateFlow<ScheduleEditUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(FocusEditUiState(editId = editId))
+    val uiState: StateFlow<FocusEditUiState> = _uiState.asStateFlow()
 
     private val _toasts = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val toasts: SharedFlow<String> = _toasts.asSharedFlow()
@@ -59,7 +59,7 @@ class ScheduleEditViewModel(
     init {
         viewModelScope.launch {
             val app = getApplication<Application>()
-            val schedules = app.schedulePrefs().first().schedules
+            val schedules = app.focusPrefs().first().schedules
             val existing = editId?.let { id -> schedules.firstOrNull { it.id == id } }
             _uiState.update {
                 it.copy(
@@ -68,14 +68,14 @@ class ScheduleEditViewModel(
                     days = (existing?.days ?: listOf(0, 1, 2)).toSet(),
                     startMinute = existing?.startMinute ?: (21 * 60),
                     endMinute = existing?.endMinute ?: (23 * 60),
-                    mode = existing?.mode ?: ScheduleMode.BOTH,
+                    mode = existing?.mode ?: FocusMode.BOTH,
                     enabled = resolveEditedEnabled(editId, existing?.enabled),
                     selectedApps = existing?.appPackages?.toSet() ?: emptySet(),
                 )
             }
         }
         viewModelScope.launch {
-            val excluded = getApplication<Application>().schedulePrefs().first().excludedApps
+            val excluded = getApplication<Application>().focusPrefs().first().excludedApps
             val apps = withContext(Dispatchers.Default) { enumerateApps().filter { it.packageName !in excluded } }
             _uiState.update { it.copy(installedApps = apps, appsLoaded = true) }
         }
@@ -100,7 +100,7 @@ class ScheduleEditViewModel(
         _uiState.update { it.copy(endMinute = minute) }
     }
 
-    fun setMode(mode: ScheduleMode) {
+    fun setMode(mode: FocusMode) {
         _uiState.update { it.copy(mode = mode) }
     }
 
@@ -145,12 +145,12 @@ class ScheduleEditViewModel(
             _toasts.tryEmit(app.getString(R.string.sche_toast_day))
             return false
         }
-        if (!isValidScheduleWindow(state.startMinute, state.endMinute)) {
+        if (!isValidFocusWindow(state.startMinute, state.endMinute)) {
             _toasts.tryEmit(app.getString(R.string.sche_toast_time))
             return false
         }
-        val schedule = ScheduleBlock(
-            id = state.editId ?: newScheduleId(),
+        val session = FocusSession(
+            id = state.editId ?: newFocusSessionId(),
             name = state.name.trim(),
             days = state.days.toList(),
             startMinute = state.startMinute,
@@ -161,9 +161,9 @@ class ScheduleEditViewModel(
         )
         viewModelScope.launch {
             if (state.editId != null) {
-                app.updateSchedule(schedule)
+                app.updateFocusSession(session)
             } else {
-                app.addSchedule(schedule)
+                app.addFocusSession(session)
             }
             _toasts.tryEmit(app.getString(R.string.sche_toast_saved))
             _done.tryEmit(Unit)
@@ -175,7 +175,7 @@ class ScheduleEditViewModel(
         val app = getApplication<Application>()
         val id = _uiState.value.editId ?: return
         viewModelScope.launch {
-            app.deleteSchedule(id)
+            app.deleteFocusSession(id)
             _toasts.tryEmit(app.getString(R.string.sche_toast_deleted))
             _done.tryEmit(Unit)
         }
@@ -193,7 +193,7 @@ class ScheduleEditViewModel(
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ScheduleEditViewModel(app, editId) as T
+            FocusEditViewModel(app, editId) as T
     }
 }
 
@@ -204,14 +204,14 @@ class ScheduleEditViewModel(
  * only the degenerate case is rejected here. Single source of truth for
  * the editor save path and the time-picker sheet.
  */
-internal fun isValidScheduleWindow(startMinute: Int, endMinute: Int): Boolean =
+internal fun isValidFocusWindow(startMinute: Int, endMinute: Int): Boolean =
     startMinute != endMinute
 
 /**
  * B6: resolves the editor's `enabled` flag. New schedules default on; edits
  * preserve the stored flag. A missing stored value (e.g. the schedule was
  * deleted elsewhere while editing) fails safe to on — and the subsequent
- * `updateSchedule()` already no-ops when the id matches nothing.
+ * `updateFocusSession()` already no-ops when the id matches nothing.
  */
 internal fun resolveEditedEnabled(editId: String?, storedEnabled: Boolean?): Boolean =
     if (editId == null) true else storedEnabled ?: true

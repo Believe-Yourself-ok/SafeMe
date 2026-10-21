@@ -25,7 +25,7 @@ class ProtectionLayersTest {
         appLockEnabled = appLock,
         a11yProtectionEnabled = a11yProt,
         preventUninstallEnabled = pu,
-        hasEnabledSchedule = schedules,
+        hasEnabledFocusSession = schedules,
         hasContentRules = contentRules,
         hasTitleRules = titleRules,
         deviceAdminActive = deviceAdmin,

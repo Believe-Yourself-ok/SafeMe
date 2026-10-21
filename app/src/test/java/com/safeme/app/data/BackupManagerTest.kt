@@ -47,9 +47,9 @@ class BackupManagerTest {
             whitelistKeywords = listOf("work"),
             blockingEnabled = false,
         ),
-        schedules = SchedulePrefsState(
+        schedules = FocusPrefsState(
             schedules = listOf(
-                ScheduleBlock("s1", "Study", listOf(1), 60, 120, ScheduleMode.LAUNCH, emptyList(), enabled = false),
+                FocusSession("s1", "Study", listOf(1), 60, 120, FocusMode.LAUNCH, emptyList(), enabled = false),
             ),
         ),
         vpn = DnsVpnSettings(enabled = true, preset = DnsPreset.CLOUDFLARE_FAMILY),
@@ -74,7 +74,7 @@ class BackupManagerTest {
         failOnWriteNumber: BackupSection? = null,
     ): Map<BackupSection, FakeStore> = buildMap {
         put(BackupSection.BLOCKING, FakeStore(BlockingPrefsState(blockingEnabled = true)))
-        put(BackupSection.SCHEDULES, FakeStore(SchedulePrefsState(schedules = emptyList())))
+        put(BackupSection.FOCUS_SESSIONS, FakeStore(FocusPrefsState(schedules = emptyList())))
         put(BackupSection.VPN, FakeStore(DnsVpnSettings(enabled = false)))
         put(BackupSection.QUICK_ACTIONS, FakeStore(listOf(QuickActionType.HISTORY)))
         put(BackupSection.APP_LOCK, FakeStore(AppLockPrefsState(lockType = LockType.OFF)))
@@ -104,7 +104,7 @@ class BackupManagerTest {
 
         val restored = sampleSnapshot()
         assertEquals(restored.blocking, stores[BackupSection.BLOCKING]?.value)
-        assertEquals(restored.schedules, stores[BackupSection.SCHEDULES]?.value)
+        assertEquals(restored.schedules, stores[BackupSection.FOCUS_SESSIONS]?.value)
         assertEquals(restored.vpn, stores[BackupSection.VPN]?.value)
         assertEquals(restored.quickActions, stores[BackupSection.QUICK_ACTIONS]?.value)
         assertEquals(restored.appLock, stores[BackupSection.APP_LOCK]?.value)
@@ -149,7 +149,7 @@ class BackupManagerTest {
         before.forEach { (section, old) -> assertEquals(old, stores[section]?.value) }
         // The first two sections were written then rolled back.
         assertTrue((stores[BackupSection.BLOCKING]?.writes ?: 0) >= 2)
-        assertTrue((stores[BackupSection.SCHEDULES]?.writes ?: 0) >= 2)
+        assertTrue((stores[BackupSection.FOCUS_SESSIONS]?.writes ?: 0) >= 2)
     }
 
     @Test

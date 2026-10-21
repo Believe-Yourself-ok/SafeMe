@@ -31,7 +31,7 @@ import com.safeme.app.protect.DeviceAdminUtils
 import com.safeme.app.protect.ImageVideoSearchGate
 import com.safeme.app.protect.PrivateDnsBlockers
 import com.safeme.app.protect.ProtectedSystemPages
-import com.safeme.app.protect.ScheduleEngine
+import com.safeme.app.protect.FocusEngine
 import com.safeme.app.protect.SocialBlockingGate
 import com.safeme.app.protect.UninstallBlockers
 import com.safeme.app.protect.VpnBlockers
@@ -48,7 +48,7 @@ import java.util.Locale
 
 internal const val SCHEDULE_RECHECK_THROTTLE_MS = 5_000L
 
-internal fun shouldThrottleScheduleRecheck(
+internal fun shouldThrottleFocusRecheck(
     lastRecheckMs: Long,
     nowMs: Long,
     force: Boolean,
@@ -270,13 +270,13 @@ class SafeMeAccessibilityService : AccessibilityService() {
 
     /** Separate cooldown tracker for schedule blocks — never suppresses keyword/PU blocks. */
     @Volatile
-    private var lastScheduleBlockKey: String? = null
+    private var lastFocusBlockKey: String? = null
 
     @Volatile
-    private var lastScheduleBlockAt: Long = 0L
+    private var lastFocusBlockAt: Long = 0L
 
     @Volatile
-    private var lastScheduleRecheckMs: Long = 0L
+    private var lastFocusRecheckMs: Long = 0L
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -661,10 +661,10 @@ class SafeMeAccessibilityService : AccessibilityService() {
             }
         }
 
-        // Schedule-Based App Blocking: launch/UI blocking is independent of the
+        // FocusMe: launch/UI blocking is independent of the
         // keyword engine and the master blocking switch.
-        if (isScheduleBlocked(pkg)) {
-            launchScheduleGate(pkg)
+        if (isFocusBlocked(pkg)) {
+            launchFocusGate(pkg)
             return
         }
 
@@ -2110,17 +2110,17 @@ class SafeMeAccessibilityService : AccessibilityService() {
      * "block everything" schedule active, critical system surfaces stay
      * reachable so the user is never locked out of the launcher/Settings.
      */
-    private fun isScheduleBlocked(pkg: String): Boolean {
-        if (!ScheduleEngine.isLaunchBlocked(pkg)) return false
-        if (ScheduleEngine.isLaunchBlockAllActive() && pkg in SCHEDULE_SYSTEM_EXEMPT) return false
+    private fun isFocusBlocked(pkg: String): Boolean {
+        if (!FocusEngine.isLaunchBlocked(pkg)) return false
+        if (FocusEngine.isLaunchBlockAllActive() && pkg in FOCUS_SYSTEM_EXEMPT) return false
         return true
     }
 
-    private fun launchScheduleGate(pkg: String) {
+    private fun launchFocusGate(pkg: String) {
         val now = SystemClock.elapsedRealtime()
-        if (lastScheduleBlockKey == pkg && now - lastScheduleBlockAt < SCHEDULE_COOLDOWN_MS) return
-        lastScheduleBlockKey = pkg
-        lastScheduleBlockAt = now
+        if (lastFocusBlockKey == pkg && now - lastFocusBlockAt < SCHEDULE_COOLDOWN_MS) return
+        lastFocusBlockKey = pkg
+        lastFocusBlockAt = now
         // [Overlay gate] Same universal overlay host as every other gate type.
         BlockOverlayController.show(this, pkg, "", "schedule")
     }
@@ -2184,21 +2184,21 @@ class SafeMeAccessibilityService : AccessibilityService() {
 
     /**
      * Re-checks the current foreground window against the schedule sets.
-     * Called by [ScheduleEngine] when the active launch-block set changes, so
+     * Called by [FocusEngine] when the active launch-block set changes, so
      * a block that starts while the app is already open still takes effect.
      * Throttled.
      */
-    private fun recheckScheduleBlock(force: Boolean = false) {
+    private fun recheckFocusBlock(force: Boolean = false) {
         val now = SystemClock.elapsedRealtime()
-        if (shouldThrottleScheduleRecheck(lastScheduleRecheckMs, now, force)) return
-        lastScheduleRecheckMs = now
+        if (shouldThrottleFocusRecheck(lastFocusRecheckMs, now, force)) return
+        lastFocusRecheckMs = now
         try {
             val root = rootInActiveWindow ?: return
             try {
                 val pkg = root.packageName?.toString() ?: return
                 val ownPackage = applicationContext.packageName ?: return
                 if (pkg == ownPackage) return
-                if (isScheduleBlocked(pkg)) launchScheduleGate(pkg)
+                if (isFocusBlocked(pkg)) launchFocusGate(pkg)
             } finally {
                 recycle(root)
             }
@@ -2398,15 +2398,15 @@ class SafeMeAccessibilityService : AccessibilityService() {
 
         /**
          * Pokes the live service to re-check the current foreground window.
-         * Called by [ScheduleEngine] when the active launch-block set changes.
+         * Called by [FocusEngine] when the active launch-block set changes.
          * This bypasses the normal recheck throttle so a newly active schedule
          * gates an already-open targeted app without waiting several seconds.
          */
-        fun onScheduleSetsChanged() {
+        fun onFocusSetsChanged() {
             val service = instance ?: return
             try {
                 Handler(Looper.getMainLooper()).post {
-                    runCatching { service.recheckScheduleBlock(force = true) }
+                    runCatching { service.recheckFocusBlock(force = true) }
                 }
             } catch (_: Throwable) {
             }
@@ -2416,7 +2416,7 @@ class SafeMeAccessibilityService : AccessibilityService() {
          * Surfaces that must stay reachable during a "block everything"
          * schedule so the user is never locked out of the device.
          */
-        private val SCHEDULE_SYSTEM_EXEMPT = setOf(
+        private val FOCUS_SYSTEM_EXEMPT = setOf(
             "com.android.systemui",
             "com.android.settings",
             "com.android.launcher3",

@@ -20,11 +20,11 @@ class BackupCodecTest {
             titleBlockRules = listOf(TitleBlockRule("id-1", "settings", TitleMatchMode.CONTAINS, true)),
             blockingEnabled = true,
         ),
-        schedules = SchedulePrefsState(
+        schedules = FocusPrefsState(
             schedules = listOf(
-                ScheduleBlock(
+                FocusSession(
                     id = "s1", name = "Study", days = listOf(0, 2), startMinute = 540, endMinute = 1380,
-                    mode = ScheduleMode.BOTH, appPackages = listOf("com.instagram.android"), enabled = true,
+                    mode = FocusMode.BOTH, appPackages = listOf("com.instagram.android"), enabled = true,
                 )
             ),
             a11yWarningDismissed = true,
@@ -98,7 +98,7 @@ class BackupCodecTest {
         val snapshot = successOf(decode(raw))
         assertEquals(1, snapshot.blocking?.blocklistKeywords?.size)
         assertEquals(BlockedCategory.SOCIAL_MEDIA, snapshot.blocking?.blocklistKeywords?.first()?.category)
-        assertEquals(listOf(BackupSection.BLOCKING, BackupSection.SCHEDULES), snapshot.presentSections)
+        assertEquals(listOf(BackupSection.BLOCKING, BackupSection.FOCUS_SESSIONS), snapshot.presentSections)
     }
 
     @Test
@@ -318,10 +318,10 @@ class BackupCodecTest {
     @Test
     fun schedules_wrapRuleSurvivesRoundTrip() {
         val base = fullSnapshot()
-        val wrap = ScheduleBlock(
+        val wrap = FocusSession(
             id = "bedtime", name = "Bedtime", days = listOf(0),
             startMinute = 22 * 60, endMinute = 7 * 60,
-            mode = ScheduleMode.BOTH, appPackages = listOf("com.tiktok"), enabled = true,
+            mode = FocusMode.BOTH, appPackages = listOf("com.tiktok"), enabled = true,
         )
         val original = base.copy(schedules = base.schedules?.copy(schedules = listOf(wrap)))
         assertEquals(original, successOf(decode(encode(original))))
@@ -330,10 +330,10 @@ class BackupCodecTest {
     @Test
     fun schedules_equalStartEndDroppedOnDecode() {
         val base = fullSnapshot()
-        val bad = ScheduleBlock(
+        val bad = FocusSession(
             id = "bad", name = "Bad", days = listOf(0),
             startMinute = 22 * 60, endMinute = 22 * 60,
-            mode = ScheduleMode.BOTH, appPackages = listOf("com.tiktok"), enabled = true,
+            mode = FocusMode.BOTH, appPackages = listOf("com.tiktok"), enabled = true,
         )
         val snapshot = base.copy(schedules = base.schedules?.copy(schedules = listOf(bad)))
         val decoded = successOf(decode(encode(snapshot)))

@@ -80,10 +80,10 @@ class SafeMeVpnService : VpnService() {
 
         /**
          * Packages whose internet must be blocked right now (per-app-block
-         * tunnel mode). Managed by [com.safeme.app.protect.ScheduleEngine].
+         * tunnel mode). Managed by [com.safeme.app.protect.FocusEngine].
          */
         @Volatile
-        var scheduledBlockApps: Set<String> = emptySet()
+        var focusBlockApps: Set<String> = emptySet()
 
         /**
          * True when a "block everything" schedule is internet-blocking: the
@@ -91,7 +91,7 @@ class SafeMeVpnService : VpnService() {
          * except SafeMe itself and the VPN whitelist.
          */
         @Volatile
-        var scheduledBlockAll: Boolean = false
+        var focusBlockAll: Boolean = false
 
         /**
          * Global schedule exclusions: apps that must never be blocked by any
@@ -100,7 +100,7 @@ class SafeMeVpnService : VpnService() {
          * engine filters them out before applying.
          */
         @Volatile
-        var scheduledExcludeApps: Set<String> = emptySet()
+        var focusExcludeApps: Set<String> = emptySet()
 
         /**
          * Applies the current scheduled internet-block set. Updates the
@@ -113,14 +113,14 @@ class SafeMeVpnService : VpnService() {
          *    can do silently, so the start is skipped);
          *  - nothing active → leaves the tunnel as-is.
          */
-        fun applyScheduledBlocks(packages: Set<String>, blockAll: Boolean, excluded: Set<String>, context: Context) {
-            scheduledBlockApps = packages
-            scheduledBlockAll = blockAll
-            scheduledExcludeApps = excluded
+        fun applyFocusBlocks(packages: Set<String>, blockAll: Boolean, excluded: Set<String>, context: Context) {
+            focusBlockApps = packages
+            focusBlockAll = blockAll
+            focusExcludeApps = excluded
             val intent = Intent(context, SafeMeVpnService::class.java)
             when {
                 isActive || VpnStatusStore.active.value -> intent.setAction(ACTION_RESTART)
-                (scheduledBlockAll || scheduledBlockApps.isNotEmpty()) &&
+                (focusBlockAll || focusBlockApps.isNotEmpty()) &&
                     VpnService.prepare(context) == null -> intent.setAction(ACTION_START)
                 else -> return
             }
@@ -169,7 +169,7 @@ class SafeMeVpnService : VpnService() {
                     // Scheduled internet blocks are independent of the cosmetic
                     // switch — re-arm the tunnel in block mode instead of
                     // letting the restriction silently lapse.
-                    if (hasScheduledInternetBlock()) {
+                    if (hasFocusInternetBlock()) {
                         startTunnel()
                     } else {
                         stopSelf()
@@ -180,7 +180,7 @@ class SafeMeVpnService : VpnService() {
                 dispatchCommand {
                     stopTunnel()
                     runBlocking { setVpnEnabled(false) }
-                    if (hasScheduledInternetBlock()) {
+                    if (hasFocusInternetBlock()) {
                         startTunnel()
                     } else {
                         stopSelf()
@@ -236,7 +236,7 @@ class SafeMeVpnService : VpnService() {
             // The tunnel runs when the VPN feature is on OR a schedule is
             // internet-blocking right now (mirrors the reference: scheduled
             // blocks keep enforcement even when the cosmetic switch is off).
-            if (!vpnSettings.enabled && !hasScheduledInternetBlock()) {
+            if (!vpnSettings.enabled && !hasFocusInternetBlock()) {
                 stopSelf()
                 return
             }
@@ -257,8 +257,8 @@ class SafeMeVpnService : VpnService() {
         }
     }
 
-    private fun hasScheduledInternetBlock(): Boolean =
-        scheduledBlockAll || scheduledBlockApps.isNotEmpty()
+    private fun hasFocusInternetBlock(): Boolean =
+        focusBlockAll || focusBlockApps.isNotEmpty()
 
     /**
      * Reference-style DNS-filtering tunnel: advertise the family-safe resolver
@@ -304,24 +304,24 @@ class SafeMeVpnService : VpnService() {
             // no internet while every other app keeps working. allowBypass()
             // must NOT be called here: it would let targeted apps circumvent
             // the block (same pattern as the reference / NetGuard).
-            val perAppBlockMode = scheduledBlockAll || scheduledBlockApps.isNotEmpty()
+            val perAppBlockMode = focusBlockAll || focusBlockApps.isNotEmpty()
             if (perAppBlockMode) {
                 runCatching { builder.addRoute("0.0.0.0", 0) }
                 runCatching { builder.addRoute("::", 0) }
-                if (scheduledBlockAll) {
+                if (focusBlockAll) {
                     // Block everything except SafeMe + the VPN whitelist.
                     runCatching { builder.addDisallowedApplication(packageName) }
                     vpnSettings.whitelist.forEach { pkg ->
                         runCatching { builder.addDisallowedApplication(pkg) }
                     }
                     // Excluded apps are also exempt from the block-all tunnel.
-                    scheduledExcludeApps.forEach { pkg ->
+                    focusExcludeApps.forEach { pkg ->
                         runCatching { builder.addDisallowedApplication(pkg) }
                     }
                 } else {
                     // Block only the targeted apps; SafeMe and whitelisted apps
                     // are not in the allowed list, so they bypass automatically.
-                    scheduledBlockApps.forEach { pkg ->
+                    focusBlockApps.forEach { pkg ->
                         runCatching { builder.addAllowedApplication(pkg) }
                     }
                 }
@@ -384,7 +384,7 @@ class SafeMeVpnService : VpnService() {
             val vpnSettings = runBlocking { dnsVpnSettings().first() }
             // A scheduled internet block keeps the tunnel alive even when the
             // cosmetic VPN switch is off (mirrors startTunnel's guard).
-            if (!vpnSettings.enabled && !hasScheduledInternetBlock()) {
+            if (!vpnSettings.enabled && !hasFocusInternetBlock()) {
                 stopSelf()
                 return
             }

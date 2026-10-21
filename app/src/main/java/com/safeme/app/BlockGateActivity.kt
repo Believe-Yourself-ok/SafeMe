@@ -146,15 +146,15 @@ private fun BlockGate(
     val locale = LocalConfiguration.current.locales[0]
     val defaultMessage = stringResource(R.string.bs_preview_msg_default)
     val puGateMessage = stringResource(R.string.pu_gate_message)
-    val scheduleGateMessage = stringResource(R.string.schedule_gate_message)
+    val focusGateMessage = stringResource(R.string.schedule_gate_message)
     // The persisted custom message is the gate message (default fallback), so
     // the live gate matches the Block Screen preview and the prototype.
     val msg = remember(prefs.message, defaultMessage, locale) {
         prefs.message.ifEmpty { defaultMessage }
     }
     // The block context is rendered inline by the shared overlay.
-    val whyReason = remember(pkg, matched, type, puGateMessage, scheduleGateMessage, locale) {
-        blockGateWhyReason(type, matched, puGateMessage, scheduleGateMessage)
+    val whyReason = remember(pkg, matched, type, puGateMessage, focusGateMessage, locale) {
+        blockGateWhyReason(type, matched, puGateMessage, focusGateMessage)
     }
     BlockOverlay(
         dwell = prefs.dwell,
