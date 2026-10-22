@@ -15,6 +15,36 @@ package com.safeme.app.protect
  * the other's behaviour — the property COD-79 asks for and the one the previous
  * design could not express (`lockType != OFF` meant "credential exists" and
  * "gate armed" at the same time).
+ *
+ * ## Scope boundary: what card 2 covers, and what it deliberately does not
+ *
+ * **Covered** — turning a protection OFF, and deleting protection the user
+ * configured (a schedule, a title rule, a blocklist keyword or website, the
+ * whole blocklist via reset). These are the "disabling protected features" the
+ * issue names, plus the bulk deletes that are equivalent to disabling.
+ *
+ * **Not covered** — *exemption* controls that narrow a protection which stays
+ * ON: the excluded-apps lists (Other Features, Schedules), the DNS whitelist,
+ * whitelisted keywords and trusted websites.
+ *
+ * That exclusion is a deliberate product decision, not an oversight, and it is
+ * worth being explicit about because these controls genuinely do reduce
+ * coverage — `ScheduleEngine` computes `blockedPackages - excludedApps`, so
+ * excluding an app is functionally the same as unblocking it. They are still
+ * left ungated because:
+ *
+ *  1. The feature remains enabled and working; the issue scopes card 2 to
+ *     *disabling* features, and adding an exception is not that.
+ *  2. Exceptions are the routine, intended way to use the product — whitelisting
+ *     a bank app, trusting a work site. A password prompt on the most common
+ *     operations in the app is friction that pushes users to switch the whole
+ *     protection off, which is a net security loss.
+ *  3. The mirror-image operations are ungated for the opposite reason: removing
+ *     an entry from an allow-list *strengthens* blocking, so it prompts for
+ *     nothing either.
+ *
+ * Revisit this boundary only with a product decision — it is recorded in
+ * docs/04-security-architecture.md §4 as well.
  */
 object DisableProtectionPolicy {
 
@@ -89,6 +119,15 @@ enum class ProtectedAction(
 
     /** Social Media Blocking — allowing a tab (Shorts / Reels / Spotlight). */
     SOCIAL_BLOCKING_TAB("social_tab"),
+
+    /**
+     * Social Media Blocking — applying a preset that removes protection the
+     * user currently has. "Relax" turns the master off and clears the whole-app
+     * list; "Balanced" clears the whole-app list; "Deep" can still shrink a
+     * hand-picked list larger than the default. Gated only when the preset
+     * actually weakens — applying a stronger one never prompts.
+     */
+    SOCIAL_PRESET_WEAKEN("social_preset_weaken"),
 
     /** DNS & VPN filtering off. The enable/re-enable paths are not gated. */
     DNS_VPN("dns_vpn"),

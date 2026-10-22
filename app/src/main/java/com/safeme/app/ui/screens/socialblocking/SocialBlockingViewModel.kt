@@ -1,7 +1,6 @@
 package com.safeme.app.ui.screens.socialblocking
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.data.InstalledApp
 import com.safeme.app.data.SocialBlockingPrefs
@@ -13,6 +12,8 @@ import com.safeme.app.data.setSocialSnapchat
 import com.safeme.app.data.setSocialWholeBlocked
 import com.safeme.app.data.setSocialYoutube
 import com.safeme.app.data.socialBlockingPrefs
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -38,7 +39,7 @@ data class SocialBlockingUiState(
     val isRelax: Boolean get() = preset == "relax"
 }
 
-class SocialBlockingViewModel(application: Application) : AndroidViewModel(application) {
+class SocialBlockingViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val app: Application get() = getApplication()
 
@@ -106,16 +107,56 @@ class SocialBlockingViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    // Every control below is split by direction for COD-79: turning blocking ON
+    // is never gated, while turning it OFF — or removing an app, a tab, or a
+    // preset's worth of protection — goes through guardDisable first. The write
+    // and its toast live inside the granted lambda, so a cancelled prompt cannot
+    // leave the UI announcing a change that never happened.
+
     fun toggleMaster() {
+        if (_uiState.value.enabled) {
+            guardDisable(ProtectedAction.SOCIAL_BLOCKING_MASTER) { applyMaster(false) }
+        } else {
+            applyMaster(true)
+        }
+    }
+
+    private fun applyMaster(next: Boolean) {
         viewModelScope.launch {
-            val cur = _uiState.value
-            val next = !cur.enabled
             app.setSocialBlockingEnabled(next)
             _toasts.emit(if (next) "Social Media Blocking — on" else "Social Media Blocking — off")
         }
     }
 
     fun applyPreset(which: String) {
+        if (presetWeakens(which)) {
+            guardDisable(ProtectedAction.SOCIAL_PRESET_WEAKEN) { applyPresetNow(which) }
+        } else {
+            applyPresetNow(which)
+        }
+    }
+
+    /**
+     * Whether [preset] would remove protection the user currently has.
+     *
+     * All three presets turn every tab on, so only the master flag and the
+     * whole-app set can shrink: "relax" flips the master off and clears the
+     * list, "balanced" clears the list, and "deep" overwrites the list with
+     * [SocialBlockingState.DEFAULT_WHOLE_BLOCKED] — which *reduces* it whenever
+     * the user hand-picked apps outside the default. Applying a strictly
+     * stronger preset never prompts.
+     */
+    private fun presetWeakens(preset: String): Boolean {
+        val cur = _uiState.value
+        return when (preset) {
+            "relax" -> cur.enabled || cur.wholeBlocked.isNotEmpty()
+            "balanced" -> cur.wholeBlocked.isNotEmpty()
+            "deep" -> (cur.wholeBlocked - SocialBlockingState.DEFAULT_WHOLE_BLOCKED).isNotEmpty()
+            else -> false
+        }
+    }
+
+    private fun applyPresetNow(which: String) {
         viewModelScope.launch {
             app.applySocialPreset(which)
             val label = when (which) {
@@ -134,57 +175,78 @@ class SocialBlockingViewModel(application: Application) : AndroidViewModel(appli
             viewModelScope.launch { _toasts.emit("Turn on Master first") }
             return
         }
+        if (pkg in cur.wholeBlocked) {
+            guardDisable(ProtectedAction.SOCIAL_BLOCKING_APP) {
+                applyLaunch(pkg, cur.wholeBlocked - pkg)
+            }
+        } else {
+            applyLaunch(pkg, cur.wholeBlocked + pkg)
+        }
+    }
+
+    /** Bulk set from the app picker. Gated only when it drops blocked apps. */
+    fun setWholeBlocked(pkgs: Set<String>) {
+        if ((_uiState.value.wholeBlocked - pkgs).isNotEmpty()) {
+            guardDisable(ProtectedAction.SOCIAL_BLOCKING_APP) { applyWholeBlocked(pkgs) }
+        } else {
+            applyWholeBlocked(pkgs)
+        }
+    }
+
+    private fun applyLaunch(pkg: String, next: Set<String>) {
         viewModelScope.launch {
-            val next = if (pkg in cur.wholeBlocked) cur.wholeBlocked - pkg else cur.wholeBlocked + pkg
             app.setSocialWholeBlocked(next)
             val name = pkg.substringAfterLast(".").takeIf { it.isNotEmpty() } ?: pkg
             _toasts.emit(if (pkg in next) "$name blocked" else "$name allowed")
         }
     }
 
-    fun setWholeBlocked(pkgs: Set<String>) {
+    private fun applyWholeBlocked(next: Set<String>) {
         viewModelScope.launch {
-            app.setSocialWholeBlocked(pkgs)
+            app.setSocialWholeBlocked(next)
             _toasts.emit(
-                if (pkgs.isEmpty()) "No whole-app blocks"
-                else "${SocialBlockingPrefs.displayCount(pkgs)} app${if (SocialBlockingPrefs.displayCount(pkgs) == 1) "" else "s"} blocked (whole-app)"
+                if (next.isEmpty()) "No whole-app blocks"
+                else "${SocialBlockingPrefs.displayCount(next)} app${if (SocialBlockingPrefs.displayCount(next) == 1) "" else "s"} blocked (whole-app)"
             )
         }
     }
 
-    fun toggleYoutube() {
-        val cur = _uiState.value
-        if (!cur.enabled) {
+    fun toggleYoutube() =
+        toggleTab("YouTube Shorts", _uiState.value.youtube) { app.setSocialYoutube(it) }
+
+    fun toggleFacebook() =
+        toggleTab("Facebook Reels", _uiState.value.facebook) { app.setSocialFacebook(it) }
+
+    fun toggleSnapchat() =
+        toggleTab("Snapchat Spotlight", _uiState.value.snapchat) { app.setSocialSnapchat(it) }
+
+    /**
+     * Shared shape for the three tab toggles, which were previously three
+     * near-identical copies. Turning a tab block OFF weakens protection and is
+     * gated; turning one ON never is. Toast wording and the "master first"
+     * guard are unchanged from the originals.
+     */
+    private fun toggleTab(
+        name: String,
+        currentlyBlocked: Boolean,
+        write: suspend (Boolean) -> Unit,
+    ) {
+        if (!_uiState.value.enabled) {
             viewModelScope.launch { _toasts.emit("Turn on Social Media Blocking first") }
             return
         }
-        viewModelScope.launch {
-            app.setSocialYoutube(!cur.youtube)
-            _toasts.emit(if (!cur.youtube) "YouTube Shorts blocked" else "YouTube Shorts allowed")
+        val next = !currentlyBlocked
+        if (currentlyBlocked) {
+            guardDisable(ProtectedAction.SOCIAL_BLOCKING_TAB) { applyTab(name, next, write) }
+        } else {
+            applyTab(name, next, write)
         }
     }
 
-    fun toggleFacebook() {
-        val cur = _uiState.value
-        if (!cur.enabled) {
-            viewModelScope.launch { _toasts.emit("Turn on Social Media Blocking first") }
-            return
-        }
+    private fun applyTab(name: String, next: Boolean, write: suspend (Boolean) -> Unit) {
         viewModelScope.launch {
-            app.setSocialFacebook(!cur.facebook)
-            _toasts.emit(if (!cur.facebook) "Facebook Reels blocked" else "Facebook Reels allowed")
-        }
-    }
-
-    fun toggleSnapchat() {
-        val cur = _uiState.value
-        if (!cur.enabled) {
-            viewModelScope.launch { _toasts.emit("Turn on Social Media Blocking first") }
-            return
-        }
-        viewModelScope.launch {
-            app.setSocialSnapchat(!cur.snapchat)
-            _toasts.emit(if (!cur.snapchat) "Snapchat Spotlight blocked" else "Snapchat Spotlight allowed")
+            write(next)
+            _toasts.emit(if (next) "$name blocked" else "$name allowed")
         }
     }
 

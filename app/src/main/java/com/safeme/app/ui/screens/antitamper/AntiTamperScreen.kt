@@ -44,6 +44,7 @@ import com.safeme.app.R
 import com.safeme.app.protect.DeviceAdminUtils
 import com.safeme.app.ui.components.ToastHost
 import com.safeme.app.ui.screens.blockscreen.InfoIcon
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 
@@ -106,6 +107,10 @@ fun AntiTamperScreen(
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp),
         )
     }
+
+    // COD-79: prompts before Deactivate, and before the PU flag is synced down
+    // after the system admin page reports the admin is gone.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

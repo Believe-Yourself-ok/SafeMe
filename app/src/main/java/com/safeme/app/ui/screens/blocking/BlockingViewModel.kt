@@ -135,6 +135,14 @@ class BlockingViewModel(application: Application) : ProtectedViewModel(applicati
         }
     }
 
+    /**
+     * Excluded apps bypass the content engine while blocking stays on. This is
+     * an *exemption* control, deliberately ungated — see the scope boundary in
+     * [com.safeme.app.protect.DisableProtectionPolicy]. It does reduce coverage
+     * (`excludedApps` is subtracted from what the engine acts on), but it is the
+     * routine way to keep a bank or work app usable, and prompting for it is the
+     * friction that makes users switch blocking off entirely.
+     */
     fun setExcludedApps(apps: Set<String>) {
         val sanitized = apps.map { it.trim() }.filter { it.isNotEmpty() }.toSet()
         val prev = _uiState.value.excludedApps

@@ -57,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
 import com.safeme.app.ui.components.ToastHost
 import com.safeme.app.ui.screens.blockscreen.InfoIcon
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 import kotlinx.coroutines.delay
@@ -131,6 +132,9 @@ fun AccessibilityProtectionScreen(
         }
         ToastHost(flow = viewModel.toasts)
     }
+
+    // COD-79: prompts before the master switch stops the guard watching.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

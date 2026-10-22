@@ -51,6 +51,7 @@ import com.safeme.app.data.NOTIF_HIDE
 import com.safeme.app.protect.ScheduleEngine
 import com.safeme.app.ui.components.SafeMeTextField
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.theme.LocalAppColors
 import com.safeme.app.vpn.DnsPreset
 import com.safeme.app.vpn.PrivateDnsFilter
@@ -182,6 +183,11 @@ fun DnsVpnScreen(
             onDismiss = { showAppsSheet = false },
         )
     }
+
+    // COD-79: prompts before DNS filtering is turned off. The re-enable path and
+    // the whitelist controls are not gated — see DisableProtectionPolicy's scope
+    // boundary.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

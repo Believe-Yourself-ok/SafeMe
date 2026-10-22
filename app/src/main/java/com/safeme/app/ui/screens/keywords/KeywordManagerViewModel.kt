@@ -114,6 +114,13 @@ class KeywordManagerViewModel(application: Application) : ProtectedViewModel(app
         }
     }
 
+    /**
+     * Adding a whitelisted keyword is an *exemption*, not a disable: blocking
+     * stays on and this carves one exception out of it. Deliberately ungated per
+     * the scope boundary in [com.safeme.app.protect.DisableProtectionPolicy] —
+     * prompting on routine exceptions is the friction that makes users switch
+     * the whole protection off.
+     */
     fun addWhitelist(value: String, success: String) {
         viewModelScope.launch {
             try {
@@ -176,6 +183,7 @@ class KeywordManagerViewModel(application: Application) : ProtectedViewModel(app
         }
     }
 
+    /** Ungated exemption — see [addWhitelist] for the reasoning. */
     fun addTrusted(domain: String, success: String) {
         viewModelScope.launch {
             try {

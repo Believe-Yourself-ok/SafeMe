@@ -1,7 +1,6 @@
 package com.safeme.app.ui.screens.antitamper
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.A11yProtectionPrefsState
@@ -10,6 +9,8 @@ import com.safeme.app.data.setA11yProtectionEnabled
 import com.safeme.app.protect.A11yProtectionGuard
 import com.safeme.app.protect.A11yProtectionStateHolder
 import com.safeme.app.protect.A11yProtectionUtils
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,7 +29,7 @@ data class A11yProtectionUiState(
  * State for the Accessibility Protection screen: the master toggle and the
  * WRITE_SECURE_SETTINGS grant state.
  */
-class AccessibilityProtectionViewModel(application: Application) : AndroidViewModel(application) {
+class AccessibilityProtectionViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val app = getApplication<Application>()
 
@@ -66,8 +67,23 @@ class AccessibilityProtectionViewModel(application: Application) : AndroidViewMo
         )
     }
 
-    /** Master on/off toggle — the feature's control. */
+    /**
+     * Master on/off toggle — the feature's control.
+     *
+     * COD-79: the ON direction runs straight through and also starts the guard
+     * watching. The OFF direction is gated, because `stopWatching()` is what
+     * actually disarms the protection — prompting only after that would leave
+     * the guard down while the user was still deciding.
+     */
     fun setEnabled(enabled: Boolean) {
+        if (enabled) {
+            applyEnabled(true)
+        } else {
+            guardDisable(ProtectedAction.ACCESSIBILITY_PROTECTION) { applyEnabled(false) }
+        }
+    }
+
+    private fun applyEnabled(enabled: Boolean) {
         viewModelScope.launch {
             try {
                 app.setA11yProtectionEnabled(enabled)

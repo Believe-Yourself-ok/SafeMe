@@ -681,8 +681,9 @@
     <string name="al_verify_purpose_admin_sync">remove SafeMe\'s device-admin protection</string>
     <string name="al_verify_purpose_a11y">turn off Accessibility Protection</string>
     <string name="al_verify_purpose_social_master">turn off Social Media Blocking</string>
-    <string name="al_verify_purpose_social_app">allow this app again</string>
+    <string name="al_verify_purpose_social_app">stop blocking these apps</string>
     <string name="al_verify_purpose_social_tab">allow this tab again</string>
+    <string name="al_verify_purpose_social_preset">apply a weaker blocking preset</string>
     <string name="al_verify_purpose_dns_vpn">turn off DNS filtering</string>
     <string name="al_verify_purpose_image_video">turn off image &amp; video search blocking</string>
     <string name="al_verify_purpose_schedule_item">turn off this schedule</string>

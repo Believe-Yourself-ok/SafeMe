@@ -120,7 +120,7 @@ class DisableProtectionPolicyTest {
      */
     @Test
     fun protectedAction_hasExactlyTheWiredSurfaces() {
-        assertEquals(20, ProtectedAction.entries.size)
+        assertEquals(21, ProtectedAction.entries.size)
     }
 
     @Test

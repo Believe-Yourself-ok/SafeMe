@@ -333,6 +333,7 @@ internal fun ProtectedAction.purposeRes(): Int = when (this) {
     ProtectedAction.SOCIAL_BLOCKING_MASTER -> R.string.al_verify_purpose_social_master
     ProtectedAction.SOCIAL_BLOCKING_APP -> R.string.al_verify_purpose_social_app
     ProtectedAction.SOCIAL_BLOCKING_TAB -> R.string.al_verify_purpose_social_tab
+    ProtectedAction.SOCIAL_PRESET_WEAKEN -> R.string.al_verify_purpose_social_preset
     ProtectedAction.DNS_VPN -> R.string.al_verify_purpose_dns_vpn
     ProtectedAction.IMAGE_VIDEO_SEARCH -> R.string.al_verify_purpose_image_video
     ProtectedAction.SCHEDULE_ITEM -> R.string.al_verify_purpose_schedule_item

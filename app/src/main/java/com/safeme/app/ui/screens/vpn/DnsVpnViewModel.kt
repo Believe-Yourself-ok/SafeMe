@@ -3,7 +3,6 @@ package com.safeme.app.ui.screens.vpn
 import android.app.Application
 import android.content.Intent
 import android.net.VpnService
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.data.AppCatalog
 import com.safeme.app.data.InstalledApp
@@ -15,7 +14,9 @@ import com.safeme.app.data.setVpnNotifCustom
 import com.safeme.app.data.setVpnNotifMode
 import com.safeme.app.data.setVpnPreset
 import com.safeme.app.data.setVpnWhitelist
+import com.safeme.app.protect.ProtectedAction
 import com.safeme.app.service.SafeMeVpnService
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import com.safeme.app.vpn.DnsPreset
 import com.safeme.app.vpn.PrivateDnsFilter
 import com.safeme.app.vpn.VpnStatusStore
@@ -49,7 +50,7 @@ data class DnsVpnUiState(
     val appsLoaded: Boolean = false,
 )
 
-class DnsVpnViewModel(application: Application) : AndroidViewModel(application) {
+class DnsVpnViewModel(application: Application) : ProtectedViewModel(application) {
 
     private companion object {
         /** Pause before persisting/refreshing the custom notification text. */
@@ -166,11 +167,18 @@ class DnsVpnViewModel(application: Application) : AndroidViewModel(application) 
         val state = _uiState.value
         if (state.loading) return
         when {
-            state.enabled && state.running -> disable()
+            // COD-79: this is the only weakening branch. `disable()` sets
+            // optimisticEnabled = false before it writes, so gating the whole
+            // call — not just the write inside it — is what keeps a cancelled
+            // prompt from flipping the switch visually.
+            state.enabled && state.running ->
+                guardDisable(ProtectedAction.DNS_VPN) { disable() }
             state.enabled && !state.running -> {
                 // The user's intent is "on" but the tunnel is down (e.g. the
                 // system disabled it, or a START_STICKY restart failed).
                 // Re-establish rather than flip the persisted state off.
+                // Never gated: this restores protection the user already asked
+                // for, it does not remove any.
                 reEnable()
             }
             else -> enable()
@@ -336,7 +344,16 @@ class DnsVpnViewModel(application: Application) : AndroidViewModel(application) 
         persistWhitelistOnce()
     }
 
-    /** Persists the current whitelist once and restarts the tunnel if needed. */
+    /**
+     * Persists the current whitelist once and restarts the tunnel if needed.
+     *
+     * Single choke point for all three whitelist controls (toggle one app,
+     * select all, deselect all), and deliberately ungated: whitelisting an app
+     * exempts it from DNS filtering while filtering itself stays ON, which makes
+     * it an *exemption* control rather than a disable. See the scope boundary in
+     * [com.safeme.app.protect.DisableProtectionPolicy] — the same rule that
+     * leaves the excluded-apps lists and the keyword/site allow-lists ungated.
+     */
     private fun persistWhitelistOnce() {
         viewModelScope.launch {
             getApplication<Application>().setVpnWhitelist(_uiState.value.whitelist)

@@ -57,6 +57,7 @@ import com.safeme.app.data.SocialBlockingPrefs
 import com.safeme.app.ui.components.GroupedAppPickerList
 import com.safeme.app.ui.components.SafeMeTextField
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.theme.LocalAppColors
 import com.safeme.app.ui.theme.SerifFamily
 
@@ -151,6 +152,10 @@ fun SocialBlockingScreen(
             onDismiss = { showPicker = false },
         )
     }
+
+    // COD-79: prompts before the master switch, an app block, a tab block or a
+    // weakening preset can remove protection.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable
