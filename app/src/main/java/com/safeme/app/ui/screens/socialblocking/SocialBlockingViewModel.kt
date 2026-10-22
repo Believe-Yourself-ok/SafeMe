@@ -129,30 +129,11 @@ class SocialBlockingViewModel(application: Application) : ProtectedViewModel(app
     }
 
     fun applyPreset(which: String) {
-        if (presetWeakens(which)) {
+        val cur = _uiState.value
+        if (presetWeakens(which, cur.enabled, cur.wholeBlocked)) {
             guardDisable(ProtectedAction.SOCIAL_PRESET_WEAKEN) { applyPresetNow(which) }
         } else {
             applyPresetNow(which)
-        }
-    }
-
-    /**
-     * Whether [preset] would remove protection the user currently has.
-     *
-     * All three presets turn every tab on, so only the master flag and the
-     * whole-app set can shrink: "relax" flips the master off and clears the
-     * list, "balanced" clears the list, and "deep" overwrites the list with
-     * [SocialBlockingState.DEFAULT_WHOLE_BLOCKED] — which *reduces* it whenever
-     * the user hand-picked apps outside the default. Applying a strictly
-     * stronger preset never prompts.
-     */
-    private fun presetWeakens(preset: String): Boolean {
-        val cur = _uiState.value
-        return when (preset) {
-            "relax" -> cur.enabled || cur.wholeBlocked.isNotEmpty()
-            "balanced" -> cur.wholeBlocked.isNotEmpty()
-            "deep" -> (cur.wholeBlocked - SocialBlockingState.DEFAULT_WHOLE_BLOCKED).isNotEmpty()
-            else -> false
         }
     }
 

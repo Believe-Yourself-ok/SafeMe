@@ -70,6 +70,12 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         _toasts.tryEmit(message)
     }
 
+    /**
+     * Not gated by COD-79, deliberately: this is a stub that emits a toast and
+     * deletes nothing, so there is no protection to weaken. If it ever becomes
+     * real it must gain a [com.safeme.app.protect.ProtectedAction] — deleting an
+     * account would remove every protection at once.
+     */
     fun deleteAccount() {
         val app = getApplication<Application>()
         _toasts.tryEmit(app.getString(R.string.prof_delete_toast))
