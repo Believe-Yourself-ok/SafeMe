@@ -1,7 +1,6 @@
 package com.safeme.app.ui.screens.schedule
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,6 +14,8 @@ import com.safeme.app.data.deleteSchedule
 import com.safeme.app.data.newScheduleId
 import com.safeme.app.data.schedulePrefs
 import com.safeme.app.data.updateSchedule
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +45,7 @@ data class ScheduleEditUiState(
 class ScheduleEditViewModel(
     application: Application,
     private val editId: String?,
-) : AndroidViewModel(application) {
+) : ProtectedViewModel(application) {
 
     private val _uiState = MutableStateFlow(ScheduleEditUiState(editId = editId))
     val uiState: StateFlow<ScheduleEditUiState> = _uiState.asStateFlow()
@@ -104,8 +105,23 @@ class ScheduleEditViewModel(
         _uiState.update { it.copy(mode = mode) }
     }
 
+    /**
+     * Editor on/off switch — a working copy that [save] persists.
+     *
+     * Gated here rather than in save() for the same reason as BlockScreen's
+     * "why" toggle: an unverified cancel leaves `enabled` true, so save()
+     * persists true, and the prompt never has to interleave with a call the
+     * screen awaits a Boolean from. Only the OFF direction of an already-enabled
+     * schedule is gated — flipping an off schedule off again protects nothing.
+     */
     fun setEnabled(value: Boolean) {
-        _uiState.update { it.copy(enabled = value) }
+        if (value || !_uiState.value.enabled) {
+            _uiState.update { it.copy(enabled = value) }
+        } else {
+            guardDisable(ProtectedAction.SCHEDULE_EDITOR_OFF) {
+                _uiState.update { it.copy(enabled = false) }
+            }
+        }
     }
 
     fun toggleApp(pkg: String) {
@@ -171,9 +187,17 @@ class ScheduleEditViewModel(
         return true
     }
 
+    /**
+     * Deleting the schedule outright — a strictly stronger form of switching it
+     * off, so COD-79 gates it the same way.
+     */
     fun delete() {
-        val app = getApplication<Application>()
         val id = _uiState.value.editId ?: return
+        guardDisable(ProtectedAction.SCHEDULE_DELETE) { applyDelete(id) }
+    }
+
+    private fun applyDelete(id: String) {
+        val app = getApplication<Application>()
         viewModelScope.launch {
             app.deleteSchedule(id)
             _toasts.tryEmit(app.getString(R.string.sche_toast_deleted))

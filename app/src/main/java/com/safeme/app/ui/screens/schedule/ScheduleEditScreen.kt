@@ -56,6 +56,7 @@ import com.safeme.app.data.ScheduleMode
 import com.safeme.app.data.scheduleTimeLabel
 import com.safeme.app.ui.components.SafeMeTextField
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 
@@ -196,6 +197,9 @@ fun ScheduleEditScreen(
             onDismiss = { showApps = false },
         )
     }
+
+    // COD-79: prompts before the editor can save a schedule as off, or delete it.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

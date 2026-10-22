@@ -1,7 +1,6 @@
 package com.safeme.app.ui.screens.titleblock
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.TitleBlockRule
@@ -11,6 +10,8 @@ import com.safeme.app.data.blockingPrefs
 import com.safeme.app.data.deleteTitleBlockRule
 import com.safeme.app.data.toggleTitleBlockRule
 import com.safeme.app.data.updateTitleBlockRule
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -34,7 +35,7 @@ data class TitleBlockUiState(
         get() = rules.count { it.enabled }
 }
 
-class TitleBlockViewModel(application: Application) : AndroidViewModel(application) {
+class TitleBlockViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val app = getApplication<Application>()
 
@@ -103,18 +104,30 @@ class TitleBlockViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    /** Deleting a rule removes protection the user configured, so COD-79 gates it. */
     fun deleteRule(id: String) {
-        viewModelScope.launch {
-            try {
-                app.deleteTitleBlockRule(id)
-                _toasts.tryEmit(app.getString(R.string.tb_toast_deleted))
-            } catch (t: Throwable) {
-                _toasts.tryEmit(failure())
+        guardDisable(ProtectedAction.TITLE_RULE_DELETE) {
+            viewModelScope.launch {
+                try {
+                    app.deleteTitleBlockRule(id)
+                    _toasts.tryEmit(app.getString(R.string.tb_toast_deleted))
+                } catch (t: Throwable) {
+                    _toasts.tryEmit(failure())
+                }
             }
         }
     }
 
+    /** Only the OFF direction weakens protection; turning a rule on never prompts. */
     fun toggleRule(id: String, enabled: Boolean) {
+        if (enabled) {
+            applyToggleRule(id, true)
+        } else {
+            guardDisable(ProtectedAction.TITLE_RULE) { applyToggleRule(id, false) }
+        }
+    }
+
+    private fun applyToggleRule(id: String, enabled: Boolean) {
         viewModelScope.launch {
             try {
                 app.toggleTitleBlockRule(id, enabled)

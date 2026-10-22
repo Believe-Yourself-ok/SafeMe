@@ -1,13 +1,14 @@
 package com.safeme.app.ui.screens.blockscreen
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.BLOCK_SCREEN_DEFAULT_DWELL
 import com.safeme.app.data.BlockScreenPrefsState
 import com.safeme.app.data.blockScreenPrefs
 import com.safeme.app.data.writeBlockScreenPrefs
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,7 @@ import kotlinx.coroutines.launch
  * whole working copy with [save]. Edits before a successful save stay in
  * memory only — leaving the screen without saving discards them.
  */
-class BlockScreenViewModel(application: Application) : AndroidViewModel(application) {
+class BlockScreenViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val _dwell = MutableStateFlow(BLOCK_SCREEN_DEFAULT_DWELL)
     val dwell: StateFlow<Int> = _dwell.asStateFlow()
@@ -62,8 +63,21 @@ class BlockScreenViewModel(application: Application) : AndroidViewModel(applicat
         _img.value = value
     }
 
+    /**
+     * The "why blocked" explanation toggle.
+     *
+     * This ViewModel keeps a working copy that [save] persists in one atomic
+     * edit, so the guard belongs here rather than in save(): gating the flip
+     * means an unverified cancel leaves `_whyOn` true and save() therefore
+     * persists true. Gating save() instead would mean interleaving a prompt with
+     * a suspend call the screen awaits a Boolean from.
+     */
     fun toggleWhy() {
-        _whyOn.value = !_whyOn.value
+        if (_whyOn.value) {
+            guardDisable(ProtectedAction.BLOCK_SCREEN_WHY) { _whyOn.value = false }
+        } else {
+            _whyOn.value = true
+        }
     }
 
     /**

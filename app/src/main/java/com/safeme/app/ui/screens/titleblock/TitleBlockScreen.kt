@@ -66,6 +66,7 @@ import com.safeme.app.ui.screens.blocking.BlkChevronRightIcon
 import com.safeme.app.ui.screens.blocking.BlkCrossIcon
 import com.safeme.app.ui.screens.blocking.BlkMenuIcon
 import com.safeme.app.ui.screens.blockscreen.InfoIcon
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.keywords.KwSearchIcon
 import com.safeme.app.ui.screens.keywords.KwTrashIcon
 import com.safeme.app.ui.screens.permissions.ChevronIcon
@@ -362,6 +363,9 @@ fun TitleBlockScreen(
             }
         }
     }
+
+    // COD-79: prompts before a title rule can be switched off or deleted.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

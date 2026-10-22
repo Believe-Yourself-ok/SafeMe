@@ -32,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
@@ -40,6 +39,9 @@ import com.safeme.app.data.DEFAULT_QUICK_ACTIONS
 import com.safeme.app.data.QuickActionType
 import com.safeme.app.data.quickActionPrefs
 import com.safeme.app.data.setQuickActions
+import com.safeme.app.protect.ProtectedAction
+import com.safeme.app.ui.screens.common.ProtectedActionHost
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +49,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class QuickActionsEditViewModel(application: Application) : AndroidViewModel(application) {
+class QuickActionsEditViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val _actions = MutableStateFlow<List<QuickActionType>>(DEFAULT_QUICK_ACTIONS)
     val actions: StateFlow<List<QuickActionType>> = _actions.asStateFlow()
@@ -78,8 +80,18 @@ class QuickActionsEditViewModel(application: Application) : AndroidViewModel(app
         })
     }
 
+    /**
+     * Removing a quick action is gated — not because the grid is security
+     * furniture, but because `QuickActionType.APPLOCK` is a route back into the
+     * lock settings, so removing it hides the guard's own configuration.
+     * Adding and reordering never prompt: they can only make the grid more
+     * useful, and `resetDefaults` cannot remove APPLOCK either, since
+     * DEFAULT_QUICK_ACTIONS includes it.
+     */
     fun remove(action: QuickActionType) {
-        persist(_actions.value.filter { it != action })
+        guardDisable(ProtectedAction.QUICK_ACTION_REMOVE) {
+            persist(_actions.value.filter { it != action })
+        }
     }
 
     fun add(action: QuickActionType) {
@@ -170,6 +182,9 @@ fun QuickActionsEditScreen(
             Spacer(Modifier.height(16.dp))
         }
     }
+
+    // COD-79: prompts before a quick action can be removed from the grid.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable

@@ -1,7 +1,6 @@
 package com.safeme.app.ui.screens.schedule
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.safeme.app.R
 import com.safeme.app.data.AppCatalog
@@ -19,7 +18,9 @@ import com.safeme.app.data.setExcludedApps
 import com.safeme.app.data.shouldShowA11yWarning
 import com.safeme.app.data.shouldShowExactAlarmWarning
 import com.safeme.app.data.toggleSchedule
+import com.safeme.app.protect.ProtectedAction
 import com.safeme.app.protect.ScheduleEvaluator
+import com.safeme.app.ui.screens.common.ProtectedViewModel
 import com.safeme.app.ui.util.isAccessibilityEnabled
 import com.safeme.app.ui.util.isExactAlarmGranted
 import java.util.Calendar
@@ -57,7 +58,7 @@ data class ScheduleUiState(
     val appsLoaded: Boolean = false,
 )
 
-class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
+class ScheduleViewModel(application: Application) : ProtectedViewModel(application) {
 
     private val _uiState = MutableStateFlow(ScheduleUiState())
     val uiState: StateFlow<ScheduleUiState> = _uiState.asStateFlow()
@@ -201,7 +202,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    /** Persists the global schedule-exclusion list. */
+    /**
+     * Persists the global schedule-exclusion list.
+     *
+     * Deliberately ungated: excluded apps are subtracted from what the engine
+     * blocks (`ScheduleEngine` computes `blockedPackages - excludedApps`), so
+     * this does reduce coverage — but it is an *exemption* control that leaves
+     * every schedule enabled. See the scope boundary in
+     * [com.safeme.app.protect.DisableProtectionPolicy].
+     */
     fun setExcludedApps(apps: Set<String>) {
         val app = getApplication<Application>()
         viewModelScope.launch { app.setExcludedApps(apps) }
@@ -246,14 +255,30 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /**
+     * Turns one schedule on or off from the list.
+     *
+     * COD-79: only the OFF direction weakens protection, so only it is gated.
+     * The toast moved inside the guarded path — it used to fire unconditionally
+     * beside the write, which would have announced "off" for a change the user
+     * then cancelled.
+     */
     fun toggleSchedule(id: String) {
         val current = _uiState.value.cards.firstOrNull { it.id == id }?.enabled ?: return
+        if (current) {
+            guardDisable(ProtectedAction.SCHEDULE_ITEM) { applyToggleSchedule(id, false) }
+        } else {
+            applyToggleSchedule(id, true)
+        }
+    }
+
+    private fun applyToggleSchedule(id: String, enabled: Boolean) {
         val app = getApplication<Application>()
         viewModelScope.launch {
-            app.toggleSchedule(id, !current)
+            app.toggleSchedule(id, enabled)
         }
         _toasts.tryEmit(
-            app.getString(if (current) R.string.sch_toast_off else R.string.sch_toast_on)
+            app.getString(if (enabled) R.string.sch_toast_on else R.string.sch_toast_off)
         )
     }
 

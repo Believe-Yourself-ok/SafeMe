@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
 import com.safeme.app.ui.components.blurredShadow
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 import com.safeme.app.ui.theme.SerifFamily
@@ -274,6 +275,9 @@ fun BlockScreen(onBack: () -> Unit) {
         )
     }
 
+
+    // COD-79: prompts before the "why blocked" explanation can be hidden.
+    ProtectedActionHost(vm)
 }
 
 @Composable

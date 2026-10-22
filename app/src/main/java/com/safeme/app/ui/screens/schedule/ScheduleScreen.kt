@@ -63,6 +63,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.screens.common.ProtectedActionHost
 import com.safeme.app.ui.screens.home.HomeAccessibilityIcon
 import com.safeme.app.ui.theme.LocalAppColors
 import com.safeme.app.ui.theme.SerifFamily
@@ -174,6 +175,9 @@ fun ScheduleScreen(
             )
         }
     }
+
+    // COD-79: prompts before a schedule can be switched off from the list.
+    ProtectedActionHost(viewModel)
 }
 
 @Composable
