@@ -109,3 +109,32 @@ phone/telecom) so the user can always escape.
 - Mutations go through `Context.addFocusSession` / `updateFocusSession` /
   `deleteFocusSession` / `toggleFocusSession`; the `focusPrefs()` flow notifies
   `SafeMeApp`, which calls `FocusEngine.apply` and re-arms the alarm.
+
+## 8. Persisted identifiers (frozen — do not rename)
+
+The FocusMe rename changed class names, files, routes and copy, but the values
+below live on disk, in backup files, in armed `PendingIntent`s or in the
+manifest. Changing any one of them silently drops user data or breaks restores,
+so `app/src/test/java/com/safeme/app/data/FrozenIdentifiersTest.kt` pins them:
+a rename that touches one of these values fails the unit-test suite instead of
+silently costing users their sessions or their backups.
+
+| Kind | Frozen value | Where |
+|---|---|---|
+| DataStore file | `schedule_prefs` | `FocusPrefs.kt` |
+| DataStore keys | `schedules_json`, `a11y_warn_dismissed`, `exact_alarm_warn_dismissed`, `excluded_apps` | `FocusPrefs.kt` |
+| Session JSON fields | `id`, `n`, `d`, `st`, `en`, `m`, `a`, `e` | `focusSessionsToJson` |
+| Mode wire names | `INTERNET`, `LAUNCH`, `BOTH` | `FocusMode.name` |
+| Backup section key | `schedules` (top level and nested) | `BackupCodec` |
+| Backup format | `safeme-backup`, schema `1` | `BackupCodec` |
+| Activity type | `schedule` (`ACTIVITY_FOCUS`) | `ActivityLog.kt` |
+| Quick-action id | `schedule` (`QuickActionType.FOCUS_SESSIONS.id`) | `QuickActionsPrefs.kt` |
+| Gate type token | `schedule` | a11y service → `BlockOverlayController` |
+| Alarm action | `com.safeme.app.action.SCHEDULE_BOUNDARY` | `FocusAlarmReceiver` + manifest |
+| Platform permission | `android.permission.SCHEDULE_EXACT_ALARM` | manifest |
+
+Kotlin property names `FocusPrefsState.schedules` and `BackupSnapshot.schedules`
+are intentionally identical to the frozen JSON key, so the model and the wire
+format can never drift apart. The same applies to `FocusMode`'s constant names
+and to the `"schedule"` string that the block gate passes between the
+accessibility service and the overlay.
