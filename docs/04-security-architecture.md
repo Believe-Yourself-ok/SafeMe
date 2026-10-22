@@ -70,6 +70,17 @@ adb shell pm grant com.safeme.app android.permission.WRITE_SECURE_SETTINGS
   the lock UI needs it to render the dot row and auto-submit. It leaks only
   length, which the prototype's dot row already shows.
 - Auto-lock delays: immediately / 15 s / 30 s / 1 m / 5 m / manual-only.
+- **Two independent protection flags** (COD-79), both defaulting to `true`:
+  `entryLockEnabled` and `disableProtectionEnabled`. Each has its own DataStore
+  key and its own single-key mutator, which is what makes them independent at
+  the storage layer rather than by convention. Derived from them:
+  `hasCredential`, `entryLockActive`, `disableProtectionActive`. Both default to
+  `true` so a store written by a pre-COD-79 build keeps gating entry exactly as
+  before — the upgrade is a no-op.
+- The credential is **retained** while either flag is off, and is destroyed only
+  by `setLock` (overwrite), `disableLock` (explicit removal, offered in the UI
+  solely when both protections are already off) or a backup restore. Turning
+  entry protection off therefore cannot weaken the feature-disabling guard.
 
 ### Verification & rate limiting (`protect/AppLockManager.kt`)
 
@@ -87,9 +98,74 @@ adb shell pm grant com.safeme.app android.permission.WRITE_SECURE_SETTINGS
 
 - `AppLockStateHolder` is fed by a DataStore collector in `SafeMeApp`; the
   gate reads it synchronously so a cold start can lock before the first frame.
+  Since COD-79 it holds **one immutable `AppLockPrefsState` snapshot** behind an
+  `AtomicReference`, with each setting exposed as a lens onto it, instead of one
+  `@Volatile var` per field. The old shape forced `setLock` / `disableLock` to
+  rebuild a full state by hand and list every field, so any field added later
+  silently reverted to its default — with the COD-79 flags defaulting to `true`,
+  changing your lock would have re-armed a protection you had turned off. Both
+  paths now go through `snapshot().copy(...)`. The single snapshot also removes
+  torn reads, and `updateAndGet` keeps the lenses race-free between the
+  `Dispatchers.Default` collector and the ViewModel's main-thread writes.
+- `AppLockGateController` reads only `AppLockStateHolder.enabled`, which is
+  `entryLockActive`. All four of its branches therefore honour card 1 with no
+  gate logic of their own — the split lives in one place and cannot drift.
 - `MainActivity.onStart` → `onAppForeground()` applies the auto-lock delay;
   `onStop` → `onAppBackground()`.
-- `AppLockBiometrics` wraps the BiometricPrompt for the biometric unlock path.
+- `AppLockBiometrics` wraps the BiometricPrompt for the biometric unlock path
+  (entry gate only — see below).
+
+### Two protections, one credential (COD-79)
+
+Before COD-79, `AppLockStateHolder.enabled == (lockType != OFF)` was the sole
+gate input, so three distinct facts were collapsed into one: *a credential
+exists*, *the entry gate is armed*, and *the App Lock UI is on*. That made "open
+the app without the app lock" impossible without also destroying the credential
+that feature-disabling protection has to verify against.
+
+| | card 1 — App entry password | card 2 — Feature disabling password |
+|---|---|---|
+| gates | opening the app | turning a protection **off** |
+| armed when | `entryLockEnabled && hasCredential` | `disableProtectionEnabled && hasCredential` |
+| prompt | full-screen `AppLockUnlockOverlay` | `AppLockVerifySheet` bottom sheet |
+| gated itself? | never, in either direction | only in the OFF direction |
+
+Neither decision can see the other card's flag — `protect/DisableProtectionPolicy`
+takes them as separate parameters — so independence is structural rather than a
+convention someone has to remember. Enabling anything never prompts, and there is
+no enable-direction `ProtectedAction` with which to express one by mistake.
+
+Card 2's own OFF switch **is** gated (`DISABLE_PROTECTION_ITSELF`). It disarms
+every other guard at once, so without a prompt anyone who reached the App Lock
+screen with card 1 off could switch card 2 off too and the whole feature would be
+worthless.
+
+Both cards are inert until a credential exists. Arming either without one would be
+a promise the app cannot keep: card 1 would raise the unlock overlay's
+`LockType.OFF` branch, which renders no input at all — a full-screen dead end —
+and card 2 would prompt for a password the user never set.
+
+**Scope boundary — what card 2 does *not* cover.** Exemption controls that narrow
+a protection which stays ON are deliberately ungated: the excluded-apps lists
+(Other Features, Schedules), the DNS whitelist, whitelisted keywords and trusted
+websites. These genuinely reduce coverage — `ScheduleEngine` computes
+`blockedPackages - excludedApps`, so excluding an app is functionally the same as
+unblocking it — and are left ungated anyway, because the feature remains enabled
+and working, exceptions are the routine intended way to use the product, and a
+prompt on the most common operations in the app is exactly the friction that makes
+users switch the whole protection off (a net security loss). Deleting protection
+the user configured *is* gated: a schedule, a title rule, a blocklist keyword or
+website, and the whole blocklist via Keyword Manager's reset. Revisit this
+boundary only with a product decision.
+
+The verify sheet shares `AppLockManager`'s rate limiter with the entry gate,
+deliberately: two independent counters would let an attacker burn ten guesses per
+surface against the same single secret. It has **no biometric path** — a
+fingerprint says "this is the owner" but weakly authorises "weaken a protection",
+the system prompt is easy to trigger by accident, and `AppLockBiometrics.launch`
+needs a `FragmentActivity` host that not every gated screen guarantees. A
+cancelled, dismissed or failed prompt writes nothing at all, so the feature stays
+enabled.
 
 ## 3. Prevent Uninstall & Device Admin
 
@@ -107,7 +183,19 @@ which the accessibility guards intercept while Prevent Uninstall is on.
   ROMs (MIUI, EMUI).
 - Activation goes through `DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN`; there
   is no trusted result, so the Anti-Tamper screen re-checks `isActive()` on
-  resume.
+  resume. **Since COD-79 that re-check is gated when it would sync the PU flag
+  OFF** (`ProtectedAction.ANTI_TAMPER_ADMIN_SYNC`), because that write is what
+  disarms the guards below. On a cancelled prompt the flag stays ON while
+  `adminActive` still reports the real `false`.
+  This deliberately relaxes the invariant the old `refreshAdminActive()` KDoc
+  stated — that the PU flag always tracks the actual admin state, so the guards
+  cannot drift after a crash between "admin became active" and "flag persisted".
+  It is relaxed in one direction only and fails toward protection: the guards
+  keep running although the admin is gone, which can over-block but never
+  under-block. The UI still shows the true admin state, so nothing is
+  misrepresented to the user, and the next verified sync (or an explicit
+  Deactivate) reconciles the two. Syncing the flag ON after activation is never
+  gated. This section is now where that qualified invariant is recorded.
 - Every call is try/catch wrapped; the safe fallback is `false` / no-op.
 
 ### Accessibility guards (`service/SafeMeAccessibilityService.handlePreventUninstall`)
@@ -186,7 +274,11 @@ feature on AND consent granted):
 1. `master` — blocking switch
 2. `accessibility` — service enabled
 3. `vpn` — DNS filter active
-4. `appLock` — a lock type configured
+4. `appLock` — the entry gate is **armed** (`entryLockActive`: card 1 on *and* a
+   credential stored). Since COD-79 this is no longer "a lock type configured" —
+   a stored credential with entry protection off does not stop the app opening,
+   so counting it as an active layer would overstate the shield ring.
+   `evaluate()`'s signature is unchanged, so the layer count stays 10.
 5. `a11yProtection` — protection switch on
 6. `preventUninstall` — PU flag on
 7. `schedules` — ≥1 enabled schedule

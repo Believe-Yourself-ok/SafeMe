@@ -90,7 +90,22 @@ Notes:
   VPN apply) must stay safe to call repeatedly from any thread.
 - **Backup parity:** any new persisted domain should be added to
   `BackupSection` + `BackupSnapshot` + `backupStores()` + the codec's
-  `toJson`/`parse` pair so backups capture it.
+  `toJson`/`parse` pair so backups capture it. (The COD-79 protection flags
+  deliberately did *not* add a section — they ride inside the existing
+  `APP_LOCK` one, so restore/rollback is unchanged and an old backup parses
+  both to `true`.)
+- **Guarded disables (COD-79):** any ViewModel action that turns a protection
+  off, or deletes one the user configured, extends
+  `ui/screens/common/ProtectedViewModel` and wraps the write in
+  `guardDisable(ProtectedAction.X) { … }`; its screen then adds a single
+  `ProtectedActionHost(viewModel)`. The optimistic UI flip and any toast belong
+  **inside** that lambda — with a prompt in between, flipping first leaves the
+  switch looking off after the user cancels and announces a change that never
+  happened. New surfaces go in `ProtectedAction` (its size is pinned by
+  `DisableProtectionPolicyTest`) and in `purposeRes()`, whose exhaustive `when`
+  makes a missing description a compile error. Never gate the enable direction,
+  and never gate the exemption controls — see the scope boundary in
+  [04 §2](04-security-architecture.md).
 
 ### UI
 
@@ -136,6 +151,17 @@ not the obvious "what".
 - Don't add per-frame allocations to draw paths; gate periodic background
   work by need.
 - Backup restore must validate before writing and roll back on failure.
+- Keep the two COD-79 protections independent: `entryLockActive` must never
+  depend on `disableProtectionEnabled` or vice versa, and neither toggle may
+  destroy the stored credential — card 2 has to verify against it. Rebuild
+  `AppLockStateHolder` with `snapshot().copy(...)`, never a hand-written
+  `AppLockPrefsState(...)`; the latter silently resets every field added later,
+  which is how a "change lock" tap once would have re-armed a protection the
+  user had turned off.
+- Never arm a protection without a credential. `entryLockActive` and
+  `disableProtectionActive` both require `hasCredential`, because the unlock
+  overlay renders no input for `LockType.OFF` — an armed gate with no credential
+  is a full-screen dead end with no way past it.
 
 ## 6. CI/CD
 

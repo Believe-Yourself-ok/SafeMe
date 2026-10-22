@@ -70,6 +70,7 @@ Material 3's `colorScheme` maps these tokens onto M3 roles (`primary`,
 | `Effects.blurredShadow` | Design-language soft shadow behind cards; lazily builds `Paint`/`BlurMaskFilter` once per modifier and reuses across frames |
 | `GroupedAppPicker` | Shared grouped picker (category header + bordered card of rows + search filter) used by schedule apps and VPN whitelist; row rendering is injected per screen |
 | `AppCategoryHeader` | The uppercase 11.5 sp/800 category label from the prototype |
+| `AppLockVerifySheet` *(lives in `ui/screens/applock/`, shared by 14 screens)* | COD-79 credential prompt shown before a protection is weakened. A `ModalBottomSheet` (`skipPartiallyExpanded`, 26 dp top corners, `surface`) that reuses `GrabBar`, `GhostButton`, `PinDots`/`PinKeypad`/`PasswordField`/`PatternGrid`/`shakeEffect` and the gate's own `methodLabel`/`formatLockout`, so it reads as part of the App Lock family rather than a new component. Those four were widened from `private` to `internal` **in place** for exactly that reason. Mounted per screen by `ProtectedActionHost(viewModel)` (`ui/screens/common/`). A sheet rather than the full-screen overlay on purpose: it keeps the switch the user just tapped visible, and being dismissible is what makes back / swipe / scrim-tap all resolve to "cancelled, feature stays on" |
 
 ### Card language
 

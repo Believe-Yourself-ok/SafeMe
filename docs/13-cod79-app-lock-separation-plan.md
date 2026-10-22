@@ -2,8 +2,122 @@
 
 **Implementation plan** · Linear [COD-79](https://linear.app/code-bro/issue/COD-79/open-app-without-the-app-lock) · project *SafeMe* · label `Feature` · priority Urgent
 
-> Plan-only document. No production code has been modified. Every claim below is
-> verified against the working tree at `faf4ede` (branch `main`).
+> Originally plan-only, written against `faf4ede` (branch `main`). **It has since
+> been implemented** on branch `feat/cod-79-app-lock-separation`. Read §0 first:
+> it records every place the shipped code differs from the plan below, and why.
+> The remaining sections are the original analysis and are still the citation
+> index for *why* each change was needed, but where §0 and the plan disagree,
+> **§0 and the code win**.
+
+---
+
+## 0. As-built delta (what actually shipped)
+
+Everything below diverges from the plan in later sections. Nothing here is a
+TODO — it is the record of decisions taken during implementation.
+
+### `ProtectedAction` grew 14 → 21
+
+The plan's §4/§7/§9 say 14 values and ~16 gate sites. Shipped: **21 values, 22
+`guardDisable` sites, 14 `ProtectedActionHost` mounts across 13 ViewModels**
+(`BlockingViewModel` is hosted by two screens — Navigation Compose scopes each
+destination separately, so `BlockingScreen` and `OtherFeaturesScreen` hold
+distinct instances).
+
+Added while wiring, each found by verifying call sites rather than trusting the
+original list:
+
+| Value | Why it was missing |
+|---|---|
+| `ANTI_TAMPER_ADMIN_SYNC` | `refreshAdminActive()` syncs the PU flag down when the system admin page reports the admin is gone — a second way out of Anti-Tamper besides `deactivate()`. Gated by product decision. |
+| `SCHEDULE_DELETE` | `ScheduleEditViewModel.delete()` — deleting is a strictly stronger form of switching off. |
+| `TITLE_RULE_DELETE` | `TitleBlockViewModel.deleteRule()`. |
+| `KEYWORD_DELETE` / `WEBSITE_DELETE` | Blocklist deletions. Allow-list removals (`removeWhitelist`, `removeTrusted`) are **not** gated — they strengthen blocking. |
+| `BLOCKLIST_RESET` | `KeywordManagerViewModel.resetCustom()` wipes every user keyword, website and title rule in one tap and is wired at `KeywordManagerScreen.kt:301`. Found by sweeping the data layer for every weakening function reachable from the UI. The largest single weakening in the app. |
+| `SOCIAL_PRESET_WEAKEN` | `applyPreset` was assumed to be either strengthening or the master toggle. In fact `"deep"` **overwrites** the whole-app list with `DEFAULT_WHOLE_BLOCKED`, so it silently unblocks any hand-picked app outside that default. Gated only when `presetWeakens(...)` is true, so a strictly stronger preset never prompts. |
+
+`DisableProtectionPolicyTest.protectedAction_hasExactlyTheWiredSurfaces` pins the
+size, and `purposeRes()` is an exhaustive `when` with no `else`, so a future
+surface without wiring or without copy fails the build.
+
+### Verified ungated, with the reasoning recorded at each site
+
+- **Exemption controls** — excluded-apps lists (Other Features, Schedules), DNS
+  whitelist, whitelisted keywords, trusted websites. These genuinely reduce
+  coverage (`ScheduleEngine` computes `blockedPackages - excludedApps`), and are
+  left ungated by product decision: the feature stays enabled, exceptions are the
+  routine intended way to use the product, and prompting on the most common
+  operations is the friction that makes users switch protection off entirely.
+  Documented in `DisableProtectionPolicy` and docs/04 §2.
+- **`QuickActionsEditViewModel.resetDefaults`** — verified `DEFAULT_QUICK_ACTIONS`
+  *includes* `APPLOCK`, so resetting can only restore that shortcut, never remove
+  it.
+- **`updateKeyword` / `updateWebsite`** — an edit swaps one blocked entry for
+  another; the blocked count does not drop.
+- **`ProfileViewModel.deleteAccount`** — a stub that emits a toast and deletes
+  nothing. Commented so a future implementer knows it must gain an action.
+- **`DnsVpnViewModel`'s re-enable branch** — restores a tunnel the user already
+  asked for.
+
+### "Remove stored lock" replaced the red button instead of just deleting it
+
+The plan said to delete `DisableButton` and its dialog. Doing only that would have
+removed the **only** way to delete a stored credential — a regression of an
+existing capability, since card 1 off deliberately retains it. It ships as
+`RemoveLockButton`, rendered solely when `AppLockUiState.credentialIdle` (a
+credential exists but neither protection is using it). It cannot undermine either
+card there, so it needs no prompt, and `AppLockManager.disableLock()` stays
+reachable instead of becoming dead code.
+
+### Two working-copy ViewModels gate the flip, not the save
+
+`ScheduleEditViewModel.setEnabled` and `BlockScreenViewModel.toggleWhy` mutate a
+working copy that an explicit `save()` persists. The guard goes on the flip: an
+unverified cancel leaves the copy unchanged, so `save()` persists the protected
+value. Gating `save()` instead would mean interleaving a prompt with a suspend
+call the screen awaits a `Boolean` from, and would let an unverified edit sit in
+the copy waiting to be committed by an unrelated later save.
+
+### Other deltas
+
+- **`HomeViewModel` was reparented after all.** The plan listed it as an exception;
+  the exception only ever applied to *not* folding `disableGate()` into its
+  five-flow `combine`. It still needs `guardDisable(MASTER_BLOCKING)`, so it
+  extends `ProtectedViewModel` like the rest and reads `lastAppLock.entryLockActive`
+  for shield-ring layer 4.
+- **`ProtectedViewModel` has no abstract members.** The plan specified
+  `abstract applyProtectedDisable(action)`; the shipped `guardDisable(action) { … }`
+  takes a lambda instead, so each call site states its own effect once rather than
+  every subclass maintaining an action→effect `when` that can drift.
+- **The shared host lives in its own file.** `ui/screens/common/ProtectedActionHost.kt`
+  alongside `ProtectedViewModel.kt`, rather than both in one file — keeping Compose
+  out of the ViewModel file.
+- **`methodLabel` / `formatLockout` were widened in place**, not moved to
+  `AppLockInputs.kt`. Same-package `internal` is enough, and it avoids touching two
+  files for no behavioural gain.
+- **`AppLockStateHolder` holds one immutable snapshot** behind an `AtomicReference`
+  with lens accessors, rather than gaining two more `@Volatile var` fields plus a
+  `snapshot()` that could not reproduce `storedHash`. This is what makes the
+  `snapshot().copy(...)` fix from §10 possible at all, and it removes torn reads.
+- **`SocialBlockingViewModel`'s three tab toggles** were three near-identical
+  copies; they now share `toggleTab`/`applyTab`. Toast wording and the "master
+  first" guard are byte-identical to the originals.
+- **`presetWeakens` was extracted** to `ui/screens/socialblocking/SocialPresetPolicy.kt`
+  as a pure `internal` function so its branching — including the `"deep"` case
+  above — is JVM-tested (`SocialPresetPolicyTest`).
+- **CI itself needed fixing first.** Every run on every branch was red from
+  2026-09-12 onward: `android-actions/setup-android@v3` defaults to
+  `packages: tools platform-tools`, and Google removed the legacy `tools` package
+  from the SDK repository, so `sdkmanager tools` exits 1 before any build step.
+  Fixed in its own commit by passing `packages: platform-tools` in both jobs that
+  call the action. Other open branches need to rebase onto it to get CI back.
+
+### Verification status
+
+Every phase was pushed and verified by GitHub Actions (unit tests, Android lint,
+debug APK and release APK on both matrix legs) — there is no local Android
+toolchain in this environment, so CI was the only build loop. The 15-row manual
+device matrix in §5 phase 9 has **not** been executed; it needs a physical device.
 
 ---
 
