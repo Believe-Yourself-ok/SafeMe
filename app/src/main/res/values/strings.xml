@@ -2,6 +2,13 @@
 <resources>
     <string name="app_name">SafeMe</string>
 
+    <!-- Unsaved-changes warning (shared editor guard, COD-81) -->
+    <string name="unsaved_title">Unsaved changes</string>
+    <string name="unsaved_body">You have unsaved changes. If you leave without saving, they will be lost.</string>
+    <string name="unsaved_keep">Keep Editing</string>
+    <string name="unsaved_save_exit">Save &amp; Exit</string>
+    <string name="unsaved_discard">Discard Changes</string>
+
     <string name="perm_back">Back</string>
     <string name="perm_required_badge">Required</string>
     <string name="perm_grant">Grant</string>

@@ -1,6 +1,7 @@
 package com.safeme.app.ui.screens.blockscreen
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safeme.app.R
+import com.safeme.app.ui.components.UnsavedChangesDialog
 import com.safeme.app.ui.components.blurredShadow
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
@@ -68,6 +71,13 @@ fun BlockScreen(onBack: () -> Unit) {
     var showImgSheet by remember { mutableStateOf(false) }
     var showMsgSheet by remember { mutableStateOf(false) }
     var showOverlay by remember { mutableStateOf(false) }
+
+    // COD-81: guard user-initiated exits (chevron + system Back) while the
+    // working copy holds unsaved changes. A successful Save Changes refreshes
+    // the baseline, so a later exit is clean and never warns.
+    val hasUnsavedChanges by vm.hasUnsavedChanges.collectAsState()
+    var showUnsavedDialog by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = hasUnsavedChanges) { showUnsavedDialog = true }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -87,7 +97,11 @@ fun BlockScreen(onBack: () -> Unit) {
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                HeaderRow(onBack)
+                HeaderRow(
+                    onBack = {
+                        if (hasUnsavedChanges) showUnsavedDialog = true else onBack()
+                    },
+                )
 
                 PreviewCard(dwell, message, img)
 
@@ -271,6 +285,33 @@ fun BlockScreen(onBack: () -> Unit) {
                     context, R.string.bs_toast_msg_saved, Toast.LENGTH_SHORT
                 ).show()
             }
+        )
+    }
+
+    // Show only while actually dirty: a restored flag over a clean editor
+    // (process death + recreate) must never warn (COD-81 review F3).
+    if (showUnsavedDialog && hasUnsavedChanges) {
+        UnsavedChangesDialog(
+            onKeepEditing = { showUnsavedDialog = false },
+            onSaveAndExit = {
+                showUnsavedDialog = false
+                scope.launch {
+                    // Same persistence + feedback as the Save Changes button
+                    // (android Toast survives navigation); only a successful
+                    // save performs the requested exit.
+                    val ok = vm.save()
+                    Toast.makeText(
+                        context,
+                        if (ok) R.string.bs_toast_changes_saved else R.string.bs_toast_save_failed,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    if (ok) onBack()
+                }
+            },
+            onDiscardChanges = {
+                showUnsavedDialog = false
+                onBack()
+            },
         )
     }
 

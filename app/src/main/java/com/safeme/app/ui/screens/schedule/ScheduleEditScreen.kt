@@ -1,5 +1,6 @@
 package com.safeme.app.ui.screens.schedule
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +34,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +58,7 @@ import com.safeme.app.data.ScheduleMode
 import com.safeme.app.data.scheduleTimeLabel
 import com.safeme.app.ui.components.SafeMeTextField
 import com.safeme.app.ui.components.ToastHost
+import com.safeme.app.ui.components.UnsavedChangesDialog
 import com.safeme.app.ui.screens.permissions.ChevronIcon
 import com.safeme.app.ui.theme.LocalAppColors
 
@@ -82,6 +85,13 @@ fun ScheduleEditScreen(
     var timeTarget by remember { mutableStateOf<TimeTarget?>(null) }
     var showApps by remember { mutableStateOf(false) }
 
+    // COD-81: guard user-initiated exits (chevron + system Back) while the
+    // working copy holds unsaved changes. Programmatic exits (done after
+    // save/delete) call onBack() directly and bypass the dialog by design.
+    val hasUnsavedChanges by viewModel.hasUnsavedChanges.collectAsState()
+    var showUnsavedDialog by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = hasUnsavedChanges) { showUnsavedDialog = true }
+
     LaunchedEffect(Unit) {
         viewModel.done.collect { onBack() }
     }
@@ -98,7 +108,9 @@ fun ScheduleEditScreen(
                 title = stringResource(
                     if (editId != null) R.string.sche_title_edit else R.string.sche_title_new
                 ),
-                onBack = onBack,
+                onBack = {
+                    if (hasUnsavedChanges) showUnsavedDialog = true else onBack()
+                },
             )
             EnabledRow(
                 enabled = state.enabled,
@@ -160,6 +172,26 @@ fun ScheduleEditScreen(
         ToastHost(
             flow = viewModel.toasts,
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp),
+        )
+    }
+
+    // Show only while actually dirty: a restored flag over a clean editor
+    // (process death + recreate) must never warn (COD-81 review F3).
+    if (showUnsavedDialog && hasUnsavedChanges) {
+        UnsavedChangesDialog(
+            onKeepEditing = { showUnsavedDialog = false },
+            onSaveAndExit = {
+                // Same as tapping the screen's Save/Create button: success
+                // exits via the existing done → onBack() path; validation
+                // failure keeps the user here. The dialog closes either way so
+                // the validation toast (ToastHost) is never behind its scrim.
+                showUnsavedDialog = false
+                viewModel.save()
+            },
+            onDiscardChanges = {
+                showUnsavedDialog = false
+                onBack()
+            },
         )
     }
 

@@ -69,6 +69,7 @@ Material 3's `colorScheme` maps these tokens onto M3 roles (`primary`,
 | `ToastHost` | Displays non-blocking toasts fed by a `SharedFlow<String>` — the standard "operation succeeded/failed" feedback channel |
 | `Effects.blurredShadow` | Design-language soft shadow behind cards; lazily builds `Paint`/`BlurMaskFilter` once per modifier and reuses across frames |
 | `GroupedAppPicker` | Shared grouped picker (category header + bordered card of rows + search filter) used by schedule apps and VPN whitelist; row rendering is injected per screen |
+| `UnsavedChangesDialog` | COD-81 unsaved-changes guard shown when exiting a buffered editor (`ScheduleEditScreen`, `BlockScreen`) — Keep Editing / Save & Exit / Discard Changes; scrim/back keeps editing |
 | `AppCategoryHeader` | The uppercase 11.5 sp/800 category label from the prototype |
 
 ### Card language
@@ -113,6 +114,10 @@ Other routes are pushed sub-screens with horizontal slide transitions
   intentionally not consumed — see the comment in `MainScreen.kt`).
 - Each screen has a back-chevron header (`ChevronIcon` in a 40 dp rounded
   chip) except the bottom-tab roots.
+- Buffered editors (`ScheduleEditScreen`, `BlockScreen`) intercept the
+  chevron and system Back with `UnsavedChangesDialog` while their working
+  copy holds unsaved changes (COD-81); saved or untouched content exits
+  without a warning, and save/delete-driven exits never warn.
 - Long screens use `verticalScroll`; pickers use `LazyColumn`.
 
 ## 4. Home screen anatomy (reference screen)

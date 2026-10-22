@@ -9,9 +9,12 @@ import com.safeme.app.data.BlockScreenPrefsState
 import com.safeme.app.data.blockScreenPrefs
 import com.safeme.app.data.writeBlockScreenPrefs
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -37,6 +40,23 @@ class BlockScreenViewModel(application: Application) : AndroidViewModel(applicat
     private val _whyOn = MutableStateFlow(true)
     val whyOn: StateFlow<Boolean> = _whyOn.asStateFlow()
 
+    /** COD-81: default preview message; a blank working copy ≡ this value. */
+    private val defaultPreviewMessage: String =
+        application.getString(R.string.bs_preview_msg_default)
+
+    /**
+     * COD-81: working copy at load time / last successful save; null until
+     * the initial load completes.
+     */
+    private val baseline = MutableStateFlow<BlockScreenSnapshot?>(null)
+
+    /** COD-81: true while the working copy holds changes that were never saved. */
+    val hasUnsavedChanges: StateFlow<Boolean> =
+        combine(baseline, _dwell, _message, _img, _whyOn) { base, dwell, message, img, whyOn ->
+            val current = BlockScreenSnapshot(dwell, message, img, whyOn)
+            base != null && isBlockScreenDirty(base, current, defaultPreviewMessage)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     init {
         viewModelScope.launch {
             val app = getApplication<Application>()
@@ -47,6 +67,9 @@ class BlockScreenViewModel(application: Application) : AndroidViewModel(applicat
             }
             _img.value = stored.img
             _whyOn.value = stored.whyOn
+            // COD-81: the just-loaded working copy is the clean baseline.
+            baseline.value =
+                BlockScreenSnapshot(_dwell.value, _message.value, _img.value, _whyOn.value)
         }
     }
 
@@ -72,14 +95,53 @@ class BlockScreenViewModel(application: Application) : AndroidViewModel(applicat
      * never a crash, and the in-memory working copy is left untouched so the
      * user can retry.
      */
-    suspend fun save(): Boolean = runCatching {
-        getApplication<Application>().writeBlockScreenPrefs(
-            BlockScreenPrefsState(
-                dwell = _dwell.value,
-                message = _message.value,
-                img = _img.value,
-                whyOn = _whyOn.value,
+    suspend fun save(): Boolean {
+        // Snapshot once: the persisted payload and the new baseline use the
+        // same values, so an edit landing mid-write can never be marked clean
+        // without having been saved (COD-81 review F2).
+        val saved = BlockScreenSnapshot(_dwell.value, _message.value, _img.value, _whyOn.value)
+        val ok = runCatching {
+            getApplication<Application>().writeBlockScreenPrefs(
+                BlockScreenPrefsState(
+                    dwell = saved.dwell,
+                    message = saved.message,
+                    img = saved.img,
+                    whyOn = saved.whyOn,
+                )
             )
-        )
-    }.isSuccess
+        }.isSuccess
+        if (ok) {
+            // COD-81: saved → clean. A failed write leaves the baseline
+            // stale so the user can retry or discard.
+            baseline.value = saved
+        }
+        return ok
+    }
 }
+
+/** COD-81: comparable copy of the block-gate working state. */
+internal data class BlockScreenSnapshot(
+    val dwell: Int,
+    val message: String,
+    val img: String,
+    val whyOn: Boolean,
+)
+
+/**
+ * COD-81: true when the working copy differs from the baseline. An empty
+ * message and the default preview message are the same content (the screen
+ * resolves `message.ifEmpty { default }`), so blank ≡ [defaultMessage] here.
+ */
+internal fun isBlockScreenDirty(
+    baseline: BlockScreenSnapshot,
+    current: BlockScreenSnapshot,
+    defaultMessage: String,
+): Boolean =
+    baseline.dwell != current.dwell ||
+        baseline.img != current.img ||
+        baseline.whyOn != current.whyOn ||
+        normalizeMessage(baseline.message, defaultMessage) !=
+            normalizeMessage(current.message, defaultMessage)
+
+private fun normalizeMessage(message: String, defaultMessage: String): String =
+    if (message.isBlank()) defaultMessage else message
