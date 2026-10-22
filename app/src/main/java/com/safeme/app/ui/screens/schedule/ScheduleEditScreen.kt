@@ -175,14 +175,18 @@ fun ScheduleEditScreen(
         )
     }
 
-    if (showUnsavedDialog) {
+    // Show only while actually dirty: a restored flag over a clean editor
+    // (process death + recreate) must never warn (COD-81 review F3).
+    if (showUnsavedDialog && hasUnsavedChanges) {
         UnsavedChangesDialog(
             onKeepEditing = { showUnsavedDialog = false },
             onSaveAndExit = {
-                // Same as tapping the screen's Save/Create button: validation
-                // failure keeps the user here (existing toast explains why);
-                // success exits via the existing done → onBack() path.
-                if (viewModel.save()) showUnsavedDialog = false
+                // Same as tapping the screen's Save/Create button: success
+                // exits via the existing done → onBack() path; validation
+                // failure keeps the user here. The dialog closes either way so
+                // the validation toast (ToastHost) is never behind its scrim.
+                showUnsavedDialog = false
+                viewModel.save()
             },
             onDiscardChanges = {
                 showUnsavedDialog = false

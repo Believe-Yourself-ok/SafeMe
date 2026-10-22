@@ -288,7 +288,9 @@ fun BlockScreen(onBack: () -> Unit) {
         )
     }
 
-    if (showUnsavedDialog) {
+    // Show only while actually dirty: a restored flag over a clean editor
+    // (process death + recreate) must never warn (COD-81 review F3).
+    if (showUnsavedDialog && hasUnsavedChanges) {
         UnsavedChangesDialog(
             onKeepEditing = { showUnsavedDialog = false },
             onSaveAndExit = {

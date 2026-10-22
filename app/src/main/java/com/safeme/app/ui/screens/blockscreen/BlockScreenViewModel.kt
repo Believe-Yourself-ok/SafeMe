@@ -96,21 +96,24 @@ class BlockScreenViewModel(application: Application) : AndroidViewModel(applicat
      * user can retry.
      */
     suspend fun save(): Boolean {
+        // Snapshot once: the persisted payload and the new baseline use the
+        // same values, so an edit landing mid-write can never be marked clean
+        // without having been saved (COD-81 review F2).
+        val saved = BlockScreenSnapshot(_dwell.value, _message.value, _img.value, _whyOn.value)
         val ok = runCatching {
             getApplication<Application>().writeBlockScreenPrefs(
                 BlockScreenPrefsState(
-                    dwell = _dwell.value,
-                    message = _message.value,
-                    img = _img.value,
-                    whyOn = _whyOn.value,
+                    dwell = saved.dwell,
+                    message = saved.message,
+                    img = saved.img,
+                    whyOn = saved.whyOn,
                 )
             )
         }.isSuccess
         if (ok) {
             // COD-81: saved → clean. A failed write leaves the baseline
             // stale so the user can retry or discard.
-            baseline.value =
-                BlockScreenSnapshot(_dwell.value, _message.value, _img.value, _whyOn.value)
+            baseline.value = saved
         }
         return ok
     }
