@@ -16,7 +16,6 @@ import com.safeme.app.data.removeBlockedWebsite
 import com.safeme.app.data.removeTrustedWebsite
 import com.safeme.app.data.removeWhitelistKeyword
 import com.safeme.app.data.resetUserBlockingPrefs
-import com.safeme.app.data.setBlockingEnabled
 import com.safeme.app.data.updateBlockedKeyword
 import com.safeme.app.data.updateBlockedWebsite
 import com.safeme.app.protect.ProtectedAction
@@ -67,16 +66,6 @@ class KeywordManagerViewModel(application: Application) : ProtectedViewModel(app
 
     fun showToast(message: String) {
         _toasts.tryEmit(message)
-    }
-
-    fun toggleBlocking(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                app.setBlockingEnabled(enabled)
-            } catch (t: Throwable) {
-                _toasts.tryEmit(failure())
-            }
-        }
     }
 
     fun addKeyword(value: String, category: BlockedCategory, success: String) {
