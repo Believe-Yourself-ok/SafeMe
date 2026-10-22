@@ -65,11 +65,27 @@ jobs:
       - name: Set up Gradle (with caching)
         uses: gradle/actions/setup-gradle@v4
 
+      # The action's built-in license acceptance is not reliable on the current
+      # runner image: it finds cmdline-tools 12.0 preinstalled, downloads build
+      # 12266719 (-> cmdline-tools/16.0) and then its own
+      # `sdkmanager --licenses` leaves "7 of 8 SDK package licenses not
+      # accepted" and exits 1, failing the job before any build step runs.
+      # Licenses are accepted deterministically in the next step instead.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: false
+          packages: ''
 
-      - name: Install SDK components
-        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+      # Answering the prompts from a finite input (rather than `yes |`, which
+      # raises SIGPIPE under `set -o pipefail` when sdkmanager exits) makes the
+      # acceptance repeatable. Install the components afterwards so the
+      # versions stay pinned in one place.
+      - name: Accept SDK licenses and install components
+        run: |
+          set -euo pipefail
+          printf 'y\n%.0s' $(seq 1 200) | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Configure release signing from secrets
         if: ${{ !matrix.force_fork_sim && env.KEYSTORE_BASE64 != '' }}
@@ -177,11 +193,27 @@ jobs:
       - name: Set up Gradle (with caching)
         uses: gradle/actions/setup-gradle@v4
 
+      # The action's built-in license acceptance is not reliable on the current
+      # runner image: it finds cmdline-tools 12.0 preinstalled, downloads build
+      # 12266719 (-> cmdline-tools/16.0) and then its own
+      # `sdkmanager --licenses` leaves "7 of 8 SDK package licenses not
+      # accepted" and exits 1, failing the job before any build step runs.
+      # Licenses are accepted deterministically in the next step instead.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: false
+          packages: ''
 
-      - name: Install SDK components
-        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+      # Answering the prompts from a finite input (rather than `yes |`, which
+      # raises SIGPIPE under `set -o pipefail` when sdkmanager exits) makes the
+      # acceptance repeatable. Install the components afterwards so the
+      # versions stay pinned in one place.
+      - name: Accept SDK licenses and install components
+        run: |
+          set -euo pipefail
+          printf 'y\n%.0s' $(seq 1 200) | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Configure release signing from secrets
         run: |
