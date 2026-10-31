@@ -1,5 +1,6 @@
 package com.safeme.app.ui.screens.permissions
 
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.safeme.app.R
+import com.safeme.app.data.markBoundariesAcknowledged
 import com.safeme.app.data.markOnboardingComplete
 import com.safeme.app.data.onboardingComplete
 import com.safeme.app.ui.screens.welcome.WelcomeScreen
@@ -82,13 +84,40 @@ fun OnboardingNavHost(modifier: Modifier = Modifier) {
             AccessibilityPermissionStep(
                 navController = navController,
                 vm = vm,
-                onAllGranted = {
-                    scope.launch { context.markOnboardingComplete() }
-                    navController.navigate("main") {
-                        popUpTo(0) { inclusive = true }
+                onRequiredPermissionsGranted = {
+                    navController.navigate(PERM_ROUTE_BOUNDARIES)
+                },
+            )
+        }
+
+        composable(PERM_ROUTE_BOUNDARIES) {
+            BoundariesScreen(
+                onBack = { navController.popBackStack() },
+                onContinue = {
+                    scope.launch {
+                        context.markBoundariesAcknowledged()
+                        navController.navigate(PERM_ROUTE_ACTIVE)
                     }
                 },
-                completionToast = R.string.perm_welcome_toast,
+            )
+        }
+
+        composable(PERM_ROUTE_ACTIVE) {
+            ActiveScreen(
+                onBack = { navController.popBackStack() },
+                onOpen = {
+                    scope.launch {
+                        context.markOnboardingComplete()
+                        navController.navigate("main") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                        Toast.makeText(
+                            context,
+                            R.string.perm_welcome_toast,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                },
             )
         }
 

@@ -3,24 +3,42 @@
     <string name="app_name">SafeMe</string>
 
     <string name="perm_back">Back</string>
-    <string name="perm_required_badge">Required</string>
     <string name="perm_grant">Grant</string>
     <string name="perm_granted">Granted ✓</string>
     <string name="perm_skip">Skip for now</string>
+    <string name="perm_step">STEP %1$d OF %2$d</string>
 
-    <string name="perm_notifications_title">Notifications</string>
-    <string name="perm_notifications_sub">Alerts for blocks, reports &amp; sessions</string>
+    <string name="welcome_title">Welcome to SafeMe.</string>
+    <string name="welcome_body">Your personal sanctuary for deep focus. SafeMe protects your attention, blocks adult content, and helps you reclaim your time from digital distractions.</string>
+    <string name="welcome_get_started">Get started</string>
 
-    <string name="perm_battery_title">Battery optimization</string>
-    <string name="perm_battery_sub">Whitelist SafeMe so protection persists</string>
+    <string name="perm_notifications_title">Stay mindful</string>
+    <string name="perm_notifications_sub">Allow SafeMe to send quiet updates when you cross milestones or when focus sessions conclude. We keep notifications minimal and peaceful.</string>
+    <string name="perm_notifications_action">Allow notifications</string>
+    <string name="perm_notifications_card_title">SafeMe Shield</string>
+    <string name="perm_notifications_card_subtitle">Focus &amp; Protection Service</string>
+    <string name="perm_notifications_card_body">Allow SafeMe to send occasional summaries?</string>
 
+    <string name="perm_battery_title">Uninterrupted guard</string>
+    <string name="perm_battery_sub">To keep adult content blocked and maintain distraction filters around the clock, SafeMe needs background protection exemption from your battery saver.</string>
+    <string name="perm_battery_action">Disable optimization</string>
+    <string name="perm_battery_card_title">Always Protect in Background</string>
+    <string name="perm_battery_card_subtitle">Exempt from Android power saving</string>
 
-    <string name="perm_a11y_title">Accessibility</string>
-    <string name="perm_a11y_sub">SafeMe uses Android\'s Accessibility Service only to watch the screen you are viewing and block content matching your rules.</string>
-    <string name="perm_a11y_step1">Open Settings → Accessibility → SafeMe</string>
-    <string name="perm_a11y_step2">Toggle the SafeMe service On and confirm</string>
-    <string name="perm_a11y_step3">Return to SafeMe — protection turns on</string>
-    <string name="perm_a11y_note">Tip: after enabling, Android may ask you to confirm — allow it.</string>
+    <string name="perm_a11y_title">Content filtering</string>
+    <string name="perm_a11y_sub">Enable accessibility services to allow SafeMe to detect and filter explicit adult content or addictive feeds across your browsers and apps instantly.</string>
+    <string name="perm_a11y_action">Enable accessibility</string>
+    <string name="perm_a11y_privacy">Your privacy is absolute. Content checks happen locally on your device to shield you without compromising your personal data.</string>
+
+    <string name="perm_boundaries_title">Your digital boundaries</string>
+    <string name="perm_boundaries_sub">SafeMe is engineered to respect your autonomy. By filtering out distractions and harmful content, we help you direct your focus toward what truly matters to you.</string>
+    <string name="perm_boundaries_card_title">Strict Safe Filtering</string>
+    <string name="perm_boundaries_card_body">Adult content and triggers are blocked silently and securely in the background.</string>
+    <string name="perm_boundaries_action">I understand</string>
+
+    <string name="perm_active_title">SafeMe is active.</string>
+    <string name="perm_active_body">Your defenses are set. Enjoy a clean, focused, and distraction-free digital experience.</string>
+    <string name="perm_active_action">Open SafeMe</string>
 
     <string name="perm_required_toast">Grant the required permissions to continue</string>
     <string name="perm_skipped_toast">Skipped — you can grant it later from Profile</string>

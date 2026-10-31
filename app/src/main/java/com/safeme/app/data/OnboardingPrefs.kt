@@ -17,6 +17,7 @@ enum class ThemePref {
 private val Context.onboardingDataStore by preferencesDataStore(name = "onboarding_prefs")
 
 val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+val KEY_BOUNDARIES_ACKNOWLEDGED = booleanPreferencesKey("boundaries_acknowledged")
 val KEY_THEME_PREF = stringPreferencesKey("theme_pref")
 
 suspend fun Context.markOnboardingComplete() {
@@ -27,6 +28,15 @@ fun Context.onboardingComplete(): Flow<Boolean> =
     onboardingDataStore.data
         .catch { emit(emptyPreferences()) }
         .map { it[KEY_ONBOARDING_COMPLETE] ?: false }
+
+suspend fun Context.markBoundariesAcknowledged() {
+    onboardingDataStore.edit { it[KEY_BOUNDARIES_ACKNOWLEDGED] = true }
+}
+
+fun Context.boundariesAcknowledged(): Flow<Boolean> =
+    onboardingDataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_BOUNDARIES_ACKNOWLEDGED] ?: false }
 
 suspend fun Context.setThemePref(pref: ThemePref) {
     onboardingDataStore.edit { it[KEY_THEME_PREF] = pref.name }

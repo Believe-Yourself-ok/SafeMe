@@ -6,218 +6,325 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.safeme.app.R
 import com.safeme.app.ui.components.blurredShadow
 import com.safeme.app.ui.theme.LocalAppColors
+import com.safeme.app.ui.theme.UiFamily
+
+/** Visual treatment for the three existing Android permission mechanisms. */
+enum class PermissionVisual {
+    Notifications,
+    Battery,
+    Accessibility,
+}
 
 /**
- * Prototype-styled permission step ("Typeless" layout structure):
- * open editorial composition — no card. Two variants:
- *  - simple: centered hero title + sub, bottom-anchored CTA block;
- *  - timeline ([timeline] != null): inline back+title header, description,
- *    numbered vertical how-to timeline, note line, bottom CTA block.
+ * Prototype-matched presentation for a production permission step.
+ *
+ * All permission requests, Settings intents, lifecycle checks and navigation
+ * callbacks remain owned by [PermissionSteps.kt]. This composable only renders
+ * the supplied state and invokes the supplied actions.
  */
 @Composable
 fun PermissionScreen(
     title: String,
     subtitle: String,
-    required: Boolean,
     step: Int,
-    totalSteps: Int = 3,
+    totalSteps: Int = 5,
     granted: Boolean,
+    visual: PermissionVisual,
     onBack: () -> Unit,
-    grantLabel: String = stringResource(R.string.perm_grant),
+    grantLabel: String,
     onGrant: () -> Unit,
     skipLabel: String? = null,
     onSkip: (() -> Unit)? = null,
-    accentWord: String? = null,
-    timeline: List<String>? = null,
-    note: String? = null,
 ) {
     val colors = LocalAppColors.current
-    val isTimeline = timeline != null
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
             .statusBarsPadding()
-            .padding(start = 20.dp, top = 8.dp, end = 20.dp, bottom = 108.dp)
+            .navigationBarsPadding(),
     ) {
-        if (!isTimeline) {
-            // Small floating back control, top-left (prototype keeps forward-
-            // only steps, SafeMe needs a way out of re-entered flows).
-            Box(modifier = Modifier.padding(top = 12.dp)) {
-                BackChip(onBack = onBack)
-            }
-        }
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .widthIn(max = 560.dp)
+                .fillMaxSize()
+                .padding(start = 32.dp, top = 12.dp, end = 32.dp, bottom = 28.dp),
+        ) {
+            OnboardingBackButton(onBack)
+            Spacer(modifier = Modifier.height(24.dp))
 
-        if (isTimeline) {
-            TimelineHeader(
-                title = title,
-                subtitle = subtitle,
-                onBack = onBack,
-                modifier = Modifier.padding(top = 20.dp)
-            )
-            Spacer(modifier = Modifier.height(28.dp))
-            TimelineSteps(steps = timeline)
-            if (note != null) {
-                Spacer(modifier = Modifier.height(18.dp))
-                Text(
-                    text = note,
-                    fontSize = 12.sp,
-                    lineHeight = 18.sp,
-                    color = colors.ink3
-                )
-            }
-        } else {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
             ) {
-                if (required) {
-                    Text(
-                        text = stringResource(R.string.perm_required_badge),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.4.sp,
-                        color = colors.brandDark,
-                        modifier = Modifier
-                            .background(colors.brandSoft, RoundedCornerShape(99.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                }
-                HeroTitle(
-                    title = title,
-                    accentWord = accentWord,
-                    color = colors.ink,
-                    accentColor = colors.brand,
-                    textAlign = TextAlign.Center
+                Text(
+                    text = androidx.compose.ui.res.stringResource(
+                        R.string.perm_step,
+                        step,
+                        totalSteps,
+                    ),
+                    fontFamily = UiFamily,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.1.sp,
+                    color = colors.brand,
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = title,
+                    fontFamily = UiFamily,
+                    fontSize = 30.sp,
+                    lineHeight = 36.sp,
+                    fontWeight = FontWeight.Normal,
+                    letterSpacing = (-0.75).sp,
+                    color = colors.ink,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = subtitle,
-                    fontSize = 13.5.sp,
-                    lineHeight = 20.25.sp,
+                    fontFamily = UiFamily,
+                    fontSize = 14.5.sp,
+                    lineHeight = 23.5.sp,
+                    fontWeight = FontWeight.Normal,
                     color = colors.ink2,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(max = 300.dp)
                 )
+                Spacer(modifier = Modifier.height(if (visual == PermissionVisual.Accessibility) 16.dp else 24.dp))
+
+                when (visual) {
+                    PermissionVisual.Notifications -> NotificationPreview()
+                    PermissionVisual.Battery -> BatteryPreview()
+                    PermissionVisual.Accessibility -> PrivacyCallout()
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-        }
 
-        if (isTimeline) {
-            Spacer(modifier = Modifier.weight(1f))
-        } else {
-            Spacer(modifier = Modifier.height(20.dp))
-        }
+            Spacer(modifier = Modifier.height(16.dp))
+            OnboardingPrimaryButton(
+                label = if (granted) {
+                    androidx.compose.ui.res.stringResource(R.string.perm_granted)
+                } else {
+                    grantLabel
+                },
+                granted = granted,
+                onClick = onGrant,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
 
-        GrantPill(
-            granted = granted,
-            label = if (granted) stringResource(R.string.perm_granted) else grantLabel,
-            onGrant = onGrant
-        )
-
-        // [Welcome-parity CTA stack] Fixed-height secondary slot (ghost Skip
-        // when optional, empty otherwise) keeps the grant pill at the same
-        // vertical position on every step — matched to the welcome screen's
-        // "Get started" placement (pill → 8dp → 40dp slot → 12dp → dots).
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (skipLabel != null && onSkip != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp)
-                        .clip(CircleShape)
-                        .border(1.2.dp, colors.line, CircleShape)
-                        .clickable(onClick = onSkip),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = skipLabel,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.ink2
-                    )
+            // Required production permissions intentionally retain no Skip
+            // action. The fixed visual slot keeps the primary CTA and dots in
+            // the same positions as the prototype without adding an interaction.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (skipLabel != null && onSkip != null) {
+                    OnboardingSecondaryButton(label = skipLabel, onClick = onSkip)
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
-        ProgressDots(step = step, totalSteps = totalSteps)
+            Spacer(modifier = Modifier.height(24.dp))
+            OnboardingProgressDots(activeIndex = step)
+        }
     }
 }
 
-/** Prototype `.sub()` header: chevron + inline title + muted desc below. */
 @Composable
-private fun TimelineHeader(
-    title: String,
-    subtitle: String,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun NotificationPreview() {
     val colors = LocalAppColors.current
-    Column(modifier = modifier.fillMaxWidth()) {
+    PrototypeCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            BackChip(onBack = onBack)
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(colors.brandSoft, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "S",
+                    fontFamily = UiFamily,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.brand,
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = title,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = colors.ink
-            )
+            Column {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.perm_notifications_card_title),
+                    fontFamily = UiFamily,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.ink,
+                )
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.perm_notifications_card_subtitle),
+                    fontFamily = UiFamily,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    color = colors.ink3,
+                )
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = subtitle,
-            fontSize = 13.5.sp,
-            lineHeight = 21.sp,
-            color = colors.ink2
+            text = androidx.compose.ui.res.stringResource(R.string.perm_notifications_card_body),
+            fontFamily = UiFamily,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            color = colors.ink2,
+            modifier = Modifier.padding(start = 40.dp),
         )
     }
 }
 
 @Composable
-private fun BackChip(onBack: () -> Unit) {
+private fun BatteryPreview() {
+    val colors = LocalAppColors.current
+    PrototypeCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.perm_battery_card_title),
+                    fontFamily = UiFamily,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.ink,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.perm_battery_card_subtitle),
+                    fontFamily = UiFamily,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    color = colors.ink2,
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(width = 44.dp, height = 24.dp)
+                    .clearAndSetSemantics { }
+                    .background(colors.brand, CircleShape)
+                    .padding(2.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(colors.surface, CircleShape),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrivacyCallout() {
+    val colors = LocalAppColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(colors.brandSoft)
+            .border(1.dp, colors.line, RoundedCornerShape(16.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            imageVector = InfoCircleIcon,
+            contentDescription = null,
+            tint = colors.brand,
+            modifier = Modifier
+                .padding(top = 2.dp)
+                .size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = androidx.compose.ui.res.stringResource(R.string.perm_a11y_privacy),
+            fontFamily = UiFamily,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            color = colors.ink2,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun PrototypeCard(content: @Composable ColumnScope.() -> Unit) {
+    val colors = LocalAppColors.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .blurredShadow(
+                cornerRadius = 16.dp,
+                color = Color.Black.copy(alpha = 0.08f),
+                blurRadius = 18.dp,
+                offsetY = 8.dp,
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(colors.surface, colors.brandMist),
+                )
+            )
+            .border(1.dp, colors.line, RoundedCornerShape(16.dp))
+            .padding(20.dp),
+        content = content,
+    )
+}
+
+@Composable
+fun OnboardingBackButton(onClick: () -> Unit) {
     val colors = LocalAppColors.current
     Box(
         modifier = Modifier
@@ -225,158 +332,106 @@ private fun BackChip(onBack: () -> Unit) {
             .clip(RoundedCornerShape(14.dp))
             .background(colors.surface)
             .border(1.dp, colors.line, RoundedCornerShape(14.dp))
-            .clickable(onClick = onBack),
-        contentAlignment = Alignment.Center
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = ChevronIcon,
-            contentDescription = stringResource(R.string.perm_back),
+            contentDescription = androidx.compose.ui.res.stringResource(R.string.perm_back),
             modifier = Modifier.size(20.dp),
-            tint = colors.ink
+            tint = colors.ink,
         )
     }
 }
 
-/** Hero headline; [accentWord] renders in the brand color like `em` in the prototype. */
 @Composable
-private fun HeroTitle(
-    title: String,
-    accentWord: String?,
-    color: Color,
-    accentColor: Color,
-    textAlign: TextAlign = TextAlign.Start,
+fun OnboardingPrimaryButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    granted: Boolean = false,
 ) {
-    val styled: AnnotatedString = if (accentWord != null && title.contains(accentWord)) {
-        buildAnnotatedString {
-            val idx = title.indexOf(accentWord)
-            append(title.take(idx))
-            pushStyle(SpanStyle(color = accentColor))
-            append(accentWord)
-            pop()
-            append(title.drop(idx + accentWord.length))
-        }
-    } else {
-        AnnotatedString(title)
-    }
-    Text(
-        text = styled,
-        fontSize = 26.sp,
-        lineHeight = 31.sp,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.3).sp,
-        color = color,
-        textAlign = textAlign
-    )
-}
-
-/**
- * Numbered vertical how-to timeline (prototype `.a11y-tl`): 30dp brandSoft
- * circles with bold serif-style numerals connected by a hairline.
- */
-@Composable
-private fun TimelineSteps(steps: List<String>) {
     val colors = LocalAppColors.current
-    Column {
-        steps.forEachIndexed { index, stepText ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(colors.brandSoft),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = (index + 1).toString(),
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.brandDark
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stepText,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                    color = colors.ink,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            if (index < steps.lastIndex) {
-                Box(
-                    modifier = Modifier
-                        .padding(start = 14.dp)
-                        .width(1.5.dp)
-                        .height(18.dp)
-                        .background(colors.line)
-                )
-                Spacer(modifier = Modifier.height(0.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun GrantPill(granted: Boolean, label: String, onGrant: () -> Unit) {
-    val colors = LocalAppColors.current
+    val shape = RoundedCornerShape(16.dp)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(56.dp)
             .then(
                 if (granted) {
                     Modifier
-                        .background(colors.brandSoft, CircleShape)
-                        .clickable(onClick = onGrant)
                 } else {
-                    Modifier
-                        .blurredShadow(
-                            cornerRadius = 26.dp,
-                            color = colors.brand.copy(alpha = 0.35f),
-                            blurRadius = 20.dp,
-                            offsetY = 8.dp
-                        )
-                        .clip(CircleShape)
-                        .background(colors.brand)
-                        .clickable(onClick = onGrant)
+                    Modifier.blurredShadow(
+                        cornerRadius = 16.dp,
+                        color = Color.Black.copy(alpha = 0.14f),
+                        blurRadius = 10.dp,
+                        offsetY = 4.dp,
+                    )
                 }
-            ),
-        contentAlignment = Alignment.Center
+            )
+            .clip(shape)
+            .background(if (granted) colors.brandSoft else colors.brand)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
+            fontFamily = UiFamily,
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            lineHeight = 24.sp,
+            fontWeight = FontWeight.Medium,
             color = if (granted) colors.brandDark else Color.White,
-            modifier = if (granted) Modifier.alpha(0.45f) else Modifier
         )
     }
 }
 
 @Composable
-private fun ProgressDots(step: Int, totalSteps: Int) {
+fun OnboardingSecondaryButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalAppColors.current
+    val shape = RoundedCornerShape(16.dp)
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clip(shape)
+            .background(colors.surface)
+            .border(1.dp, colors.line, shape)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            fontFamily = UiFamily,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.ink,
+        )
+    }
+}
+
+@Composable
+fun OnboardingProgressDots(activeIndex: Int) {
     val colors = LocalAppColors.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        for (i in 1..totalSteps) {
-            if (i > 1) Spacer(modifier = Modifier.width(6.dp))
-            if (i <= step) {
-                Box(
-                    modifier = Modifier
-                        .width(20.dp)
-                        .height(7.dp)
-                        .background(colors.brand, RoundedCornerShape(50))
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .background(colors.line, CircleShape)
-                )
-            }
+        repeat(6) { index ->
+            if (index > 0) Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .width(if (index == activeIndex) 28.dp else 8.dp)
+                    .height(8.dp)
+                    .background(
+                        color = if (index == activeIndex) colors.brand else colors.ink3,
+                        shape = CircleShape,
+                    ),
+            )
         }
     }
 }

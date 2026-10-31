@@ -41,6 +41,46 @@ val ChevronIcon: ImageVector by lazy {
     }.build()
 }
 
+val InfoCircleIcon: ImageVector by lazy {
+    iconBuilder("InfoCircle").apply {
+        strokePath {
+            moveTo(12f, 3f)
+            arcToRelative(9f, 9f, 0f, true, true, 0f, 18f)
+            arcToRelative(9f, 9f, 0f, true, true, 0f, -18f)
+        }
+        strokePath {
+            moveTo(12f, 11f)
+            verticalLineTo(16f)
+        }
+        strokePath {
+            moveTo(12f, 8f)
+            lineTo(12.01f, 8f)
+        }
+    }.build()
+}
+
+val CheckIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "Check",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        path(
+            fill = null,
+            stroke = stroke,
+            strokeLineWidth = 2.5f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+        ) {
+            moveTo(5f, 13f)
+            lineTo(9f, 17f)
+            lineTo(19f, 7f)
+        }
+    }.build()
+}
+
 val BellIcon: ImageVector by lazy {
     iconBuilder("Bell").apply {
         strokePath {

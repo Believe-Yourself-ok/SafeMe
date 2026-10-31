@@ -2,11 +2,13 @@ package com.safeme.app.ui.screens.permissions
 
 import android.content.Context
 import android.os.PowerManager
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -14,8 +16,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.safeme.app.R
+import com.safeme.app.data.markBoundariesAcknowledged
 import com.safeme.app.ui.theme.LocalAppColors
 import com.safeme.app.ui.util.isAccessibilityEnabled
+import kotlinx.coroutines.launch
 
 /**
  * Permission management flow opened from the Profile tab. Walks the same
@@ -29,6 +33,7 @@ fun ManagePermissionsFlow(onBack: () -> Unit) {
     val context = LocalContext.current
     val vm: OnboardingViewModel = viewModel()
     val colors = LocalAppColors.current
+    val scope = rememberCoroutineScope()
 
     // Seed the flow with the permissions already granted to the system so
     // granted steps render as "Granted ✓" and can be tapped through.
@@ -54,9 +59,34 @@ fun ManagePermissionsFlow(onBack: () -> Unit) {
             AccessibilityPermissionStep(
                 navController = navController,
                 vm = vm,
-                onAllGranted = onBack,
-                completionToast = R.string.perm_all_granted_toast,
+                onRequiredPermissionsGranted = {
+                    navController.navigate(PERM_ROUTE_BOUNDARIES)
+                },
                 onBack = onBack,
+            )
+        }
+        composable(PERM_ROUTE_BOUNDARIES) {
+            BoundariesScreen(
+                onBack = onBack,
+                onContinue = {
+                    scope.launch {
+                        context.markBoundariesAcknowledged()
+                        navController.navigate(PERM_ROUTE_ACTIVE)
+                    }
+                },
+            )
+        }
+        composable(PERM_ROUTE_ACTIVE) {
+            ActiveScreen(
+                onBack = onBack,
+                onOpen = {
+                    Toast.makeText(
+                        context,
+                        R.string.perm_all_granted_toast,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    onBack()
+                },
             )
         }
     }

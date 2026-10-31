@@ -30,6 +30,8 @@ import com.safeme.app.ui.util.isAccessibilityEnabled
 const val PERM_ROUTE_NOTIFICATIONS = "permissions"
 const val PERM_ROUTE_BATTERY = "permbattery"
 const val PERM_ROUTE_A11Y = "perma11y"
+const val PERM_ROUTE_BOUNDARIES = "permboundaries"
+const val PERM_ROUTE_ACTIVE = "permactive"
 
 const val KEY_NOTIFICATIONS = "notifications"
 const val KEY_BATTERY = "battery"
@@ -77,11 +79,11 @@ fun NotificationPermissionStep(
     PermissionScreen(
         title = context.getString(R.string.perm_notifications_title),
         subtitle = context.getString(R.string.perm_notifications_sub),
-        required = true,
         step = 1,
-        totalSteps = 3,
         granted = KEY_NOTIFICATIONS in granted,
+        visual = PermissionVisual.Notifications,
         onBack = onBack,
+        grantLabel = context.getString(R.string.perm_notifications_action),
         onGrant = {
             if (KEY_NOTIFICATIONS in granted) {
                 navController.navigate(PERM_ROUTE_BATTERY)
@@ -142,12 +144,11 @@ fun BatteryPermissionStep(
     PermissionScreen(
         title = context.getString(R.string.perm_battery_title),
         subtitle = context.getString(R.string.perm_battery_sub),
-        required = false,
         step = 2,
-        totalSteps = 3,
         granted = KEY_BATTERY in granted,
-        accentWord = "Battery",
+        visual = PermissionVisual.Battery,
         onBack = onBack,
+        grantLabel = context.getString(R.string.perm_battery_action),
         onGrant = {
             if (KEY_BATTERY in granted) navController.navigate(PERM_ROUTE_A11Y) else grant()
         },
@@ -163,14 +164,14 @@ fun BatteryPermissionStep(
 
 /**
  * Step 3 of the permission flow — accessibility (required). Calls
- * [onAllGranted] once notifications AND accessibility are both granted.
+ * [onRequiredPermissionsGranted] once notifications AND accessibility are
+ * both granted. The caller owns the two informational steps that follow.
  */
 @Composable
 fun AccessibilityPermissionStep(
     navController: NavHostController,
     vm: OnboardingViewModel,
-    onAllGranted: () -> Unit,
-    completionToast: Int,
+    onRequiredPermissionsGranted: () -> Unit,
     onBack: () -> Unit = { navController.popBackStack() },
 ) {
     val context = LocalContext.current
@@ -180,8 +181,7 @@ fun AccessibilityPermissionStep(
     fun finish() {
         vm.markGranted(KEY_ACCESSIBILITY)
         if (KEY_NOTIFICATIONS in vm.granted.value && KEY_ACCESSIBILITY in vm.granted.value) {
-            onAllGranted()
-            Toast.makeText(context, completionToast, Toast.LENGTH_SHORT).show()
+            onRequiredPermissionsGranted()
         } else {
             Toast.makeText(
                 context, R.string.perm_required_toast, Toast.LENGTH_SHORT
@@ -214,18 +214,12 @@ fun AccessibilityPermissionStep(
     PermissionScreen(
         title = context.getString(R.string.perm_a11y_title),
         subtitle = context.getString(R.string.perm_a11y_sub),
-        required = true,
         step = 3,
-        totalSteps = 3,
         granted = KEY_ACCESSIBILITY in granted,
+        visual = PermissionVisual.Accessibility,
         onBack = onBack,
+        grantLabel = context.getString(R.string.perm_a11y_action),
         onGrant = ::grant,
-        timeline = listOf(
-            context.getString(R.string.perm_a11y_step1),
-            context.getString(R.string.perm_a11y_step2),
-            context.getString(R.string.perm_a11y_step3)
-        ),
-        note = context.getString(R.string.perm_a11y_note)
     )
 }
 
