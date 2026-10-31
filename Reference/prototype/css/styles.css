@@ -565,3 +565,83 @@
   /* ---------- Sheet category chips (KeywordManagerScreen CategoryPicker) ---------- */
   #sheetKw .chips,#sheetSite .chips{flex-wrap:wrap;overflow:visible;gap:8px}
   #sheetKw .chip,#sheetSite .chip{font-size:12px;font-weight:600}
+
+  /* ---------- Onboarding redesign — safeme_onboarding.html (6 screens) ----------
+     Vanilla-CSS port of the reference file's Tailwind utilities. Tailwind CDN
+     is intentionally NOT added to the prototype: its preflight would restyle
+     every other screen. All design tokens already match (the reference
+     file's :root values are identical to this stylesheet's).
+     Headings use var(--ui) at weight 400 on purpose: in the reference file,
+     `font-[var(--serif)]` is an ambiguous Tailwind arbitrary value (family
+     vs weight), so Tailwind generates no font-family for it and headings
+     render in the UI sans stack — verified via computed styles in Chrome.
+     These rules match the file as it actually renders. The prototype's
+     phone frame, status bar and sidebar are unchanged; screen padding is
+     the file's px-8 (32px) inside the existing phone. Dark theme keeps
+     working through the shared var(--*) tokens (the file is light-only). */
+  .screen.onb{padding:12px 32px 0;transform:scale(.98) translateY(12px);
+              transition:opacity .4s var(--ease),transform .4s var(--ease)}
+  .screen.onb.show{transform:scale(1) translateY(0)}
+  .obx{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;
+       position:relative;padding-bottom:56px}
+  .obx-top{margin-top:24px}
+  .obx-top-welcome{margin-top:56px}
+  .obx-back{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+            color:var(--ink);background:var(--surface);border:1px solid var(--line);transition:.18s var(--ease)}
+  .obx-back:active{transform:scale(.96);background:var(--brand-soft)}
+  .obx-back svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .obx-logo{width:56px;height:56px;background:var(--surface);border:1px solid var(--line);color:var(--brand);
+            border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:32px;
+            box-shadow:0 1px 2px 0 rgba(0,0,0,.05)}
+  .obx-logo svg{width:32px;height:32px}
+  .obx-wtitle{font-family:var(--ui);font-size:42px;line-height:1.08;letter-spacing:-1.05px;font-weight:400;
+              margin-bottom:16px;color:var(--ink)}
+  .obx-lead{color:var(--ink-2);font-size:15px;line-height:1.625}
+  .obx-step{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+            color:var(--brand);margin-bottom:12px}
+  .obx-title{font-family:var(--ui);font-size:30px;line-height:36px;letter-spacing:-.75px;font-weight:400;
+             margin-bottom:12px;color:var(--ink)}
+  .obx-body{color:var(--ink-2);font-size:14.5px;line-height:1.625;margin-bottom:24px}
+  .obx-body-tight{margin-bottom:16px}
+  .obx-card{background:linear-gradient(180deg,var(--surface) 0%,var(--brand-mist) 100%);box-shadow:var(--shadow);
+            border:1px solid var(--line);padding:20px;border-radius:16px}
+  .obx-nrow{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .obx-avatar{width:28px;height:28px;border-radius:999px;background:var(--brand-soft);color:var(--brand);
+              display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+  .obx-ctitle{font-weight:600;color:var(--ink);font-size:14px;line-height:20px}
+  .obx-csub-sm{font-size:11px;line-height:16px;color:var(--ink-3)}
+  .obx-ntext{font-size:12px;line-height:16px;color:var(--ink-2);padding-left:40px}
+  .obx-brow{display:flex;justify-content:space-between;align-items:center}
+  .obx-csub{font-size:12px;line-height:16px;color:var(--ink-2);margin-top:2px}
+  .obx-toggle{width:44px;height:24px;background:var(--brand);border-radius:999px;position:relative;padding:2px;
+              box-shadow:inset 0 2px 4px 0 rgba(0,0,0,.05);flex:none}
+  .obx-knob{width:20px;height:20px;background:var(--surface);border-radius:999px;transform:translateX(20px);
+            box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+  .obx-callout{display:flex;align-items:flex-start;gap:12px;padding:16px;background:var(--brand-soft);
+               border-radius:16px;border:1px solid var(--line);font-size:12px;line-height:16px;color:var(--ink-2)}
+  .obx-callout svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--brand)}
+  .obx-cbody{font-size:12px;line-height:1.625;color:var(--ink-2)}
+  .obx-done{margin-top:48px;text-align:center;display:flex;flex-direction:column;align-items:center}
+  .obx-check{width:64px;height:64px;background:var(--brand-soft);color:var(--brand);border-radius:999px;
+             display:flex;align-items:center;justify-content:center;margin-bottom:24px;
+             box-shadow:inset 0 2px 4px 0 rgba(0,0,0,.05)}
+  .obx-check svg{width:32px;height:32px}
+  .obx-dtitle{font-family:var(--ui);font-size:36px;line-height:40px;letter-spacing:-.9px;font-weight:400;
+              margin-bottom:12px;color:var(--ink)}
+  .obx-dbody{color:var(--ink-2);font-size:15px;line-height:1.625;max-width:300px}
+  .obx-foot{display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
+  .obx-foot.single{gap:12px;padding-bottom:32px}
+  .obx-btn-primary{width:100%;height:56px;display:flex;align-items:center;justify-content:center;background:var(--brand);
+                   color:#fff;border-radius:16px;font-weight:500;font-size:16px;line-height:24px;
+                   box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);transition:all .15s var(--ease)}
+  .obx-btn-primary:hover{background:var(--brand-dark)}
+  .obx-btn-primary:active{transform:scale(.98)}
+  .obx-btn-primary.granted{background:var(--brand-soft);color:var(--brand-dark);box-shadow:none}
+  .obx-btn-secondary{width:100%;display:flex;align-items:center;justify-content:center;padding:12px;background:var(--surface);
+                     border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:14px;line-height:20px;
+                     border-radius:16px;box-shadow:0 1px 2px 0 rgba(0,0,0,.05);transition:background-color .15s var(--ease)}
+  .obx-btn-secondary:hover{background:var(--brand-soft)}
+  .obx-dots{position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;align-items:center;
+            gap:8px;pointer-events:none}
+  .obx-dots i{display:block;height:8px;width:8px;border-radius:999px;background:var(--ink-3);transition:all .3s ease-out}
+  .obx-dots i.on{width:28px;background:var(--brand);box-shadow:0 0 8px rgba(217,119,87,.35)}

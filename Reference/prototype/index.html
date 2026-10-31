@@ -32,77 +32,138 @@
     </div>
 
     <div class="screenwrap" id="screenwrap">
-      <!-- ================= ONBOARDING ================= -->
+      <!-- ================= ONBOARDING — Welcome (safeme_onboarding.html · screen 0) ================= -->
       <section class="screen onb show" id="sc-welcome">
-        <div class="ob-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px">
-          <div class="bo-logo" style="width:68px;height:68px;border-radius:22px;background:linear-gradient(135deg,var(--brand-dark),var(--brand));display:flex;align-items:center;justify-content:center;box-shadow:0 14px 32px rgba(217,119,87,.42)">
-            <svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div class="obx">
+          <div class="obx-top obx-top-welcome">
+            <div class="obx-logo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg></div>
+            <h1 class="obx-wtitle">Welcome to SafeMe.</h1>
+            <p class="obx-lead">Your personal sanctuary for deep focus. SafeMe protects your attention, blocks adult content, and helps you reclaim your time from digital distractions.</p>
           </div>
-          <div style="font-family:var(--serif);font-size:30px;font-weight:700;margin-top:20px;letter-spacing:-.3px">Safe<b style="color:var(--brand)">Me</b></div>
-          <p style="font-family:var(--serif);font-size:26px;line-height:1.25;margin-top:10px">A calm shield for your <em style="font-style:normal;color:var(--brand)">attention</em>.</p>
-          <p style="color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:10px">No ads. No trackers. No analytics.</p>
-        </div>
-        <div style="padding-top:20px">
-          <button class="btn btn-primary btn-block" onclick="nav('permissions')">Get started</button>
-          <button class="btn btn-ghost btn-block" style="height:40px;margin-top:8px" onclick="toast('Terms of Service · Privacy Policy — reviewed')">Review Terms</button>
-          <div class="ob-steps" style="margin-top:12px"><i class="on"></i><i></i></div>
+          <div class="obx-foot single">
+            <button class="obx-btn-primary" onclick="nav('permissions')">Get started</button>
+          </div>
+          <div class="obx-dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
       </section>
 
-      <!-- ================= PERMISSIONS — Notifications ================= -->
+      <!-- ================= PERMISSIONS — Step 1 · Notifications (screen 1) ================= -->
       <section class="screen onb" id="sc-permissions">
-        <div class="perm-step">
-          <div style="padding-top:12px"><button class="back" onclick="permBack('welcome')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
-          <div class="perm-mid">
-            <span class="perm-badge">Required</span>
-            <h2 class="perm-hero">Notifications</h2>
-            <p class="perm-sub">Alerts for blocks, reports &amp; sessions</p>
+        <div class="obx">
+          <div>
+            <div class="obx-backrow"><button class="obx-back" aria-label="Back" onclick="permBack('welcome')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+            <div class="obx-top">
+              <span class="obx-step">Step 1 of 5</span>
+              <h2 class="obx-title">Stay mindful</h2>
+              <p class="obx-body">Allow SafeMe to send quiet updates when you cross milestones or when focus sessions conclude. We keep notifications minimal and peaceful.</p>
+              <div class="obx-card">
+                <div class="obx-nrow">
+                  <div class="obx-avatar">S</div>
+                  <div>
+                    <p class="obx-ctitle">SafeMe Shield</p>
+                    <p class="obx-csub-sm">Focus &amp; Protection Service</p>
+                  </div>
+                </div>
+                <p class="obx-ntext">Allow SafeMe to send occasional summaries?</p>
+              </div>
+            </div>
           </div>
-          <div class="perm-cta">
-            <button class="grant-pill" data-grant data-perm="notifications" data-next="permbattery" onclick="grantPerm(this)">Grant</button>
-            <div class="ghost-slot"></div>
-            <div class="ob-steps"><i class="on"></i><i></i><i></i></div>
+          <div class="obx-foot">
+            <button class="obx-btn-primary" data-grant data-perm="notifications" data-next="permbattery" onclick="grantPerm(this)">Allow notifications</button>
+            <button class="obx-btn-secondary" data-perm="notifications" data-next="permbattery" onclick="skipPerm(this)">Skip for now</button>
           </div>
+          <div class="obx-dots"><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
         </div>
       </section>
 
-      <!-- ================= PERMISSIONS — Battery ================= -->
+      <!-- ================= PERMISSIONS — Step 2 · Battery (screen 2) ================= -->
       <section class="screen onb" id="sc-permbattery">
-        <div class="perm-step">
-          <div style="padding-top:12px"><button class="back" onclick="permBack('permissions')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
-          <div class="perm-mid">
-            <h2 class="perm-hero"><span style="color:var(--brand)">Battery</span> optimization</h2>
-            <p class="perm-sub">Whitelist SafeMe so protection persists</p>
+        <div class="obx">
+          <div>
+            <div class="obx-backrow"><button class="obx-back" aria-label="Back" onclick="permBack('permissions')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+            <div class="obx-top">
+              <span class="obx-step">Step 2 of 5</span>
+              <h2 class="obx-title">Uninterrupted guard</h2>
+              <p class="obx-body">To keep adult content blocked and maintain distraction filters around the clock, SafeMe needs background protection exemption from your battery saver.</p>
+              <div class="obx-card">
+                <div class="obx-brow">
+                  <div>
+                    <p class="obx-ctitle">Always Protect in Background</p>
+                    <p class="obx-csub">Exempt from Android power saving</p>
+                  </div>
+                  <div class="obx-toggle" aria-hidden="true"><div class="obx-knob"></div></div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="perm-cta">
-            <button class="grant-pill" data-grant data-perm="battery" data-next="perma11y" onclick="grantPerm(this)">Grant</button>
-            <div class="ghost-slot"><button onclick="skipPerm(this)" data-perm="battery" data-next="perma11y">Skip for now</button></div>
-            <div class="ob-steps"><i></i><i class="on"></i><i></i></div>
+          <div class="obx-foot">
+            <button class="obx-btn-primary" data-grant data-perm="battery" data-next="perma11y" onclick="grantPerm(this)">Disable optimization</button>
+            <button class="obx-btn-secondary" data-perm="battery" data-next="perma11y" onclick="skipPerm(this)">Skip for now</button>
           </div>
+          <div class="obx-dots"><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
         </div>
       </section>
 
-      <!-- ================= PERMISSIONS — Alarms ================= -->
-      
-      <!-- ================= PERMISSIONS — Accessibility ================= -->
+      <!-- ================= PERMISSIONS — Step 3 · Accessibility (screen 3) ================= -->
       <section class="screen onb" id="sc-perma11y">
-        <div class="perm-step">
-          <div class="tl-head" style="padding-top:20px">
-            <button class="back" onclick="permBack('permbattery')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-            <h1>Accessibility</h1>
-            <p class="tl-desc">SafeMe uses Android's Accessibility Service only to watch the screen you are viewing and block content matching your rules.</p>
+        <div class="obx">
+          <div>
+            <div class="obx-backrow"><button class="obx-back" aria-label="Back" onclick="permBack('permbattery')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+            <div class="obx-top">
+              <span class="obx-step">Step 3 of 5</span>
+              <h2 class="obx-title">Content filtering</h2>
+              <p class="obx-body obx-body-tight">Enable accessibility services to allow SafeMe to detect and filter explicit adult content or addictive feeds across your browsers and apps instantly.</p>
+              <div class="obx-callout">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p>Your privacy is absolute. Content checks happen locally on your device to shield you without compromising your personal data.</p>
+              </div>
+            </div>
           </div>
-          <div class="tl-steps">
-            <div class="tl-step"><div class="tl-num">1</div><div class="tx">Open Settings → Accessibility → SafeMe</div></div>
-            <div class="tl-step"><div class="tl-num">2</div><div class="tx">Toggle the SafeMe service On and confirm</div></div>
-            <div class="tl-step"><div class="tl-num">3</div><div class="tx">Return to SafeMe — protection turns on</div></div>
+          <div class="obx-foot">
+            <button class="obx-btn-primary" data-grant data-perm="a11y" data-next="permboundaries" onclick="grantPerm(this)">Enable accessibility</button>
+            <button class="obx-btn-secondary" data-perm="a11y" data-next="permboundaries" onclick="skipPerm(this)">Skip for now</button>
           </div>
-          <p class="tl-note">Tip: after enabling, Android may ask you to confirm — allow it.</p>
-          <div class="perm-cta">
-            <button class="grant-pill" data-grant data-perm="a11y" onclick="grantPerm(this)">Grant</button>
-            <div class="ghost-slot"></div>
-            <div class="ob-steps"><i></i><i></i><i class="on"></i></div>
+          <div class="obx-dots"><i></i><i></i><i></i><i class="on"></i><i></i><i></i></div>
+        </div>
+      </section>
+
+      <!-- ================= PERMISSIONS — Step 4 · Boundaries (screen 4) ================= -->
+      <section class="screen onb" id="sc-permboundaries">
+        <div class="obx">
+          <div>
+            <div class="obx-backrow"><button class="obx-back" aria-label="Back" onclick="permBack('perma11y')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+            <div class="obx-top">
+              <span class="obx-step">Step 4 of 5</span>
+              <h2 class="obx-title">Your digital boundaries</h2>
+              <p class="obx-body">SafeMe is engineered to respect your autonomy. By filtering out distractions and harmful content, we help you direct your focus toward what truly matters to you.</p>
+              <div class="obx-card">
+                <p class="obx-ctitle" style="margin-bottom:4px">Strict Safe Filtering</p>
+                <p class="obx-cbody">Adult content and triggers are blocked silently and securely in the background.</p>
+              </div>
+            </div>
           </div>
+          <div class="obx-foot single">
+            <button class="obx-btn-primary" onclick="nav('permactive')">I understand</button>
+          </div>
+          <div class="obx-dots"><i></i><i></i><i></i><i></i><i class="on"></i><i></i></div>
+        </div>
+      </section>
+
+      <!-- ================= PERMISSIONS — Active (screen 5) ================= -->
+      <section class="screen onb" id="sc-permactive">
+        <div class="obx">
+          <div>
+            <div class="obx-backrow"><button class="obx-back" aria-label="Back" onclick="permBack('permboundaries')"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+            <div class="obx-top obx-done">
+              <div class="obx-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
+              <h2 class="obx-dtitle">SafeMe is active.</h2>
+              <p class="obx-dbody">Your defenses are set. Enjoy a clean, focused, and distraction-free digital experience.</p>
+            </div>
+          </div>
+          <div class="obx-foot single">
+            <button class="obx-btn-primary" onclick="finishOnboard()">Open SafeMe</button>
+          </div>
+          <!-- No paging dots: the reference file fades the indicators out on this screen. -->
         </div>
       </section>
 

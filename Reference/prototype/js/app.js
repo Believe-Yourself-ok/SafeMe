@@ -1,14 +1,14 @@
 // ---------- Screen registry ----------
   const NAV = {home:'Home',block:'Block',schedule:'Schedule',profile:'Profile'};
   const SCREENS = {
-    welcome:{group:'Onboarding'}, permissions:{group:'Onboarding'}, permbattery:{group:'Onboarding'}, perma11y:{group:'Onboarding'},
+    welcome:{group:'Onboarding'}, permissions:{group:'Onboarding'}, permbattery:{group:'Onboarding'}, perma11y:{group:'Onboarding'}, permboundaries:{group:'Onboarding'}, permactive:{group:'Onboarding'},
     home:{group:'Main',nav:true}, block:{group:'Main',nav:true}, schedule:{group:'Main',nav:true}, profile:{group:'Main',nav:true},
     keywords:{group:'Blocking'}, blockscreen:{group:'Blocking'}, vpn:{group:'Blocking'}, antitamper:{group:'Blocking'},
     selfprotect:{group:'Blocking'}, servicepicker:{group:'Blocking'}, titleblock:{group:'Blocking'}, otherfeatures:{group:'Blocking'}, socialblocking:{group:'Blocking'},
     applock:{group:'Protection'}, backup:{group:'Protection'}, troubleshoot:{group:'Protection'}, about:{group:'Protection'},
     history:{group:'Activity & Schedules'}, scheduleedit:{group:'Activity & Schedules'}, quickactions:{group:'Activity & Schedules'}
   };
-  const ORDER = ['welcome','permissions','permbattery','perma11y','home','block','schedule','profile','keywords','blockscreen','vpn','antitamper','selfprotect','servicepicker','titleblock','otherfeatures','socialblocking','applock','backup','troubleshoot','about','history','scheduleedit','quickactions'];
+  const ORDER = ['welcome','permissions','permbattery','perma11y','permboundaries','permactive','home','block','schedule','profile','keywords','blockscreen','vpn','antitamper','selfprotect','servicepicker','titleblock','otherfeatures','socialblocking','applock','backup','troubleshoot','about','history','scheduleedit','quickactions'];
   let stack = [];
 
   // Build prototype navigator
@@ -49,7 +49,9 @@
     if(nx) nav(nx); else finishOnboard();
   }
 
-  /* Production flow: 3 steps (notifications, battery, accessibility). */
+  /* Onboarding flow (safeme_onboarding.html): 3 grantable steps (notifications,
+     battery, accessibility) + boundaries + active. finishOnboard() — wired to
+     the final "Open SafeMe" button — still gates on notifications + a11y. */
   function grantPerm(btn){
     const key = btn.dataset.perm;
     if(btn.classList.contains('granted')){ permAdvance(btn); return; }
@@ -81,7 +83,7 @@
     const el = document.getElementById('permCardSub');
     if(el) el.textContent = granted + ' of 3 granted \u00b7 finish setup';
     keys.forEach(k=>{
-      const btn = document.querySelector('.grant-pill[data-perm="'+k+'"]');
+      const btn = document.querySelector('[data-grant][data-perm="'+k+'"]');
       if(btn && localStorage.getItem('safeme_perm_'+k)==='1'){ btn.classList.add('granted'); btn.textContent='Granted \u2713'; }
     });
   }
@@ -1271,7 +1273,7 @@
     const onboarded = localStorage.getItem('safeme_onboarded');
     const m = location.hash.match(/#\/s\/(\w+)/);
     const name = (m && document.getElementById('sc-'+m[1])) ? m[1] : null;
-    const obScreens = ['welcome','permissions','permbattery','perma11y'];
+    const obScreens = ['welcome','permissions','permbattery','perma11y','permboundaries','permactive'];
     if(!onboarded){ show(name || 'welcome'); }
     else if(name && !obScreens.includes(name)){ nav(name); }
     else { show('home'); }
